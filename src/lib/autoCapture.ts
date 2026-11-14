@@ -1,6 +1,10 @@
 import * as AppIntents from 'expo-app-intents';
 import type { AppIntentInvocation } from 'expo-app-intents';
+import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { useFinance } from '@/store/finance';
+import { toast } from '@/store/toast';
+import { brl } from './date';
 import { toKey } from './date';
 import { CATEGORIES, normalizeName, parseAmount } from './finance';
 
@@ -42,7 +46,10 @@ function handleCompra(inv: AppIntentInvocation) {
   const card = state.cards.find((k) => matches(k.name));
   const account = card ? undefined : state.accounts.find((a) => matches(a.name));
 
-  if (amount > 0) {
+  const ok = amount > 0;
+  state.logIntent({ at: Date.now(), valor: str(p.valor), estabelecimento: merchant, cartao: str(p.cartao), categoria: catName, ok });
+  // nunca descarta: se o valor não for reconhecido, entra com R$ 0 e o valor original nas notas
+  {
     state.addTx({
       type: 'out',
       amount,
@@ -52,28 +59,60 @@ function handleCompra(inv: AppIntentInvocation) {
       cardId: card?.id,
       accountId: account?.id,
       source: 'applepay',
-      notes: !card && !account && p.cartao ? `Cartão na Carteira: ${str(p.cartao)}` : undefined,
+      notes: !ok
+        ? `Valor recebido do Atalhos não reconhecido: "${str(p.valor)}". Corrija o valor.`
+        : !card && !account && p.cartao
+          ? `Cartão na Carteira: ${str(p.cartao)}`
+          : undefined,
     });
   }
+  return ok ? `${brl(amount)}${merchant ? ` · ${merchant}` : ''}` : `${merchant || 'Compra'} (confira o valor)`;
   state.markIntentProcessed(inv.id);
 }
 
-async function process(pending: AppIntentInvocation[]) {
-  await waitHydration();
-  for (const inv of pending) {
-    try {
-      if (inv.name === 'registrarCompra') handleCompra(inv);
-      await AppIntents.removePendingInvocationAsync(inv.id);
-    } catch (e) {
-      console.warn('Falha ao processar lançamento automático', e);
+let busy: Promise<number> = Promise.resolve(0);
+
+function process(pending: AppIntentInvocation[]) {
+  busy = busy.then(async () => {
+    await waitHydration();
+    const added: string[] = [];
+    for (const inv of pending) {
+      try {
+        if (inv.name === 'registrarCompra') {
+          const label = handleCompra(inv);
+          if (label) added.push(label);
+        }
+        await AppIntents.removePendingInvocationAsync(inv.id);
+      } catch (e) {
+        console.warn('Falha ao processar lançamento automático', e);
+      }
     }
-  }
+    if (added.length === 1) toast({ message: `Compra registrada: ${added[0]}` });
+    else if (added.length > 1) toast({ message: `${added.length} compras do Apple Pay registradas` });
+    return added.length;
+  });
+  return busy;
+}
+
+/** Lê a fila nativa agora (também usado pelo botão "Verificar agora"). */
+export async function checkPendingPurchases() {
+  if (!autoCaptureAvailable) return { pending: 0, added: 0 };
+  const pending = await AppIntents.getPendingInvocationsAsync();
+  const added = pending.length ? await process(pending) : 0;
+  return { pending: pending.length, added };
 }
 
 function useAutoCaptureNative() {
   AppIntents.useAppIntents(async (pending) => {
     await process(pending);
   });
+  // O iOS roda a ação com o app fechado ou suspenso; ao voltar para o app, relê a fila.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') checkPendingPurchases().catch(() => {});
+    });
+    return () => sub.remove();
+  }, []);
 }
 function useAutoCaptureNoop() {}
 

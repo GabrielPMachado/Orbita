@@ -80,6 +80,9 @@ interface FinanceState {
   budgets: Record<string, number>;
   /** ids de invocações da automação já processadas (evita duplicar) */
   processedIntents: string[];
+  /** últimas compras recebidas do Atalhos, cruas (diagnóstico) */
+  intentLog: { at: number; valor: string; estabelecimento: string; cartao: string; categoria: string; ok: boolean }[];
+  logIntent: (e: FinanceState['intentLog'][number]) => void;
 
   addTx: (t: NewTx) => void;
   markIntentProcessed: (id: string) => void;
@@ -109,6 +112,8 @@ export const useFinance = create<FinanceState>()(
       cards: [],
       budgets: {},
       processedIntents: [],
+      intentLog: [],
+      logIntent: (e) => set((st) => ({ intentLog: [e, ...st.intentLog].slice(0, 10) })),
 
       markIntentProcessed: (id) => set((s) => ({ processedIntents: [...s.processedIntents.slice(-299), id] })),
 
@@ -247,7 +252,7 @@ export const useFinance = create<FinanceState>()(
             processedIntents: [],
           } as unknown as FinanceState;
         }
-        return { processedIntents: [], ...p } as FinanceState;
+        return { processedIntents: [], intentLog: [], ...p } as FinanceState;
       },
     },
   ),

@@ -1,9 +1,11 @@
-import { BadgeCheck, CircleCheck, CircleDashed, Landmark, Smartphone, Zap } from 'lucide-react-native';
+import { BadgeCheck, CircleCheck, CircleDashed, Landmark, RefreshCw, Smartphone, Zap } from 'lucide-react-native';
+import { useState } from 'react';
 import { router } from 'expo-router';
 import { View } from 'react-native';
 import { TxRow } from '@/components/finance';
-import { Badge, Card, Empty, IconTile, List, Screen, Section, T } from '@/components/ui';
-import { autoCaptureAvailable } from '@/lib/autoCapture';
+import { Badge, Button, Card, Empty, IconTile, List, Row, Screen, Section, T } from '@/components/ui';
+import { autoCaptureAvailable, checkPendingPurchases } from '@/lib/autoCapture';
+import { toast } from '@/store/toast';
 import { useFinance } from '@/store/finance';
 import { usePluggy } from '@/store/pluggy';
 import { space, useColors } from '@/theme';
@@ -26,6 +28,19 @@ export default function Automatico() {
   const txs = useFinance((s) => s.txs);
   const recent = txs.filter((t) => t.source === 'applepay').slice(0, 10);
   const cards = useFinance((s) => s.cards);
+  const log = useFinance((s) => s.intentLog ?? []);
+  const [checking, setChecking] = useState(false);
+  const check = async () => {
+    setChecking(true);
+    try {
+      const r = await checkPendingPurchases();
+      toast({ message: r.pending ? `${r.added} compra${r.added === 1 ? '' : 's'} importada${r.added === 1 ? '' : 's'}` : 'Nenhuma compra na fila. A automação não chegou a rodar.' , kind: r.pending ? 'success' : 'info' });
+    } catch (e) {
+      toast({ message: e instanceof Error ? e.message : 'Não foi possível ler a fila', kind: 'danger' });
+    } finally {
+      setChecking(false);
+    }
+  };
 
   return (
     <Screen back title="Automático" subtitle="Compras do Apple Pay entram sozinhas">
@@ -74,6 +89,26 @@ export default function Automatico() {
           </List>
         ) : (
           <Empty icon={Smartphone} title="Nenhuma ainda" hint="Assim que você pagar com o iPhone, a compra aparece aqui." />
+        )}
+      </Section>
+
+      <Section title="Diagnóstico">
+        <Button label={checking ? 'Verificando…' : 'Verificar compras pendentes'} icon={RefreshCw} variant="secondary" disabled={checking || !autoCaptureAvailable} onPress={check} />
+        {log.length ? (
+          <List>
+            {log.map((e) => (
+              <Row
+                key={e.at}
+                title={`${e.valor || '(sem valor)'} · ${e.categoria || 'sem categoria'}`}
+                subtitle={`${new Date(e.at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} · ${e.estabelecimento || 'sem estabelecimento'} · ${e.cartao || 'sem cartão'}`}
+                subtitleTone={e.ok ? 'dim' : 'warning'}
+              />
+            ))}
+          </List>
+        ) : (
+          <T v="caption" tone="faint">
+            Nenhuma compra recebida do Atalhos ainda. Depois de uma compra por aproximação, se nada aparecer aqui, a automação não rodou.
+          </T>
         )}
       </Section>
 
