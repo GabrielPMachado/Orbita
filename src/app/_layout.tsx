@@ -42,7 +42,6 @@ export default function RootLayout() {
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="checkin" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', gestureEnabled: false }} />
           <Stack.Screen name="foco" options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: '#050506' } }} />
         </Stack>
         <ToastHost />

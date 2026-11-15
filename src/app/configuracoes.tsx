@@ -10,6 +10,7 @@ import { useFinance } from '@/store/finance';
 import { usePluggy } from '@/store/pluggy';
 import { useFinancyLink } from '@/store/financyLink';
 import { useCheckin } from '@/store/checkin';
+import { openCheckin } from '@/store/ui';
 import { useSettings } from '@/store/settings';
 import { brl } from '@/lib/date';
 import { currentBalance } from '@/lib/finance';
@@ -112,7 +113,7 @@ export default function Configuracoes() {
             subtitle="Humor, sono, energia e o que ficou de ontem, uma vez por dia"
             trailing={<Switch value={checkinOn} onValueChange={setCheckin} trackColor={{ true: c.accent, false: c.surface3 }} />}
           />
-          <Row title="Fazer agora" onPress={() => router.push('/checkin')} chevron />
+          <Row title="Fazer agora" onPress={() => openCheckin()} chevron />
         </List>
       </Section>
 

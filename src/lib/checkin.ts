@@ -1,8 +1,8 @@
-import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { today } from './date';
 import { useCheckin } from '@/store/checkin';
+import { openCheckin } from '@/store/ui';
 
 function hydrated() {
   return useCheckin.persist.hasHydrated();
@@ -18,7 +18,7 @@ export function useDailyCheckin() {
       if (!s.enabled || s.lastPrompt === day) return;
       s.markPrompted(day); // pulou ou fez: só pergunta uma vez por dia
       clearTimeout(timer);
-      timer = setTimeout(() => router.push('/checkin'), 700);
+      timer = setTimeout(openCheckin, 700);
     };
     const start = () => maybeOpen();
     const unsub = hydrated() ? (start(), undefined) : useCheckin.persist.onFinishHydration(start);

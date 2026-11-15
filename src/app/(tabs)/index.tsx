@@ -13,6 +13,7 @@ import { habitIcon, MOODS } from '@/lib/icons';
 import { isScheduled, streak, useHabits } from '@/store/habits';
 import { useMood } from '@/store/misc';
 import { useCheckin } from '@/store/checkin';
+import { openCheckin } from '@/store/ui';
 import { openFinancy } from '@/lib/financy';
 import { useFinance } from '@/store/finance';
 import { currentBalance, monthTotals, thisMonth } from '@/lib/finance';
@@ -119,7 +120,7 @@ export default function Hoje() {
         }>
         {/* Intenção do check-in (ou convite para fazer) */}
         {intent?.intention ? (
-          <Card onPress={() => router.push('/checkin')} style={styles.intent}>
+          <Card onPress={() => openCheckin()} style={styles.intent}>
             <Target size={18} color={c.accent} />
             <View style={{ flex: 1 }}>
               <T v="overline" tone="dim">
@@ -138,7 +139,7 @@ export default function Hoje() {
             ) : null}
           </Card>
         ) : !intent?.done ? (
-          <Card onPress={() => router.push('/checkin')} style={styles.intent}>
+          <Card onPress={() => openCheckin()} style={styles.intent}>
             <Sunrise size={18} color={c.warning} />
             <View style={{ flex: 1 }}>
               <T v="headline">Fazer o check-in do dia</T>

@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router/js-tabs';
 import { QuickCapture } from '@/components/QuickCapture';
+import { CheckinModal } from '@/components/CheckinModal';
 import { useDailyCheckin } from '@/lib/checkin';
 import { TabBar } from '@/components/TabBar';
 import { useUI } from '@/store/ui';
@@ -10,6 +11,8 @@ export default function TabsLayout() {
   const capture = useUI((s) => s.capture);
   const setCapture = useUI((s) => s.setCapture);
   useDailyCheckin();
+  const checkin = useUI((s) => s.checkin);
+  const setCheckinOpen = useUI((s) => s.setCheckin);
   return (
     <>
       <Tabs
@@ -21,6 +24,7 @@ export default function TabsLayout() {
         <Tabs.Screen name="modulos" />
       </Tabs>
       <QuickCapture visible={capture} onClose={() => setCapture(false)} />
+      <CheckinModal visible={checkin} onClose={() => setCheckinOpen(false)} />
     </>
   );
 }
