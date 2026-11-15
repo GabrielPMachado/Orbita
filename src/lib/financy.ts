@@ -13,6 +13,8 @@ import { useEffect } from 'react';
 import { AppState, Linking, Platform } from 'react-native';
 import { deleteSecret, getSecret, setSecret } from './secrets';
 import { useFinancyLink, type FinancyHint, type FinancySummary } from '@/store/financyLink';
+import { useSettings } from '@/store/settings';
+import { resolveAccent } from '@/theme';
 
 export const FINANCY_URL = 'https://financy-2d.web.app';
 const API_KEY = 'AIzaSyDepvsTarS6FfS-nGNz51EVOlOR0yK5yOg'; // chave pública do app web (não é segredo)
@@ -79,7 +81,7 @@ async function auth(refreshToken?: string) {
   return session;
 }
 
-type FsValue = { stringValue?: string; doubleValue?: number; integerValue?: string; booleanValue?: boolean };
+type FsValue = { stringValue?: string; doubleValue?: number; integerValue?: string; booleanValue?: boolean; arrayValue?: { values?: FsValue[] } };
 const num = (v?: FsValue) => (v?.doubleValue ?? (v?.integerValue != null ? Number(v.integerValue) : undefined)) ?? 0;
 
 async function readSummary(): Promise<FinancySummary> {
@@ -176,6 +178,66 @@ export async function flushHints() {
   }
 }
 
+/* ---------- Aparência compartilhada ---------- */
+
+/**
+ * Aparência compartilhada (users/{uid}/aparencia/compartilhada): cor, roda de intensidade
+ * e estilo dos ícones. Quem mudou por último (Órbita ou Financy) vale para os dois.
+ */
+let applyingRemote = false;
+
+export async function pushAppearance() {
+  if (!useFinancyLink.getState().connected || applyingRemote) return;
+  const st = useSettings.getState();
+  const s = await auth();
+  const now = Date.now();
+  const fields: Record<string, FsValue> = {
+    cor: { stringValue: resolveAccent(st.accent) },
+    intensidade: { integerValue: String(st.intensity ?? 4) },
+    estiloIcones: { stringValue: st.iconStyle ?? 'suave' },
+    tomIcones: { stringValue: st.iconTone ?? 'colorido' },
+    cores: { arrayValue: { values: (st.customColors ?? []).map((c) => ({ stringValue: c })) } } as FsValue,
+    origem: { stringValue: 'orbita' },
+    atualizadoEm: { stringValue: new Date(now).toISOString() },
+  };
+  useFinancyLink.getState().setLookAt(now);
+  const mask = Object.keys(fields).map((k) => `updateMask.fieldPaths=${k}`).join('&');
+  const res = await fetch(`${DOCS}/users/${s.uid}/aparencia/compartilhada?${mask}`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${s.idToken}`, 'Content-Type': 'application/json', ...REFERER },
+    body: JSON.stringify({ fields }),
+  });
+  if (!res.ok) throw new FinancyError(`Erro ${res.status} ao enviar a aparência`);
+}
+
+/** Traz a aparência se ela foi mudada no Financy depois da última mudança aqui. */
+export async function pullAppearance() {
+  if (!useFinancyLink.getState().connected) return;
+  const s = await auth();
+  const res = await fetch(`${DOCS}/users/${s.uid}/aparencia/compartilhada`, { headers: { Authorization: `Bearer ${s.idToken}`, ...REFERER } });
+  if (!res.ok) return;
+  const f = ((await res.json()) as { fields?: Record<string, FsValue> }).fields ?? {};
+  const at = Date.parse(f.atualizadoEm?.stringValue ?? '') || 0;
+  if (f.origem?.stringValue !== 'financy' || at <= useFinancyLink.getState().lookAt) return;
+  const cor = f.cor?.stringValue;
+  const st = useSettings.getState();
+  applyingRemote = true;
+  try {
+    const cores = (f.cores?.arrayValue?.values ?? []).map((v) => v.stringValue).filter((x): x is string => !!x && /^#[0-9a-f]{6}$/i.test(x));
+    const presetHit = cor ? Object.entries({ carmim: '#F2415A', ambar: '#F5A524', azul: '#4C8DFF', menta: '#3DD6B0', lima: '#A3E635', verde: '#10B981' }).find(([, h]) => h.toLowerCase() === cor.toLowerCase())?.[0] : undefined;
+    useSettings.setState({
+      accent: presetHit ?? (cor && /^#[0-9a-f]{6}$/i.test(cor) ? cor.toUpperCase() : st.accent),
+      customColors: [...new Set([...(st.customColors ?? []), ...cores.map((c) => c.toUpperCase()), ...(!presetHit && cor ? [cor.toUpperCase()] : [])])].slice(-12),
+      intensity: f.intensidade ? Math.max(0, Math.min(11, num(f.intensidade))) : st.intensity,
+      iconStyle: (['suave', 'solido', 'contorno', 'simples'] as const).find((x) => x === f.estiloIcones?.stringValue) ?? st.iconStyle,
+      iconTone: (['colorido', 'destaque', 'neutro'] as const).find((x) => x === f.tomIcones?.stringValue) ?? st.iconTone,
+    });
+    useFinancyLink.getState().setLookAt(at);
+  } finally {
+    setTimeout(() => (applyingRemote = false), 1500);
+  }
+}
+
 /** Atualiza o resumo e envia o que ficou na fila ao abrir/voltar ao app. */
 export function useFinancySync() {
   useEffect(() => {
@@ -183,12 +245,27 @@ export function useFinancySync() {
       if (!useFinancyLink.getState().connected) return;
       refreshFinancy().catch(() => {});
       flushHints().catch(() => {});
+      pullAppearance().catch(() => {});
     };
     const t = setTimeout(run, 1500);
     const sub = AppState.addEventListener('change', (a) => a === 'active' && run());
+    // mudou a cor/roda/ícones: espera parar de mexer e manda para o Financy
+    let deb: ReturnType<typeof setTimeout> | undefined;
+    const unsubLook = useSettings.subscribe((n, p) => {
+      if (applyingRemote) return;
+      if (n.accent === p.accent && n.intensity === p.intensity && n.iconStyle === p.iconStyle && n.iconTone === p.iconTone && n.customColors === p.customColors) return;
+      clearTimeout(deb);
+      deb = setTimeout(() => pushAppearance().catch(() => {}), 1200);
+    });
+    const unsubLink = useFinancyLink.subscribe((n, p) => {
+      if (n.connected && !p.connected) pushAppearance().catch(() => {});
+    });
     return () => {
       clearTimeout(t);
+      clearTimeout(deb);
       sub.remove();
+      unsubLook();
+      unsubLink();
     };
   }, []);
 }

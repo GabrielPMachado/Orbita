@@ -12,8 +12,34 @@ export const ACCENTS = {
   azul: { color: '#4C8DFF', label: 'Azul' },
   menta: { color: '#3DD6B0', label: 'Menta' },
   lima: { color: '#A3E635', label: 'Lima' },
+  verde: { color: '#10B981', label: 'Verde' },
 } as const;
 export type AccentName = keyof typeof ACCENTS;
+
+/** Estilos dos ícones em quadradinho (IconTile) */
+export const ICON_STYLES = {
+  suave: 'Suave',
+  solido: 'Sólido',
+  contorno: 'Contorno',
+  simples: 'Só ícone',
+} as const;
+export type IconStyle = keyof typeof ICON_STYLES;
+export const ICON_TONES = { colorido: 'Coloridos', destaque: 'Destaque', neutro: 'Neutros' } as const;
+export type IconTone = keyof typeof ICON_TONES;
+
+/** Cor de uma escolha (nome pronto ou hex próprio). */
+export const resolveAccent = (a: string | undefined) =>
+  a && /^#[0-9a-f]{6}$/i.test(a) ? a.toUpperCase() : (ACCENTS[(a ?? 'carmim') as AccentName] ?? ACCENTS.carmim).color;
+
+/** Texto legível por cima da cor (preto em cores claras). */
+export function readableOn(hex: string) {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+    const x = v / 255;
+    return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.4 ? '#08090B' : '#FFFFFF';
+}
 
 const neutral = {
   bg: '#08090B',
@@ -35,18 +61,20 @@ const semantic = {
 };
 
 export type Colors = typeof neutral &
-  typeof semantic & { accent: string; accentSoft: string; accentLine: string; onAccent: string };
+  typeof semantic & { accent: string; accentSoft: string; accentLine: string; onAccent: string; intensity: number };
 
 export function useColors(): Colors {
   const name = useSettings((s) => s.accent);
-  const accent = (ACCENTS[name] ?? ACCENTS.carmim).color;
+  const intensity = useSettings((s) => s.intensity ?? 4);
+  const accent = resolveAccent(name);
   return {
     ...neutral,
     ...semantic,
     accent,
     accentSoft: accent + '1F',
     accentLine: accent + '59',
-    onAccent: name === 'lima' || name === 'ambar' || name === 'menta' ? '#08090B' : '#FFFFFF',
+    onAccent: readableOn(accent),
+    intensity,
   };
 }
 

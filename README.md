@@ -160,6 +160,12 @@ Adicionar: na tela de bloqueio, toque e segure → **Personalizar** → **Tela B
 - Cada compra do Apple Pay manda a categoria escolhida para o Financy (`comprasApplePay`). Quando a compra chega pelo Open Finance, o Financy aplica a categoria nela, sem lançar em dobro. Sem internet, fica numa fila e vai depois.
 - No Financy, o botão de órbita no topo abre o Órbita (`orbita://`).
 
+## 7.4 Aparência
+
+- **Configurações › Aparência:** cores prontas (as mesmas do Financy) e suas próprias (+). Tocar numa cor abre a **roda de intensidade** (0–11), que pinta o fundo do app; no 11 tudo acende.
+- **Ícones:** estilo (suave, sólido, contorno, só ícone) e cor (coloridos, destaque, neutros).
+- Com o Financy conectado, cor, roda e ícones ficam iguais nos dois apps (`aparencia/compartilhada`); quem mudou por último vale.
+
 ## 8. Prévia web
 
 A prévia publicada roda a versão web do app com dados de exemplo. O Liquid Glass é exclusivo do iOS 26+; na web o vidro aparece como desfoque/translúcido.

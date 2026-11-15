@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { BadgeCheck, Camera, Check, Wallet } from 'lucide-react-native';
 import { Alert, Pressable, Switch, View } from 'react-native';
+import { Appearance } from '@/components/Appearance';
 import { Glass, hasLiquidGlass } from '@/components/Glass';
 import { Badge, Field, IconTile, List, Row, Screen, Section, T, tap } from '@/components/ui';
 import { MODULES, SECTIONS } from '@/modules';
@@ -14,7 +15,7 @@ import { openCheckin } from '@/store/ui';
 import { useSettings } from '@/store/settings';
 import { brl } from '@/lib/date';
 import { currentBalance } from '@/lib/finance';
-import { ACCENTS, space, useColors, type AccentName } from '@/theme';
+import { space, useColors } from '@/theme';
 
 export default function Configuracoes() {
   const c = useColors();
@@ -70,41 +71,7 @@ export default function Configuracoes() {
         </View>
       </Section>
 
-      <Section title="Cor de destaque">
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          {(Object.keys(ACCENTS) as AccentName[]).map((a) => {
-            const active = accent === a;
-            return (
-              <Pressable
-                key={a}
-                accessibilityLabel={ACCENTS[a].label}
-                accessibilityState={{ selected: active }}
-                onPress={() => {
-                  tap();
-                  setAccent(a);
-                }}
-                style={{ alignItems: 'center', gap: space.sm }}>
-                <View
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 26,
-                    backgroundColor: ACCENTS[a].color,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderWidth: 3,
-                    borderColor: active ? c.text : 'transparent',
-                  }}>
-                  {active && <Check size={20} color={a === 'carmim' || a === 'azul' ? '#fff' : '#08090B'} strokeWidth={3} />}
-                </View>
-                <T v="caption" tone={active ? 'default' : 'dim'}>
-                  {ACCENTS[a].label}
-                </T>
-              </Pressable>
-            );
-          })}
-        </View>
-      </Section>
+      <Appearance />
 
       <Section title="Check-in diário">
         <List>

@@ -11,7 +11,7 @@ import { currentBalance, monthTotals, thisMonth } from './finance';
 import { useFinance } from '@/store/finance';
 import { useSettings } from '@/store/settings';
 import { useFinancyLink } from '@/store/financyLink';
-import { ACCENTS } from '@/theme';
+import { resolveAccent } from '@/theme';
 import type { SaldoProps } from '@/widgets/SaldoWidget';
 import type { FocoProps } from '@/widgets/FocoActivity';
 
@@ -62,7 +62,7 @@ export function saldoProps(): SaldoProps {
     detalhe: `Entradas ${brl(m.income)} · Saídas ${brl(m.expense)}`,
     atualizado: `Atualizado ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
     oculto: widgetHidden,
-    cor: ACCENTS[accent].color,
+    cor: resolveAccent(accent),
   };
 }
 

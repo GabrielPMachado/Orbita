@@ -2,7 +2,7 @@ import { BlurView } from 'expo-blur';
 import { GlassContainer, GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import React, { useId } from 'react';
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { useColors } from '@/theme';
 
 const LIQUID = isLiquidGlassAvailable();
@@ -86,6 +86,10 @@ export function GlassGroup({ children, style, spacing = 8 }: { children: React.R
  */
 export function Ambient() {
   const c = useColors();
+  // a roda de intensidade (0–11) controla quanto a cor toma conta do fundo
+  const k = Math.max(0, Math.min(11, c.intensity)) / 11;
+  const glow = (0.06 + 0.44 * k).toFixed(3);
+  const wash = (0.22 * k * k).toFixed(3);
   // ids únicos: várias telas montadas ao mesmo tempo não podem compartilhar o mesmo gradiente
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
   return (
@@ -93,9 +97,13 @@ export function Ambient() {
       <Svg width="100%" height="100%">
         <Defs>
           <RadialGradient id={`a${id}`} cx="85%" cy="4%" r="70%">
-            <Stop offset="0" stopColor={c.accent} stopOpacity="0.30" />
+            <Stop offset="0" stopColor={c.accent} stopOpacity={glow} />
             <Stop offset="1" stopColor={c.accent} stopOpacity="0" />
           </RadialGradient>
+          <LinearGradient id={`w${id}`} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={c.accent} stopOpacity={(Number(wash) * 0.35).toFixed(3)} />
+            <Stop offset="1" stopColor={c.accent} stopOpacity={wash} />
+          </LinearGradient>
           <RadialGradient id={`b${id}`} cx="0%" cy="45%" r="65%">
             <Stop offset="0" stopColor="#4C6FFF" stopOpacity="0.16" />
             <Stop offset="1" stopColor="#4C6FFF" stopOpacity="0" />
@@ -105,6 +113,7 @@ export function Ambient() {
             <Stop offset="1" stopColor="#2DD4BF" stopOpacity="0" />
           </RadialGradient>
         </Defs>
+        {k > 0 ? <Rect x="0" y="0" width="100%" height="100%" fill={`url(#w${id})`} /> : null}
         <Rect x="0" y="0" width="100%" height="100%" fill={`url(#a${id})`} />
         <Rect x="0" y="0" width="100%" height="100%" fill={`url(#b${id})`} />
         <Rect x="0" y="0" width="100%" height="100%" fill={`url(#d${id})`} />

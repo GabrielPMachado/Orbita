@@ -34,6 +34,9 @@ interface FinancyLinkState {
   /** o widget de saldo mostra o saldo do Financy */
   widgetFromFinancy: boolean;
   pendingHints: FinancyHint[];
+  /** quando a aparência compartilhada mudou por último (ms) */
+  lookAt: number;
+  setLookAt: (t: number) => void;
   setConnected: (v: boolean) => void;
   setSummary: (s: FinancySummary) => void;
   setError: (e?: string) => void;
@@ -51,6 +54,8 @@ export const useFinancyLink = create<FinancyLinkState>()(
       forwardApplePay: true,
       widgetFromFinancy: true,
       pendingHints: [],
+      lookAt: 0,
+      setLookAt: (lookAt) => set({ lookAt }),
       setConnected: (connected) => set({ connected }),
       setSummary: (summary) => set({ summary }),
       setError: (lastError) => set({ lastError }),

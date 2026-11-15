@@ -39,7 +39,8 @@ import Animated, {
   ZoomIn,
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
-import { FONTS, radius, space, type, useColors, type TypeVariant } from '@/theme';
+import { FONTS, radius, readableOn, space, type, useColors, type TypeVariant } from '@/theme';
+import { useSettings } from '@/store/settings';
 import { Ambient, Glass } from './Glass';
 import { PressScale, SPRING } from './motion';
 
@@ -382,9 +383,34 @@ export function Row({
 
 export function IconTile({ icon: Icon, color, size = 36 }: { icon: LucideIcon; color?: string; size?: number }) {
   const c = useColors();
-  const col = color ?? c.accent;
+  const style = useSettings((st) => st.iconStyle ?? 'suave');
+  const tone = useSettings((st) => st.iconTone ?? 'colorido');
+  const col = tone === 'neutro' ? c.textDim : tone === 'destaque' ? c.accent : (color ?? c.accent);
+  const box = { width: size, height: size, borderRadius: size * 0.32, alignItems: 'center', justifyContent: 'center' } as const;
+  if (style === 'solido') {
+    const bg = tone === 'neutro' ? c.surface3 : col;
+    return (
+      <View style={[box, { backgroundColor: bg }]}>
+        <Icon size={size * 0.5} color={tone === 'neutro' ? c.text : readableOn(bg)} strokeWidth={2.2} />
+      </View>
+    );
+  }
+  if (style === 'contorno') {
+    return (
+      <View style={[box, { borderWidth: 1.5, borderColor: col + '8C' }]}>
+        <Icon size={size * 0.5} color={col} strokeWidth={2} />
+      </View>
+    );
+  }
+  if (style === 'simples') {
+    return (
+      <View style={box}>
+        <Icon size={size * 0.62} color={col} strokeWidth={1.9} />
+      </View>
+    );
+  }
   return (
-    <View style={{ width: size, height: size, borderRadius: size * 0.3, backgroundColor: col + '1F', alignItems: 'center', justifyContent: 'center' }}>
+    <View style={[box, { backgroundColor: col + '1F' }]}>
       <Icon size={size * 0.5} color={col} strokeWidth={2} />
     </View>
   );
