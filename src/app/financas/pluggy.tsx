@@ -4,6 +4,7 @@ import { CreditCard, ExternalLink, KeyRound, Landmark, LockKeyhole, RefreshCw, U
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { Advanced } from '@/components/Advanced';
 import { confirmDelete } from '@/components/extra';
 import { Badge, Button, Card, Checkbox, Field, IconTile, List, Row, Screen, Section, Sheet, T, tap } from '@/components/ui';
 import { brl } from '@/lib/date';
@@ -133,10 +134,9 @@ export default function PluggySetup() {
               {p.lastError}
             </T>
           ) : null}
-          <View style={{ flexDirection: 'row', gap: space.sm }}>
-            <Button label={busy === 'sync' ? 'Sincronizando…' : 'Sincronizar'} icon={RefreshCw} disabled={!!busy} onPress={sync} style={{ flex: 1 }} />
-            <Button label="Chaves" icon={KeyRound} variant="secondary" onPress={() => setEditing(true)} style={{ flex: 1 }} />
-          </View>
+          <T v="caption" tone="faint">
+            Sincroniza sozinho ao abrir o app. Para atualizar na hora, puxe a tela da Conferência para baixo.
+          </T>
         </Card>
       ) : (
         <Section title="Credenciais">
@@ -208,17 +208,20 @@ export default function PluggySetup() {
             />
             <Row title="Abrir a conferência" onPress={() => router.push('/financas/conferencia')} chevron />
           </List>
-          <Button
-            label="Desconectar"
-            icon={Unplug}
-            variant="danger"
-            onPress={() =>
-              confirmDelete('Desconectar o Meu Pluggy?', 'As chaves saem do Keychain. Lançamentos já conferidos continuam com o selo.', () => {
-                forgetPluggy();
-                setEditing(true);
-              }, 'Desconectar')
-            }
-          />
+          <Advanced>
+            <Button label="Trocar chaves" icon={KeyRound} variant="secondary" onPress={() => setEditing(true)} />
+            <Button
+              label="Desconectar"
+              icon={Unplug}
+              variant="danger"
+              onPress={() =>
+                confirmDelete('Desconectar o Meu Pluggy?', 'As chaves saem do Keychain. Lançamentos já conferidos continuam com o selo.', () => {
+                  forgetPluggy();
+                  setEditing(true);
+                }, 'Desconectar')
+              }
+            />
+          </Advanced>
         </Section>
       )}
 

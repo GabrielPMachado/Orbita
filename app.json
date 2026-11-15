@@ -2,16 +2,20 @@
   "expo": {
     "name": "Orbita",
     "slug": "orbita",
-    "version": "0.8.0",
+    "version": "0.9.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/icons/primary.png",
     "scheme": "orbita",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0A0A0D",
     "ios": {
       "bundleIdentifier": "com.demonity.orbita",
       "supportsTablet": false,
-      "icon": "./assets/expo.icon",
+      "icon": {
+        "light": "./assets/icons/primary.png",
+        "dark": "./assets/icons/primary-dark.png",
+        "tinted": "./assets/icons/primary-tinted.png"
+      },
       "infoPlist": {
         "CFBundleDisplayName": "Órbita",
         "ITSAppUsesNonExemptEncryption": false,
@@ -38,9 +42,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0A0A0D",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#08090B",
+          "image": "./assets/icons/primary-dark.png",
+          "imageWidth": 200
         }
       ],
       [
@@ -81,6 +85,203 @@
         {
           "faceIDPermission": false
         }
+      ],
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "GrafiteAmbar",
+            "ios": "./assets/icons/GrafiteAmbar.png",
+            "android": {
+              "foregroundImage": "./assets/icons/GrafiteAmbar.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "GrafiteAzul",
+            "ios": "./assets/icons/GrafiteAzul.png",
+            "android": {
+              "foregroundImage": "./assets/icons/GrafiteAzul.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "GrafiteMenta",
+            "ios": "./assets/icons/GrafiteMenta.png",
+            "android": {
+              "foregroundImage": "./assets/icons/GrafiteMenta.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "GrafiteLima",
+            "ios": "./assets/icons/GrafiteLima.png",
+            "android": {
+              "foregroundImage": "./assets/icons/GrafiteLima.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "GrafiteVerde",
+            "ios": "./assets/icons/GrafiteVerde.png",
+            "android": {
+              "foregroundImage": "./assets/icons/GrafiteVerde.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "CorCarmim",
+            "ios": "./assets/icons/CorCarmim.png",
+            "android": {
+              "foregroundImage": "./assets/icons/CorCarmim.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "CorAmbar",
+            "ios": "./assets/icons/CorAmbar.png",
+            "android": {
+              "foregroundImage": "./assets/icons/CorAmbar.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "CorAzul",
+            "ios": "./assets/icons/CorAzul.png",
+            "android": {
+              "foregroundImage": "./assets/icons/CorAzul.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "CorMenta",
+            "ios": "./assets/icons/CorMenta.png",
+            "android": {
+              "foregroundImage": "./assets/icons/CorMenta.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "CorLima",
+            "ios": "./assets/icons/CorLima.png",
+            "android": {
+              "foregroundImage": "./assets/icons/CorLima.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "CorVerde",
+            "ios": "./assets/icons/CorVerde.png",
+            "android": {
+              "foregroundImage": "./assets/icons/CorVerde.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "ClaroCarmim",
+            "ios": "./assets/icons/ClaroCarmim.png",
+            "android": {
+              "foregroundImage": "./assets/icons/ClaroCarmim.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "ClaroAmbar",
+            "ios": "./assets/icons/ClaroAmbar.png",
+            "android": {
+              "foregroundImage": "./assets/icons/ClaroAmbar.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "ClaroAzul",
+            "ios": "./assets/icons/ClaroAzul.png",
+            "android": {
+              "foregroundImage": "./assets/icons/ClaroAzul.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "ClaroMenta",
+            "ios": "./assets/icons/ClaroMenta.png",
+            "android": {
+              "foregroundImage": "./assets/icons/ClaroMenta.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "ClaroLima",
+            "ios": "./assets/icons/ClaroLima.png",
+            "android": {
+              "foregroundImage": "./assets/icons/ClaroLima.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "ClaroVerde",
+            "ios": "./assets/icons/ClaroVerde.png",
+            "android": {
+              "foregroundImage": "./assets/icons/ClaroVerde.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "ContornoCarmim",
+            "ios": "./assets/icons/ContornoCarmim.png",
+            "android": {
+              "foregroundImage": "./assets/icons/ContornoCarmim.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "ContornoAmbar",
+            "ios": "./assets/icons/ContornoAmbar.png",
+            "android": {
+              "foregroundImage": "./assets/icons/ContornoAmbar.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "ContornoAzul",
+            "ios": "./assets/icons/ContornoAzul.png",
+            "android": {
+              "foregroundImage": "./assets/icons/ContornoAzul.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "ContornoMenta",
+            "ios": "./assets/icons/ContornoMenta.png",
+            "android": {
+              "foregroundImage": "./assets/icons/ContornoMenta.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "ContornoLima",
+            "ios": "./assets/icons/ContornoLima.png",
+            "android": {
+              "foregroundImage": "./assets/icons/ContornoLima.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "ContornoVerde",
+            "ios": "./assets/icons/ContornoVerde.png",
+            "android": {
+              "foregroundImage": "./assets/icons/ContornoVerde.png",
+              "backgroundColor": "#08090B"
+            }
+          },
+          {
+            "name": "Mono",
+            "ios": "./assets/icons/Mono.png",
+            "android": {
+              "foregroundImage": "./assets/icons/Mono.png",
+              "backgroundColor": "#08090B"
+            }
+          }
+        ]
       ]
     ],
     "experiments": {

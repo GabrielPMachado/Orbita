@@ -21,6 +21,8 @@ export const ICON_STYLES = {
   suave: 'Suave',
   solido: 'Sólido',
   contorno: 'Contorno',
+  vidro: 'Vidro',
+  gradiente: 'Gradiente',
   simples: 'Só ícone',
 } as const;
 export type IconStyle = keyof typeof ICON_STYLES;

@@ -14,6 +14,12 @@ interface SettingsState {
   /** intensidade da cor no app, 0–11 (a roda das Configurações) */
   intensity: number;
   iconStyle: IconStyle;
+  /** ícone do app na tela inicial */
+  appIconLook: 'grafite' | 'cor' | 'claro' | 'contorno' | 'mono';
+  appIconColor: 'Carmim' | 'Ambar' | 'Azul' | 'Menta' | 'Lima' | 'Verde';
+  /** o ícone do app acompanha a cor escolhida no app */
+  appIconFollows: boolean;
+  setAppIcon: (p: Partial<Pick<SettingsState, 'appIconLook' | 'appIconColor' | 'appIconFollows'>>) => void;
   iconTone: IconTone;
   addColor: (hex: string) => void;
   removeColor: (hex: string) => void;
@@ -39,6 +45,10 @@ export const useSettings = create<SettingsState>()(
       customColors: [],
       intensity: 4,
       iconStyle: 'suave',
+      appIconLook: 'grafite',
+      appIconColor: 'Carmim',
+      appIconFollows: true,
+      setAppIcon: (p) => set(p),
       iconTone: 'colorido',
       addColor: (hex) => set((s) => ({ customColors: [...s.customColors.filter((x) => x !== hex), hex].slice(-12), accent: hex })),
       removeColor: (hex) => set((s) => ({ customColors: s.customColors.filter((x) => x !== hex), accent: s.accent === hex ? 'carmim' : s.accent })),

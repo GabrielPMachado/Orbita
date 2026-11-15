@@ -17,6 +17,7 @@ import { useFocusRunner } from '@/lib/focus';
 import { useBalanceWidgetSync } from '@/lib/nativeWidgets';
 import { useAutoPluggySync } from '@/lib/pluggySync';
 import { useFinancySync } from '@/lib/financy';
+import { useAppIconFollowsAccent } from '@/lib/appIcon';
 import { useColors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -28,6 +29,7 @@ export default function RootLayout() {
   useBalanceWidgetSync();
   useAutoPluggySync();
   useFinancySync();
+  useAppIconFollowsAccent();
   const [loaded, error] = useFonts({ Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Sora_600SemiBold, Sora_700Bold });
 
   useEffect(() => {

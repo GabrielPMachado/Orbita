@@ -85,7 +85,8 @@ jobs:
           echo "Live Activities no app: $LIVE"
           [ "$LIVE" = "true" ] || { echo "::error::NSSupportsLiveActivities ausente no app"; exit 1; }
           for T in "$APP" "$EXT"; do
-            G=$(codesign -d --entitlements :- "$T" 2>/dev/null | plutil -extract com.apple.security.application-groups.0 raw -o - - 2>/dev/null || true)
+            # (o nome da chave tem pontos, então procura direto no XML dos entitlements)
+            G=$(codesign -d --entitlements :- "$T" 2>/dev/null | grep -o 'group\.com\.demonity\.orbita' | head -1 || true)
             echo "App Group de $(basename "$T"): ${G:-nenhum}"
             [ "$G" = "group.com.demonity.orbita" ] || { echo "::error::App Group faltando em $(basename "$T")"; exit 1; }
           done

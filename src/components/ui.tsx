@@ -38,7 +38,7 @@ import Animated, {
   withTiming,
   ZoomIn,
 } from 'react-native-reanimated';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Rect, Stop } from 'react-native-svg';
 import { FONTS, radius, readableOn, space, type, useColors, type TypeVariant } from '@/theme';
 import { useSettings } from '@/store/settings';
 import { Ambient, Glass } from './Glass';
@@ -399,6 +399,31 @@ export function IconTile({ icon: Icon, color, size = 36 }: { icon: LucideIcon; c
     return (
       <View style={[box, { borderWidth: 1.5, borderColor: col + '8C' }]}>
         <Icon size={size * 0.5} color={col} strokeWidth={2} />
+      </View>
+    );
+  }
+  if (style === 'vidro') {
+    return (
+      <View style={[box, { backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)', borderTopColor: 'rgba(255,255,255,0.24)' }]}>
+        <Icon size={size * 0.5} color={col} strokeWidth={2} />
+      </View>
+    );
+  }
+  if (style === 'gradiente') {
+    const base = tone === 'neutro' ? '#5B616B' : col;
+    return (
+      <View style={[box, { overflow: 'hidden' }]}>
+        <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
+          <Defs>
+            <SvgLinearGradient id={`tile${base.slice(1)}`} x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={base} />
+              <Stop offset="1" stopColor={base} stopOpacity={0.55} />
+            </SvgLinearGradient>
+          </Defs>
+          <Rect width={size} height={size} fill="#000" />
+          <Rect width={size} height={size} fill={`url(#tile${base.slice(1)})`} />
+        </Svg>
+        <Icon size={size * 0.5} color={readableOn(base)} strokeWidth={2.2} />
       </View>
     );
   }

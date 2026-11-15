@@ -4,13 +4,15 @@
  */
 import { Bell, Check, Dumbbell, Plus, Wallet, Zap } from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { useSettings } from '@/store/settings';
 import { ACCENTS, FONTS, ICON_STYLES, ICON_TONES, radius, readableOn, resolveAccent, space, useColors, type AccentName, type IconStyle, type IconTone } from '@/theme';
+import { Image } from 'expo-image';
+import { ICON_COLORS, ICON_LOOKS, iconThumb, nearestIconColor, setAppIcon, type IconColor, type IconLook } from '@/lib/appIcon';
 import { Knob } from './Knob';
-import { Button, IconTile, Section, Segmented, Sheet, T, tap } from './ui';
+import { Button, Chip, IconTile, Section, Segmented, Sheet, T, tap } from './ui';
 
 const MORE = [
   '#FF3B30', '#FF6B6B', '#F97316', '#FB923C', '#F5A524', '#FACC15',
@@ -43,6 +45,16 @@ export function Appearance() {
   const [draft, setDraft] = useState('#F2415A');
   const [hexText, setHexText] = useState('');
   const current = resolveAccent(accent);
+  const { appIconLook = 'grafite', appIconColor = 'Carmim', appIconFollows = true, setAppIcon: saveIcon } = useSettings();
+  const iconColor: IconColor = appIconFollows ? nearestIconColor(current) : appIconColor;
+  const chooseIcon = (p: Partial<{ appIconLook: IconLook; appIconColor: IconColor; appIconFollows: boolean }>) => {
+    tap();
+    saveIcon(p);
+    const look = p.appIconLook ?? appIconLook;
+    const follows = p.appIconFollows ?? appIconFollows;
+    const color = follows ? nearestIconColor(current) : (p.appIconColor ?? appIconColor);
+    setAppIcon(look, color).catch((e) => Alert.alert('Ícone do app', e instanceof Error ? e.message : 'Não foi possível trocar o ícone.'));
+  };
   const valid = /^#[0-9A-F]{6}$/i.test(draft);
 
   const [knobOpen, setKnobOpen] = useState(false);
@@ -122,8 +134,56 @@ export function Appearance() {
             </Animated.View>
           ))}
         </View>
-        <Segmented<IconStyle> value={iconStyle} onChange={setIconStyle} options={(Object.keys(ICON_STYLES) as IconStyle[]).map((k) => ({ value: k, label: ICON_STYLES[k] }))} />
+        <View style={styles.chipWrap}>
+          {(Object.keys(ICON_STYLES) as IconStyle[]).map((k) => (
+            <Chip key={k} label={ICON_STYLES[k]} active={iconStyle === k} onPress={() => (tap(), setIconStyle(k))} />
+          ))}
+        </View>
         <Segmented<IconTone> value={iconTone} onChange={setIconTone} options={(Object.keys(ICON_TONES) as IconTone[]).map((k) => ({ value: k, label: ICON_TONES[k] }))} />
+      </Section>
+
+      <Section title="Ícone do app">
+        <View style={styles.appIcons}>
+          {ICON_LOOKS.map((l) => {
+            const on = appIconLook === l.key;
+            return (
+              <Pressable
+                key={l.key}
+                accessibilityLabel={`Ícone ${l.label}`}
+                accessibilityState={{ selected: on }}
+                onPress={() => chooseIcon({ appIconLook: l.key })}
+                style={{ alignItems: 'center', gap: 6 }}>
+                <View style={[styles.appIconRing, { borderColor: on ? c.accent : 'transparent' }]}>
+                  <Image source={iconThumb(l.key, iconColor)} style={styles.appIcon} />
+                </View>
+                <T v="caption" tone={on ? 'default' : 'dim'} style={{ fontSize: 11 }}>
+                  {l.label}
+                </T>
+              </Pressable>
+            );
+          })}
+        </View>
+        <View style={[styles.iconColors, appIconFollows && { opacity: 0.4 }]} pointerEvents={appIconFollows ? 'none' : 'auto'}>
+          {ICON_COLORS.map((col) => (
+            <Pressable key={col.key} accessibilityLabel={`Cor do ícone ${col.key}`} onPress={() => chooseIcon({ appIconColor: col.key })} hitSlop={4}>
+              <View style={[styles.swatchRing, { width: 40, height: 40, borderRadius: 20, borderColor: iconColor === col.key ? col.hex : 'transparent' }]}>
+                <View style={[styles.swatch, { width: 28, height: 28, borderRadius: 14, backgroundColor: col.hex }]} />
+              </View>
+            </Pressable>
+          ))}
+        </View>
+        <Pressable onPress={() => chooseIcon({ appIconFollows: !appIconFollows })} style={styles.followRow} accessibilityRole="switch" accessibilityState={{ checked: appIconFollows }}>
+          <View style={{ flex: 1 }}>
+            <T v="body">Acompanhar a cor do app</T>
+            <T v="caption" tone="dim">
+              O ícone muda junto quando você troca a cor (usa a cor pronta mais próxima)
+            </T>
+          </View>
+          <Switch value={appIconFollows} onValueChange={(v) => chooseIcon({ appIconFollows: v })} trackColor={{ true: c.accent, false: c.surface3 }} />
+        </Pressable>
+        <T v="caption" tone="faint">
+          O iOS avisa a cada troca de ícone. No modo escuro ou tingido da tela inicial, ele usa a versão própria automaticamente.
+        </T>
       </Section>
 
       <Sheet visible={adding} onClose={() => setAdding(false)} title="Nova cor">
@@ -173,6 +233,12 @@ const styles = StyleSheet.create({
   done: { paddingHorizontal: space.xl, paddingVertical: space.sm, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.12)' },
   swatchRing: { width: 50, height: 50, borderRadius: 25, borderWidth: 2.5, alignItems: 'center', justifyContent: 'center' },
   swatch: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  appIcons: { flexDirection: 'row', justifyContent: 'space-between' },
+  iconColors: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: space.xs },
+  followRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  appIconRing: { padding: 3, borderRadius: 20, borderWidth: 2.5 },
+  appIcon: { width: 54, height: 54, borderRadius: 13 },
   preview: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: space.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' },
   gridSwatch: { width: 44, height: 44, borderRadius: 22, borderWidth: 3 },

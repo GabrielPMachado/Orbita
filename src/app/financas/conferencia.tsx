@@ -114,7 +114,11 @@ export default function Conferencia() {
             {p.lastError}
           </T>
         ) : null}
-        <Button label={syncing ? 'Sincronizando…' : 'Sincronizar agora'} icon={RefreshCw} variant="secondary" disabled={syncing} onPress={sync} />
+        {syncing ? (
+          <T v="caption" tone="faint">
+            Atualizando com o banco…
+          </T>
+        ) : null}
       </Card>
 
       <Segmented<Tab>

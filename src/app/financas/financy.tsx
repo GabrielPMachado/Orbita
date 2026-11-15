@@ -1,5 +1,5 @@
 import * as Clipboard from 'expo-clipboard';
-import { ClipboardPaste, ExternalLink, Link2, Plus, RefreshCw, Unplug, Wallet } from 'lucide-react-native';
+import { ClipboardPaste, ExternalLink, Link2, Plus, Unplug, Wallet } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -7,7 +7,8 @@ import { confirmDelete } from '@/components/extra';
 import { AnimatedNumber } from '@/components/motion';
 import { Button, Card, Checkbox, Field, IconTile, List, Row, Screen, Section, T } from '@/components/ui';
 import { brl } from '@/lib/date';
-import { connectFinancy, disconnectFinancy, openFinancy, refreshFinancy } from '@/lib/financy';
+import { connectFinancy, disconnectFinancy, openFinancy, refreshFinancy, requestFinancyLink } from '@/lib/financy';
+import { Advanced } from '@/components/Advanced';
 import { useFinancyLink } from '@/store/financyLink';
 import { toast } from '@/store/toast';
 import { space, useColors } from '@/theme';
@@ -106,32 +107,32 @@ export default function FinancyScreen() {
         <Section title="Conectar">
           <View style={{ gap: space.sm }}>
             <T v="callout" tone="dim">
-              No Financy, abra Ajustes › Órbita › Copiar chave. Depois cole aqui. Com isso o Órbita mostra seu saldo do Financy e manda a categoria de cada
-              compra do Apple Pay.
+              Um toque abre o Financy, que devolve a conexão para cá sozinho. Depois disso o Órbita mostra seu saldo do Financy, manda a categoria de cada
+              compra do Apple Pay e os dois ficam com a mesma aparência.
             </T>
-            <Field
-              label="Chave do Financy"
-              value={key}
-              onChangeText={setKey}
-              autoCapitalize="none"
-              autoCorrect={false}
-              secureTextEntry
-              placeholder="Cole a chave aqui"
-            />
-            {error ? (
-              <Animated.View entering={FadeIn} exiting={FadeOut}>
-                <T v="caption" color={c.danger}>
-                  {error}
-                </T>
-              </Animated.View>
-            ) : null}
-            <View style={{ flexDirection: 'row', gap: space.sm }}>
-              <Button label="Colar" icon={ClipboardPaste} variant="secondary" onPress={paste} style={{ flex: 1 }} />
-              <Button label={busy ? 'Conectando…' : 'Conectar'} icon={Link2} disabled={busy || !key.trim()} onPress={connect} style={{ flex: 1 }} />
-            </View>
-            <T v="caption" tone="faint">
-              A chave fica só no Keychain deste iPhone e abre apenas os seus dados. Se um dia quiser cortar o acesso, revogue a chave no Financy.
-            </T>
+            <Button label="Conectar com o Financy" icon={Link2} onPress={() => requestFinancyLink()} />
+            <Advanced>
+              <Field
+                label="Chave do Financy"
+                value={key}
+                onChangeText={setKey}
+                autoCapitalize="none"
+                autoCorrect={false}
+                secureTextEntry
+                placeholder="Cole a chave aqui"
+              />
+              {error ? (
+                <Animated.View entering={FadeIn} exiting={FadeOut}>
+                  <T v="caption" color={c.danger}>
+                    {error}
+                  </T>
+                </Animated.View>
+              ) : null}
+              <View style={{ flexDirection: 'row', gap: space.sm }}>
+                <Button label="Colar" icon={ClipboardPaste} variant="secondary" onPress={paste} style={{ flex: 1 }} />
+                <Button label={busy ? 'Conectando…' : 'Conectar'} disabled={busy || !key.trim()} onPress={connect} style={{ flex: 1 }} />
+              </View>
+            </Advanced>
           </View>
         </Section>
       ) : (
@@ -155,18 +156,16 @@ export default function FinancyScreen() {
               )}
             </List>
           </Section>
-          <View style={{ flexDirection: 'row', gap: space.sm }}>
-            <Button label="Atualizar" icon={RefreshCw} variant="secondary" onPress={refresh} style={{ flex: 1 }} />
+          <Advanced>
             <Button
               label="Desconectar"
               icon={Unplug}
               variant="danger"
-              style={{ flex: 1 }}
               onPress={() =>
                 confirmDelete('Desconectar o Financy?', 'A chave sai do Keychain. Nada é apagado no Financy.', () => disconnectFinancy(), 'Desconectar')
               }
             />
-          </View>
+          </Advanced>
         </>
       )}
     </Screen>

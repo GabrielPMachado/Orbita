@@ -27,10 +27,10 @@ const REFERER = { Referer: `${FINANCY_URL}/` };
 
 /* ---------- Abrir o Financy ---------- */
 
-type Action = { action: 'resumo' } | { action: 'novo'; tipo?: 'expense' | 'income'; valor?: number; descricao?: string; categoria?: string; data?: string };
+type Action = { action: 'resumo' } | { action: 'conectar-orbita' } | { action: 'novo'; tipo?: 'expense' | 'income'; valor?: number; descricao?: string; categoria?: string; data?: string };
 
 function query(a: Action) {
-  if (a.action === 'resumo') return '';
+  if (a.action === 'resumo' || a.action === 'conectar-orbita') return '';
   const p = new URLSearchParams();
   if (a.tipo) p.set('tipo', a.tipo);
   if (a.valor) p.set('valor', String(a.valor));
@@ -47,10 +47,13 @@ export async function openFinancy(a?: Action) {
   try {
     if (Platform.OS !== 'web' && (await Linking.canOpenURL('financy://'))) return await Linking.openURL(native);
   } catch {}
-  const webAction = a ? (a.action === 'resumo' ? 'resumo' : 'quick-add') : '';
+  const webAction = a ? (a.action === 'novo' ? 'quick-add' : a.action) : '';
   const web = webAction ? `${FINANCY_URL}/?action=${webAction}${q ? `&${q}` : ''}` : FINANCY_URL;
   return Linking.openURL(web).catch(() => {});
 }
+
+/** Pede ao Financy para mandar a chave de volta (orbita://financy/conectar?chave=…). */
+export const requestFinancyLink = () => openFinancy({ action: 'conectar-orbita' });
 
 /* ---------- Conexão ---------- */
 
