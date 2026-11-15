@@ -2,7 +2,7 @@
   "expo": {
     "name": "Orbita",
     "slug": "orbita",
-    "version": "0.7.0",
+    "version": "0.8.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "orbita",
@@ -14,7 +14,10 @@
       "icon": "./assets/expo.icon",
       "infoPlist": {
         "CFBundleDisplayName": "Órbita",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "LSApplicationQueriesSchemes": [
+          "financy"
+        ]
       }
     },
     "android": {

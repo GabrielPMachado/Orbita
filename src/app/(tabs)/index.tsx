@@ -13,6 +13,7 @@ import { habitIcon, MOODS } from '@/lib/icons';
 import { isScheduled, streak, useHabits } from '@/store/habits';
 import { useMood } from '@/store/misc';
 import { useCheckin } from '@/store/checkin';
+import { openFinancy } from '@/lib/financy';
 import { useFinance } from '@/store/finance';
 import { currentBalance, monthTotals, thisMonth } from '@/lib/finance';
 import { mediaUri } from '@/lib/media';
@@ -348,7 +349,7 @@ export default function Hoje() {
 
         {/* Finanças */}
         {on('financas') && (txs.length > 0 || accounts.length > 0) && (
-          <Section title="Finanças do mês" action="Abrir" onAction={() => router.push('/financas')}>
+          <Section title="Finanças do mês" action="Ver completo" onAction={() => openFinancy()}>
             <Card onPress={() => router.push('/financas')} style={{ gap: space.md }}>
               <View>
                 <T v="caption" tone="dim">

@@ -1,5 +1,5 @@
 import { router, type Href } from 'expo-router';
-import { ArrowDownLeft, ArrowUpRight, BadgeCheck, Calculator, CreditCard, Landmark, PiggyBank, Plus, Smartphone, Wallet, type LucideIcon } from 'lucide-react-native';
+import { ArrowDownLeft, ArrowUpRight, BadgeCheck, ExternalLink, Calculator, CreditCard, Landmark, PiggyBank, Plus, Smartphone, Wallet, type LucideIcon } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { BarChart } from '@/components/BarChart';
@@ -21,9 +21,11 @@ import {
   invoiceMonth,
   thisMonth,
 } from '@/lib/finance';
+import { openFinancy } from '@/lib/financy';
 import { review } from '@/lib/pluggySync';
 import { useFinance, type Tx } from '@/store/finance';
 import { usePluggy } from '@/store/pluggy';
+import { useFinancyLink } from '@/store/financyLink';
 import { radius, space, useColors } from '@/theme';
 
 type Filter = 'all' | 'in' | 'out';
@@ -34,6 +36,7 @@ export default function Financas() {
   const [month, setMonth] = useState(thisMonth());
   const [filter, setFilter] = useState<Filter>('all');
   const pluggy = usePluggy();
+  const financy = useFinancyLink();
   const pending = useMemo(() => {
     if (!pluggy.configured) return 0;
     const r = review(txs, pluggy);
@@ -92,6 +95,20 @@ export default function Financas() {
             <AnimatedNumber value={projected} format={brl} />
           </T>
         </View>
+      </Card>
+
+      {/* Financy: o app de finanças completo */}
+      <Card onPress={() => openFinancy()} style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+        <IconTile icon={Wallet} color="#10B981" />
+        <View style={{ flex: 1 }}>
+          <T v="headline">Ver completo no Financy</T>
+          <T v="caption" tone="dim" tabular numberOfLines={1}>
+            {financy.connected && financy.summary
+              ? `Saldo ${brl(financy.summary.saldo)} · gastos do mês ${brl(financy.summary.gastosMes)}`
+              : 'Abre o app do Financy'}
+          </T>
+        </View>
+        <ExternalLink size={16} color={c.textFaint} />
       </Card>
 
       <MonthSwitcher month={month} onChange={setMonth} />

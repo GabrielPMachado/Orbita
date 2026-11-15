@@ -152,6 +152,14 @@ Adicionar: na tela de bloqueio, toque e segure → **Personalizar** → **Tela B
 >
 > **Sideloadly com Apple ID gratuito:** o .ipa agora tem uma extensão (o widget). O Sideloadly assina a extensão junto e cada instalação usa mais App IDs (limite de 10 por semana na conta grátis). Se o widget não mostrar o saldo, o compartilhamento entre app e widget (App Group) não foi aceito pela conta grátis — o app em si continua funcionando. Com a conta paga isso não acontece.
 
+## 7.3 Financy (app de finanças completo)
+
+- **Ver completo no Financy** (Finanças e Hoje) abre o app nativo do Financy (`financy://`) ou, sem ele, o site.
+- **Conectar:** no Financy, *Ajustes › Órbita › Copiar chave*; no Órbita, *Configurações › Financy* → colar. A chave fica no Keychain.
+- Conectado, o Órbita mostra o saldo e o mês do Financy e o widget da tela de bloqueio pode usar o saldo dele.
+- Cada compra do Apple Pay manda a categoria escolhida para o Financy (`comprasApplePay`). Quando a compra chega pelo Open Finance, o Financy aplica a categoria nela, sem lançar em dobro. Sem internet, fica numa fila e vai depois.
+- No Financy, o botão de órbita no topo abre o Órbita (`orbita://`).
+
 ## 8. Prévia web
 
 A prévia publicada roda a versão web do app com dados de exemplo. O Liquid Glass é exclusivo do iOS 26+; na web o vidro aparece como desfoque/translúcido.

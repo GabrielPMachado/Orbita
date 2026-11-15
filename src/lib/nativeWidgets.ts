@@ -10,6 +10,7 @@ import { brl } from './date';
 import { currentBalance, monthTotals, thisMonth } from './finance';
 import { useFinance } from '@/store/finance';
 import { useSettings } from '@/store/settings';
+import { useFinancyLink } from '@/store/financyLink';
 import { ACCENTS } from '@/theme';
 import type { SaldoProps } from '@/widgets/SaldoWidget';
 import type { FocoProps } from '@/widgets/FocoActivity';
@@ -47,8 +48,11 @@ export function brlShort(v: number) {
 export function saldoProps(): SaldoProps {
   const { accounts, txs } = useFinance.getState();
   const { widgetHidden, accent } = useSettings.getState();
-  const bal = currentBalance(accounts, txs);
-  const m = monthTotals(txs, thisMonth());
+  const fl = useFinancyLink.getState();
+  const fin = fl.connected && fl.widgetFromFinancy ? fl.summary : undefined;
+  const bal = fin ? fin.saldo : currentBalance(accounts, txs);
+  const own = monthTotals(txs, thisMonth());
+  const m = fin ? { income: fin.entradasMes, expense: fin.gastosMes, net: fin.entradasMes - fin.gastosMes } : own;
   const now = new Date();
   return {
     saldo: brl(bal),
@@ -86,9 +90,13 @@ export function useBalanceWidgetSync() {
     const b = useSettings.subscribe((s, prev) => {
       if (s.widgetHidden !== prev.widgetHidden || s.accent !== prev.accent) refreshBalanceWidget();
     });
+    const c = useFinancyLink.subscribe((s, prev) => {
+      if (s.summary !== prev.summary || s.widgetFromFinancy !== prev.widgetFromFinancy || s.connected !== prev.connected) refreshBalanceWidget();
+    });
     return () => {
       a();
       b();
+      c();
     };
   }, []);
 }

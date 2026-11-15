@@ -5,6 +5,7 @@ import { AppState } from 'react-native';
 import { useFinance } from '@/store/finance';
 import { toast } from '@/store/toast';
 import { brl } from './date';
+import { forwardPurchase } from './financy';
 import { toKey } from './date';
 import { CATEGORIES, normalizeName, parseAmount } from './finance';
 
@@ -64,6 +65,18 @@ function handleCompra(inv: AppIntentInvocation) {
         : !card && !account && p.cartao
           ? `Cartão na Carteira: ${str(p.cartao)}`
           : undefined,
+    });
+  }
+  if (ok) {
+    const at = new Date(inv.createdAt || Date.now());
+    forwardPurchase({
+      id: inv.id,
+      valor: amount,
+      data: toKey(at),
+      hora: `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`,
+      estabelecimento: merchant || undefined,
+      cartao: str(p.cartao) || undefined,
+      categoria: category,
     });
   }
   return ok ? `${brl(amount)}${merchant ? ` · ${merchant}` : ''}` : `${merchant || 'Compra'} (confira o valor)`;

@@ -8,6 +8,7 @@ import { MODULES, SECTIONS } from '@/modules';
 import { choosePhotos, deleteMedia, mediaUri } from '@/lib/media';
 import { useFinance } from '@/store/finance';
 import { usePluggy } from '@/store/pluggy';
+import { useFinancyLink } from '@/store/financyLink';
 import { useCheckin } from '@/store/checkin';
 import { useSettings } from '@/store/settings';
 import { brl } from '@/lib/date';
@@ -19,6 +20,7 @@ export default function Configuracoes() {
   const { name, avatar, accent, disabled, widgetHidden, setName, setAvatar, setAccent, toggleModule, setWidgetHidden } = useSettings();
   const balance = useFinance((s) => currentBalance(s.accounts, s.txs));
   const pluggyOn = usePluggy((s) => s.configured);
+  const financyOn = useFinancyLink((s) => s.connected);
   const checkinOn = useCheckin((s) => s.enabled);
   const setCheckin = useCheckin((s) => s.setEnabled);
 
@@ -149,6 +151,13 @@ export default function Configuracoes() {
             title="Meu Pluggy"
             subtitle={pluggyOn ? 'Conferência com o banco ativa' : 'Conferir lançamentos com o extrato'}
             onPress={() => router.push('/financas/pluggy')}
+            chevron
+          />
+          <Row
+            leading={<IconTile icon={Wallet} color="#10B981" />}
+            title="Financy"
+            subtitle={financyOn ? 'Conectado · saldo e categorias do Apple Pay' : 'Abrir e conectar o seu app de finanças'}
+            onPress={() => router.push('/financas/financy')}
             chevron
           />
         </List>

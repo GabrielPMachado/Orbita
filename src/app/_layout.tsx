@@ -16,6 +16,7 @@ import { useAutoCapture } from '@/lib/autoCapture';
 import { useFocusRunner } from '@/lib/focus';
 import { useBalanceWidgetSync } from '@/lib/nativeWidgets';
 import { useAutoPluggySync } from '@/lib/pluggySync';
+import { useFinancySync } from '@/lib/financy';
 import { useColors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -26,6 +27,7 @@ export default function RootLayout() {
   useFocusRunner();
   useBalanceWidgetSync();
   useAutoPluggySync();
+  useFinancySync();
   const [loaded, error] = useFonts({ Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Sora_600SemiBold, Sora_700Bold });
 
   useEffect(() => {
