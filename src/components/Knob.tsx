@@ -44,12 +44,13 @@ function starPath(cx: number, cy: number, R: number) {
   return d + 'Z';
 }
 
-/** dois chevrons ( >> ) apontando para fora, perto da borda */
-function chevrons(R: number) {
-  const w = R * 0.13; // meia largura
-  const h = R * 0.085; // altura de cada chevron
-  const c = (tipY: number) => `M${R - w},${tipY + h} L${R},${tipY} L${R + w},${tipY + h}`;
-  return `${c(R - R * 0.76)} ${c(R - R * 0.6)}`;
+/** ponta de seta cheia ( ➤ ) apontando para fora, perto da borda */
+function pointer(R: number) {
+  const tip = R - R * 0.8;
+  const back = tip + R * 0.24; // cantos de trás
+  const notch = tip + R * 0.16; // entalhe no meio da base
+  const hw = R * 0.13;
+  return `M${R},${tip} L${R + hw},${back} L${R},${notch} L${R - hw},${back} Z`;
 }
 
 export function Knob({ value, onChange, color, size = 200 }: { value: number; onChange: (v: number) => void; color: string; size?: number }) {
@@ -193,9 +194,9 @@ export function Knob({ value, onChange, color, size = 200 }: { value: number; on
             ))}
             <Circle cx={R} cy={R} r={R * 0.84} fill={`url(#body${id})`} />
             <Circle cx={R} cy={R} r={R * 0.84} fill="none" stroke="#000" strokeOpacity={0.35} strokeWidth={1} />
-            {/* indicador >> na cor escolhida */}
-            <Path d={chevrons(R)} fill="none" stroke={dot} strokeOpacity={0.3} strokeWidth={R * 0.11} strokeLinecap="round" strokeLinejoin="round" />
-            <Path d={chevrons(R)} fill="none" stroke={dot} strokeWidth={R * 0.055} strokeLinecap="round" strokeLinejoin="round" />
+            {/* indicador ➤ na cor escolhida */}
+            <Path d={pointer(R)} fill={dot} fillOpacity={0.3} stroke={dot} strokeOpacity={0.3} strokeWidth={R * 0.07} strokeLinejoin="round" />
+            <Path d={pointer(R)} fill={dot} stroke={dot} strokeWidth={R * 0.02} strokeLinejoin="round" />
           </Svg>
         </Animated.View>
       </View>
