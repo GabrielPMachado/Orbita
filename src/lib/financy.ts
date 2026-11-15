@@ -84,7 +84,17 @@ async function auth(refreshToken?: string) {
   return session;
 }
 
-type FsValue = { stringValue?: string; doubleValue?: number; integerValue?: string; booleanValue?: boolean; arrayValue?: { values?: FsValue[] } };
+/** Chamada autenticada ao Firestore do Financy (caminho relativo a users/{uid}/). */
+export async function fsRequest(path: string, init: RequestInit = {}) {
+  const s = await auth();
+  const res = await fetch(`${DOCS}/users/${s.uid}/${path}`, {
+    ...init,
+    headers: { Authorization: `Bearer ${s.idToken}`, 'Content-Type': 'application/json', ...REFERER, ...(init.headers ?? {}) },
+  });
+  return res;
+}
+
+export type FsValue = { stringValue?: string; doubleValue?: number; integerValue?: string; booleanValue?: boolean; arrayValue?: { values?: FsValue[] } };
 const num = (v?: FsValue) => (v?.doubleValue ?? (v?.integerValue != null ? Number(v.integerValue) : undefined)) ?? 0;
 
 async function readSummary(): Promise<FinancySummary> {
@@ -111,6 +121,7 @@ export async function connectFinancy(key: string) {
   await auth(k);
   await setSecret(K_TOKEN, k);
   const summary = await readSummary();
+  useFinancyLink.getState().setBaseOptOut(false);
   useFinancyLink.getState().setConnected(true);
   useFinancyLink.getState().setSummary(summary);
   return summary;

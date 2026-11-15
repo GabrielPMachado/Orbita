@@ -203,3 +203,22 @@ export const normalizeName = (s: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
+
+/**
+ * Saldo de verdade: com o Financy como base, o saldo é o dele (ele conhece as contas);
+ * no modo local, saldo inicial das contas + lançamentos pagos fora do cartão.
+ */
+export function balanceFor(base: 'orbita' | 'financy', accounts: Account[], txs: Tx[], financySaldo?: number) {
+  return base === 'financy' && financySaldo !== undefined ? financySaldo : currentBalance(accounts, txs);
+}
+
+/** Categorias para escolher: as do Órbita + as criadas no Financy (quando ele é a base). */
+export function categoryOptions(type: TxType, extra: { name: string; type: TxType; color?: string }[] = []): Category[] {
+  const own = CATEGORIES[type];
+  const norm = (v: string) => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const known = new Set(own.map((c) => norm(c.name)));
+  const more = extra
+    .filter((c) => c.type === type && !known.has(norm(c.name)))
+    .map((c) => ({ ...category(c.name), color: c.color && /^#/.test(c.color) ? c.color : '#64748B' }));
+  return [...own, ...more];
+}

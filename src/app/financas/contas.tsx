@@ -1,3 +1,5 @@
+import { Wallet } from 'lucide-react-native';
+import { openFinancy } from '@/lib/financy';
 import { Landmark, Plus, Trash } from 'lucide-react-native';
 import { useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
@@ -8,6 +10,7 @@ import { useFinance, type Account, type AccountKind } from '@/store/finance';
 import { space, useColors } from '@/theme';
 
 export default function Contas() {
+  const fyBase = useFinance((st) => st.base === 'financy');
   const c = useColors();
   const { accounts, txs, addAccount, updateAccount, removeAccount } = useFinance();
   const [editing, setEditing] = useState<Account | 'new' | null>(null);
@@ -43,7 +46,15 @@ export default function Contas() {
 
   return (
     <>
-      <Screen back title="Contas" subtitle="Onde seu dinheiro está" actions={<GlassButton icon={Plus} label="Nova" onPress={() => open('new')} />}>
+      <Screen back title="Contas" subtitle="Onde seu dinheiro está" actions={fyBase ? undefined : <GlassButton icon={Plus} label="Nova" onPress={() => open('new')} />}>
+      {fyBase ? (
+        <Card onPress={() => openFinancy()} style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+          <IconTile icon={Wallet} color="#10B981" />
+          <T v="callout" tone="dim" style={{ flex: 1 }}>
+            As contas e o saldo vêm do Financy. Para mexer nelas, abra o Financy.
+          </T>
+        </Card>
+      ) : null}
         {accounts.length === 0 ? (
           <Empty
             icon={Landmark}

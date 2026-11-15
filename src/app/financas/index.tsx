@@ -13,7 +13,8 @@ import {
   byCategory,
   cardUsed,
   category,
-  currentBalance,
+  balanceFor,
+  cashMonth,
   invoice,
   monthName,
   monthTotals,
@@ -22,6 +23,7 @@ import {
   thisMonth,
 } from '@/lib/finance';
 import { openFinancy } from '@/lib/financy';
+import { pullFinancy } from '@/lib/financyData';
 import { review } from '@/lib/pluggySync';
 import { useFinance, type Tx } from '@/store/finance';
 import { usePluggy } from '@/store/pluggy';
@@ -44,8 +46,14 @@ export default function Financas() {
   }, [txs, pluggy]);
 
   const totals = monthTotals(txs, month);
-  const balance = currentBalance(accounts, txs);
-  const projected = projectedBalance(accounts, txs, cards, month);
+  const base = useFinance((s) => s.base);
+  const fySaldo = financy.summary?.saldo;
+  const balance = balanceFor(base, accounts, txs, fySaldo);
+  // com o Financy como base: saldo dele + o que ainda vai entrar/sair até o fim do mês escolhido
+  const projected =
+    base === 'financy' && fySaldo !== undefined
+      ? fySaldo + txs.filter((t) => t.date > today() && cashMonth(t, cards) <= month).reduce((a, t) => a + (t.type === 'in' ? t.amount : -t.amount), 0)
+      : projectedBalance(accounts, txs, cards, month);
   const cats = byCategory(txs, month);
 
   const chart = useMemo(
@@ -71,7 +79,12 @@ export default function Financas() {
   ];
 
   return (
-    <Screen back title="Finanças" actions={<GlassButton icon={Plus} label="Lançar" onPress={() => router.push('/financas/novo')} />}>
+    <Screen
+      back
+      title="Finanças"
+      subtitle={base === 'financy' ? 'Lançamentos do Financy' : undefined}
+      onRefresh={base === 'financy' ? () => pullFinancy(true).catch(() => {}) : undefined}
+      actions={<GlassButton icon={Plus} label="Lançar" onPress={() => router.push('/financas/novo')} />}>
       {/* Saldo */}
       <Card style={{ padding: space.xl, gap: space.lg }}>
         <View style={{ gap: 2 }}>
@@ -160,7 +173,7 @@ export default function Financas() {
           onPress={() => router.push('/financas/automatico')}
           chevron
         />
-        <Row
+        {base !== 'financy' && <Row
           leading={<IconTile icon={BadgeCheck} color={c.success} />}
           title="Conferência com o banco"
           subtitle={pluggy.configured ? `Meu Pluggy · ${pending ? `${pending} para revisar` : 'tudo em dia'}` : 'Conectar o Meu Pluggy'}
@@ -168,7 +181,7 @@ export default function Financas() {
           trailing={pending ? <Badge label={String(pending)} color={c.warning} /> : undefined}
           onPress={() => router.push(pluggy.configured ? '/financas/conferencia' : '/financas/pluggy')}
           chevron
-        />
+        />}
       </List>
 
       {/* Gráfico */}

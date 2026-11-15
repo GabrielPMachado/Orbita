@@ -14,13 +14,14 @@ import { useCheckin } from '@/store/checkin';
 import { openCheckin } from '@/store/ui';
 import { useSettings } from '@/store/settings';
 import { brl } from '@/lib/date';
-import { currentBalance } from '@/lib/finance';
+import { balanceFor } from '@/lib/finance';
 import { space, useColors } from '@/theme';
 
 export default function Configuracoes() {
   const c = useColors();
   const { name, avatar, accent, disabled, widgetHidden, setName, setAvatar, setAccent, toggleModule, setWidgetHidden } = useSettings();
-  const balance = useFinance((s) => currentBalance(s.accounts, s.txs));
+  const fySaldo = useFinancyLink((s) => s.summary?.saldo);
+  const balance = useFinance((s) => balanceFor(s.base, s.accounts, s.txs, fySaldo));
   const pluggyOn = usePluggy((s) => s.configured);
   const financyOn = useFinancyLink((s) => s.connected);
   const checkinOn = useCheckin((s) => s.enabled);

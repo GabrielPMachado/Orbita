@@ -36,6 +36,9 @@ interface FinancyLinkState {
   pendingHints: FinancyHint[];
   /** quando a aparência compartilhada mudou por último (ms) */
   lookAt: number;
+  /** desligou o Financy como base das Finanças */
+  baseOptOut: boolean;
+  setBaseOptOut: (v: boolean) => void;
   setLookAt: (t: number) => void;
   setConnected: (v: boolean) => void;
   setSummary: (s: FinancySummary) => void;
@@ -55,6 +58,8 @@ export const useFinancyLink = create<FinancyLinkState>()(
       widgetFromFinancy: true,
       pendingHints: [],
       lookAt: 0,
+      baseOptOut: false,
+      setBaseOptOut: (baseOptOut) => set({ baseOptOut }),
       setLookAt: (lookAt) => set({ lookAt }),
       setConnected: (connected) => set({ connected }),
       setSummary: (summary) => set({ summary }),

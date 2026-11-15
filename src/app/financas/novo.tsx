@@ -7,7 +7,7 @@ import { Glass } from '@/components/Glass';
 import { PhotoStrip } from '@/components/Photos';
 import { Button, Card, Chip, Field, GlassButton, IconTile, List, Progress, Row, Screen, Segmented, T, tap } from '@/components/ui';
 import { addDays, brl, friendlyDate, toKey } from '@/lib/date';
-import { CATEGORIES, category } from '@/lib/finance';
+import { category, categoryOptions } from '@/lib/finance';
 import { parseInput } from '@/lib/parse';
 import { useFinance, type TxType } from '@/store/finance';
 import { radius, space, useColors } from '@/theme';
@@ -15,6 +15,7 @@ import { radius, space, useColors } from '@/theme';
 const STEPS = ['Valor', 'Categoria', 'Pagamento', 'Detalhes'];
 
 export default function NovoLancamento() {
+  const fyCats = useFinance((st) => (st.base === 'financy' ? st.fyCategories : []));
   const c = useColors();
   const params = useLocalSearchParams<{ type?: TxType; amount?: string; category?: string; description?: string; date?: 'ontem' }>();
   const { accounts, cards, addTx } = useFinance();
@@ -105,7 +106,7 @@ export default function NovoLancamento() {
       {/* ---------- 2. Categoria ---------- */}
       {step === 1 && (
         <View style={styles.catGrid}>
-          {CATEGORIES[type].map((k) => {
+          {categoryOptions(type, fyCats).map((k) => {
             const active = cat === k.name;
             return (
               <Pressable

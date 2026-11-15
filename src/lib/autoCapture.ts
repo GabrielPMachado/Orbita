@@ -7,7 +7,7 @@ import { toast } from '@/store/toast';
 import { brl } from './date';
 import { forwardPurchase } from './financy';
 import { toKey } from './date';
-import { CATEGORIES, normalizeName, parseAmount } from './finance';
+import { categoryOptions, normalizeName, parseAmount } from './finance';
 
 /**
  * Lançamentos automáticos (Apple Pay → app Atalhos → "Registrar compra").
@@ -37,7 +37,8 @@ function handleCompra(inv: AppIntentInvocation) {
   const merchant = str(p.estabelecimento).trim();
   const cardName = normalizeName(str(p.cartao));
   const catName = str(p.categoria);
-  const category = CATEGORIES.out.some((c) => c.name === catName) ? catName : 'Outros';
+  const st0 = useFinance.getState();
+  const category = categoryOptions('out', st0.base === 'financy' ? st0.fyCategories : []).some((c) => c.name === catName) ? catName : 'Outros';
 
   // casa o nome do cartão da Carteira com um cartão/conta cadastrado
   const matches = (name: string) => {
@@ -67,7 +68,8 @@ function handleCompra(inv: AppIntentInvocation) {
           : undefined,
     });
   }
-  if (ok) {
+  // com o Financy como base a compra já foi para lá como provisória; o aviso separado só no modo antigo
+  if (ok && state.base !== 'financy') {
     const at = new Date(inv.createdAt || Date.now());
     forwardPurchase({
       id: inv.id,

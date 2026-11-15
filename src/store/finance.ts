@@ -50,7 +50,14 @@ export interface Tx {
   verified?: boolean;
   /** id da transação no banco/Pluggy, para não importar duas vezes */
   externalId?: string;
+  /** Financy como base: coleção do documento lá (despesas/receitas/investimentos) */
+  fyCol?: FyCol;
+  /** Financy como base: mudança local ainda não enviada */
+  sync?: 'new' | 'dirty';
 }
+
+export type FyCol = 'despesas' | 'receitas' | 'investimentos';
+export type FinanceBase = 'orbita' | 'financy';
 
 export type TxSource = 'manual' | 'applepay' | 'pluggy';
 
@@ -74,6 +81,18 @@ export interface NewTx {
 }
 
 interface FinanceState {
+  /** onde moram os lançamentos: aqui no aparelho ou no Financy */
+  base: FinanceBase;
+  /** cópia do que era do Órbita antes de virar Financy (volta se desligar) */
+  localBackup?: { txs: Tx[]; accounts: Account[]; cards: Card[] };
+  /** exclusões ainda não enviadas ao Financy */
+  pendingDeletes: { id: string; col: FyCol }[];
+  /** categorias do Financy (nome + tipo + cor) */
+  fyCategories: { name: string; type: 'in' | 'out'; color?: string }[];
+  setBase: (b: FinanceBase) => void;
+  /** troca a lista inteira pelo espelho do Financy (mantém o que ainda não subiu) */
+  applyMirror: (m: { txs: Tx[]; cards: Card[]; categories: FinanceState['fyCategories'] }) => void;
+  markSynced: (ids: string[], deletes?: string[]) => void;
   txs: Tx[];
   accounts: Account[];
   cards: Card[];
@@ -107,6 +126,42 @@ const round2 = (v: number) => Math.round(v * 100) / 100;
 export const useFinance = create<FinanceState>()(
   persist(
     (set, get) => ({
+      base: 'orbita',
+      pendingDeletes: [],
+      fyCategories: [],
+      setBase: (b) =>
+        set((s) => {
+          if (b === s.base) return {};
+          if (b === 'financy') return { base: b, localBackup: { txs: s.txs, accounts: s.accounts, cards: s.cards }, txs: [], accounts: [], cards: [] };
+          const bk = s.localBackup;
+          return { base: b, txs: bk?.txs ?? [], accounts: bk?.accounts ?? [], cards: bk?.cards ?? [], localBackup: undefined, pendingDeletes: [] };
+        }),
+      applyMirror: ({ txs, cards, categories }) =>
+        set((s) => {
+          if (s.base !== 'financy') return {};
+          const local = new Map(s.txs.map((t) => [t.id, t]));
+          const deleting = new Set(s.pendingDeletes.map((d) => d.id));
+          const merged = txs
+            .filter((t) => !deleting.has(t.id))
+            .map((t) => {
+              const mine = local.get(t.id);
+              if (mine?.sync) return mine; // mudança local ainda não enviada vence
+              // fotos e notas só existem aqui no aparelho
+              return mine ? { ...t, attachments: mine.attachments, notes: mine.notes ?? t.notes } : t;
+            });
+          const remoteIds = new Set(txs.map((t) => t.id));
+          const unsent = s.txs.filter((t) => t.sync === 'new' && !remoteIds.has(t.id));
+          return { txs: [...unsent, ...merged], cards, fyCategories: categories };
+        }),
+      markSynced: (ids, deletes = []) =>
+        set((s) => {
+          const ok = new Set(ids);
+          const gone = new Set(deletes);
+          return {
+            txs: s.txs.map((t) => (ok.has(t.id) ? { ...t, sync: undefined } : t)),
+            pendingDeletes: s.pendingDeletes.filter((d) => !gone.has(d.id)),
+          };
+        }),
       txs: [],
       accounts: [],
       cards: [],
@@ -181,13 +236,18 @@ export const useFinance = create<FinanceState>()(
             attachments: t.attachments ?? [],
           });
         }
-        set((s) => ({ txs: [...out, ...s.txs] }));
+        const fy = get().base === 'financy';
+        set((s) => ({ txs: [...(fy ? out.map((t) => ({ ...t, sync: 'new' as const })) : out), ...s.txs] }));
       },
 
       softRemoveTx: (id) => {
         const tx = get().txs.find((t) => t.id === id);
         if (!tx) return () => {};
-        set((s) => ({ txs: s.txs.filter((t) => t.id !== id) }));
+        const remote = get().base === 'financy' && tx.fyCol && tx.sync !== 'new';
+        set((s) => ({
+          txs: s.txs.filter((t) => t.id !== id),
+          pendingDeletes: remote ? [...s.pendingDeletes, { id, col: tx.fyCol! }] : s.pendingDeletes,
+        }));
         let undone = false;
         const purge = setTimeout(() => {
           if (!undone) tx.attachments.forEach(deleteMedia);
@@ -195,11 +255,14 @@ export const useFinance = create<FinanceState>()(
         return () => {
           undone = true;
           clearTimeout(purge);
-          set((s) => ({ txs: [tx, ...s.txs] }));
+          set((s) => ({ txs: [tx, ...s.txs], pendingDeletes: s.pendingDeletes.filter((d) => d.id !== id) }));
         };
       },
 
-      updateTx: (id, patch) => set((s) => ({ txs: s.txs.map((t) => (t.id === id ? { ...t, ...patch } : t)) })),
+      updateTx: (id, patch) =>
+        set((s) => ({
+          txs: s.txs.map((t) => (t.id === id ? { ...t, ...patch, sync: s.base === 'financy' ? (t.sync === 'new' ? 'new' : 'dirty') : t.sync } : t)),
+        })),
 
       removeTx: (id, scope = 'one') => {
         const tx = get().txs.find((t) => t.id === id);
@@ -209,7 +272,8 @@ export const useFinance = create<FinanceState>()(
         );
         doomed.forEach((t) => t.attachments.forEach(deleteMedia));
         const ids = new Set(doomed.map((t) => t.id));
-        set((s) => ({ txs: s.txs.filter((t) => !ids.has(t.id)) }));
+        const remote = get().base === 'financy' ? doomed.filter((t) => t.fyCol && t.sync !== 'new').map((t) => ({ id: t.id, col: t.fyCol! })) : [];
+        set((s) => ({ txs: s.txs.filter((t) => !ids.has(t.id)), pendingDeletes: [...s.pendingDeletes, ...remote] }));
       },
 
       addAccount: (a) => set((s) => ({ accounts: [...s.accounts, { ...a, id: uid() }] })),
@@ -252,7 +316,7 @@ export const useFinance = create<FinanceState>()(
             processedIntents: [],
           } as unknown as FinanceState;
         }
-        return { processedIntents: [], intentLog: [], ...p } as FinanceState;
+        return { processedIntents: [], intentLog: [], base: 'orbita', pendingDeletes: [], fyCategories: [], ...p } as FinanceState;
       },
     },
   ),

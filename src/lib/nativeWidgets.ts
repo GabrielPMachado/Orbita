@@ -49,7 +49,7 @@ export function saldoProps(): SaldoProps {
   const { accounts, txs } = useFinance.getState();
   const { widgetHidden, accent } = useSettings.getState();
   const fl = useFinancyLink.getState();
-  const fin = fl.connected && fl.widgetFromFinancy ? fl.summary : undefined;
+  const fin = fl.connected && (fl.widgetFromFinancy || useFinance.getState().base === 'financy') ? fl.summary : undefined;
   const bal = fin ? fin.saldo : currentBalance(accounts, txs);
   const own = monthTotals(txs, thisMonth());
   const m = fin ? { income: fin.entradasMes, expense: fin.gastosMes, net: fin.entradasMes - fin.gastosMes } : own;

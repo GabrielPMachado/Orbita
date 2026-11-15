@@ -16,7 +16,8 @@ import { useCheckin } from '@/store/checkin';
 import { openCheckin } from '@/store/ui';
 import { openFinancy } from '@/lib/financy';
 import { useFinance } from '@/store/finance';
-import { currentBalance, monthTotals, thisMonth } from '@/lib/finance';
+import { balanceFor, monthTotals, thisMonth } from '@/lib/finance';
+import { useFinancyLink } from '@/store/financyLink';
 import { mediaUri } from '@/lib/media';
 import { Image } from 'expo-image';
 import { useReminders } from '@/store/reminders';
@@ -59,9 +60,10 @@ export default function Hoje() {
     .filter((r) => !r.done && (r.repeat !== 'none' || r.at > Date.now()))
     .slice(0, 3);
 
-  const { txs: allTxs, accounts } = useFinance();
+  const { txs: allTxs, accounts, base } = useFinance();
+  const fySaldo = useFinancyLink((s) => s.summary?.saldo);
   const { income, expense, list: txs } = monthTotals(allTxs, thisMonth());
-  const balance = currentBalance(accounts, allTxs);
+  const balance = balanceFor(base, accounts, allTxs, fySaldo);
   const avatar = useSettings((s) => s.avatar);
 
   const water = useHealth((s) => s.water[day] ?? 0);

@@ -1,8 +1,10 @@
+import { Wallet } from 'lucide-react-native';
+import { openFinancy } from '@/lib/financy';
 import { CreditCard, Pencil, Plus, Trash } from 'lucide-react-native';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { MonthSwitcher, TxRow } from '@/components/finance';
-import { Button, Empty, Field, GlassButton, List, Progress, Screen, Sheet, T, tap } from '@/components/ui';
+import { Button, Card as UICard, Empty, Field, GlassButton, IconTile, List, Progress, Screen, Sheet, T, tap } from '@/components/ui';
 import { brl } from '@/lib/date';
 import { ACCOUNT_COLORS, cardUsed, invoice, invoiceMonth, monthName, parseMoney, thisMonth } from '@/lib/finance';
 import { today } from '@/lib/date';
@@ -10,6 +12,7 @@ import { useFinance, type Card } from '@/store/finance';
 import { radius, space, useColors } from '@/theme';
 
 export default function Cartoes() {
+  const fyBase = useFinance((st) => st.base === 'financy');
   const c = useColors();
   const { cards, txs, addCard, updateCard, removeCard } = useFinance();
   // abre direto na fatura em aberto (a próxima a vencer)
@@ -50,7 +53,15 @@ export default function Cartoes() {
 
   return (
     <>
-      <Screen back title="Cartões" subtitle="Faturas por mês de vencimento" actions={<GlassButton icon={Plus} label="Novo" onPress={() => open('new')} />}>
+      <Screen back title="Cartões" subtitle="Faturas por mês de vencimento" actions={fyBase ? undefined : <GlassButton icon={Plus} label="Novo" onPress={() => open('new')} />}>
+      {fyBase ? (
+        <UICard onPress={() => openFinancy()} style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+          <IconTile icon={Wallet} color="#10B981" />
+          <T v="callout" tone="dim" style={{ flex: 1 }}>
+            Os cartões vêm do Financy. Para adicionar ou editar, abra o Financy.
+          </T>
+        </UICard>
+      ) : null}
         {cards.length === 0 ? (
           <Empty
             icon={CreditCard}
