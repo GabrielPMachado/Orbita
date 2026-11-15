@@ -69,6 +69,37 @@ jobs:
           codesign -f -s - --entitlements /tmp/app.entitlements "$APP"
           codesign -d --entitlements - "$APP" || true
 
+      - name: Conferir widget e Live Activity no app
+        # Falha o build se a extensão do widget não estiver dentro do .app ou se faltar
+        # o App Group / suporte a Live Activities.
+        run: |
+          APP=$(ls -d build/Build/Products/Release-iphoneos/*.app | head -1)
+          B=/usr/libexec/PlistBuddy
+          EXT=$(ls -d "$APP"/PlugIns/*.appex 2>/dev/null | head -1)
+          [ -n "$EXT" ] || { echo "::error::Extensão do widget não está no app (PlugIns vazio)"; exit 1; }
+          echo "Extensão: $(basename "$EXT")"
+          POINT=$($B -c "Print :NSExtension:NSExtensionPointIdentifier" "$EXT/Info.plist")
+          echo "Ponto de extensão: $POINT"
+          [ "$POINT" = "com.apple.widgetkit-extension" ] || { echo "::error::A extensão não é de widget ($POINT)"; exit 1; }
+          LIVE=$($B -c "Print :NSSupportsLiveActivities" "$APP/Info.plist" 2>/dev/null || echo "false")
+          echo "Live Activities no app: $LIVE"
+          [ "$LIVE" = "true" ] || { echo "::error::NSSupportsLiveActivities ausente no app"; exit 1; }
+          for T in "$APP" "$EXT"; do
+            G=$(codesign -d --entitlements :- "$T" 2>/dev/null | plutil -extract com.apple.security.application-groups.0 raw -o - - 2>/dev/null || true)
+            echo "App Group de $(basename "$T"): ${G:-nenhum}"
+            [ "$G" = "group.com.demonity.orbita" ] || { echo "::error::App Group faltando em $(basename "$T")"; exit 1; }
+          done
+          GROUP_APP=$($B -c "Print :ExpoWidgetsAppGroupIdentifier" "$APP/Info.plist" 2>/dev/null || true)
+          GROUP_EXT=$($B -c "Print :ExpoWidgetsAppGroupIdentifier" "$EXT/Info.plist" 2>/dev/null || true)
+          echo "Grupo no Info.plist (app/widget): ${GROUP_APP:-?} / ${GROUP_EXT:-?}"
+          ls "$EXT" | head -20
+          {
+            echo "### Widget e Live Activity"
+            echo "- Extensão: \`$(basename "$EXT")\` ($POINT)"
+            echo "- Live Activities: $LIVE"
+            echo "- App Group no app e no widget: group.com.demonity.orbita"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Empacotar .ipa
         run: |
           mkdir -p Payload
