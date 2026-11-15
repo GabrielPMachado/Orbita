@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router/js-tabs';
 import { QuickCapture } from '@/components/QuickCapture';
+import { useDailyCheckin } from '@/lib/checkin';
 import { TabBar } from '@/components/TabBar';
 import { useUI } from '@/store/ui';
 import { useColors } from '@/theme';
@@ -8,6 +9,7 @@ export default function TabsLayout() {
   const c = useColors();
   const capture = useUI((s) => s.capture);
   const setCapture = useUI((s) => s.setCapture);
+  useDailyCheckin();
   return (
     <>
       <Tabs

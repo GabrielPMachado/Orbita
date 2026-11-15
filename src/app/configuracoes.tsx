@@ -8,6 +8,7 @@ import { MODULES, SECTIONS } from '@/modules';
 import { choosePhotos, deleteMedia, mediaUri } from '@/lib/media';
 import { useFinance } from '@/store/finance';
 import { usePluggy } from '@/store/pluggy';
+import { useCheckin } from '@/store/checkin';
 import { useSettings } from '@/store/settings';
 import { brl } from '@/lib/date';
 import { currentBalance } from '@/lib/finance';
@@ -18,6 +19,8 @@ export default function Configuracoes() {
   const { name, avatar, accent, disabled, widgetHidden, setName, setAvatar, setAccent, toggleModule, setWidgetHidden } = useSettings();
   const balance = useFinance((s) => currentBalance(s.accounts, s.txs));
   const pluggyOn = usePluggy((s) => s.configured);
+  const checkinOn = useCheckin((s) => s.enabled);
+  const setCheckin = useCheckin((s) => s.setEnabled);
 
   const changeAvatar = async () => {
     const run = async () => {
@@ -98,6 +101,17 @@ export default function Configuracoes() {
             );
           })}
         </View>
+      </Section>
+
+      <Section title="Check-in diário">
+        <List>
+          <Row
+            title="Perguntar ao abrir o app"
+            subtitle="Humor, sono, energia e o que ficou de ontem, uma vez por dia"
+            trailing={<Switch value={checkinOn} onValueChange={setCheckin} trackColor={{ true: c.accent, false: c.surface3 }} />}
+          />
+          <Row title="Fazer agora" onPress={() => router.push('/checkin')} chevron />
+        </List>
       </Section>
 
       <Section title="Widget de saldo">

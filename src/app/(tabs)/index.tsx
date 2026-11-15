@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ArrowDownLeft, ArrowUpRight, BellRing, CalendarCheck, Flame, GlassWater, Repeat2, Timer } from 'lucide-react-native';
+import { ArrowDownLeft, ArrowUpRight, BellRing, CalendarCheck, ChevronRight, Flame, GlassWater, Repeat2, Sunrise, Target, Timer } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Glass } from '@/components/Glass';
@@ -12,6 +12,7 @@ import { brl, greeting, longToday, today } from '@/lib/date';
 import { habitIcon, MOODS } from '@/lib/icons';
 import { isScheduled, streak, useHabits } from '@/store/habits';
 import { useMood } from '@/store/misc';
+import { useCheckin } from '@/store/checkin';
 import { useFinance } from '@/store/finance';
 import { currentBalance, monthTotals, thisMonth } from '@/lib/finance';
 import { mediaUri } from '@/lib/media';
@@ -50,6 +51,7 @@ export default function Hoje() {
 
   const mood = useMood((s) => s.moods[day]);
   const setMood = useMood((s) => s.set);
+  const intent = useCheckin((s) => s.entries[day]);
 
   const reminders = useReminders((s) => s.reminders)
     .filter((r) => !r.done && (r.repeat !== 'none' || r.at > Date.now()))
@@ -114,6 +116,39 @@ export default function Hoje() {
             )}
           </Pressable>
         }>
+        {/* Intenção do check-in (ou convite para fazer) */}
+        {intent?.intention ? (
+          <Card onPress={() => router.push('/checkin')} style={styles.intent}>
+            <Target size={18} color={c.accent} />
+            <View style={{ flex: 1 }}>
+              <T v="overline" tone="dim">
+                Foco de hoje
+              </T>
+              <T v="headline" numberOfLines={2}>
+                {intent.intention}
+              </T>
+            </View>
+            {intent.energy ? (
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 2 }}>
+                {[1, 2, 3, 4, 5].map((l) => (
+                  <View key={l} style={{ width: 4, height: 6 + l * 3, borderRadius: 2, backgroundColor: l <= intent.energy! ? c.warning : c.surface3 }} />
+                ))}
+              </View>
+            ) : null}
+          </Card>
+        ) : !intent?.done ? (
+          <Card onPress={() => router.push('/checkin')} style={styles.intent}>
+            <Sunrise size={18} color={c.warning} />
+            <View style={{ flex: 1 }}>
+              <T v="headline">Fazer o check-in do dia</T>
+              <T v="caption" tone="dim">
+                Humor, sono, energia e o que ficou de ontem — 30 segundos
+              </T>
+            </View>
+            <ChevronRight size={18} color={c.textFaint} />
+          </Card>
+        ) : null}
+
         {/* Resumo */}
         <Card style={styles.summary}>
           <ProgressRing value={pct} size={92} stroke={9}>
@@ -354,6 +389,7 @@ const styles = StyleSheet.create({
   stat: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   quick: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.lg, minHeight: 72 },
   moodRow: { flexDirection: 'row', gap: space.sm },
+  intent: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   mood: {
     height: 72,
     borderRadius: radius.sm,

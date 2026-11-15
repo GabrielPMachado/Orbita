@@ -16,7 +16,7 @@ const STEPS = ['Valor', 'Categoria', 'Pagamento', 'Detalhes'];
 
 export default function NovoLancamento() {
   const c = useColors();
-  const params = useLocalSearchParams<{ type?: TxType; amount?: string; category?: string; description?: string }>();
+  const params = useLocalSearchParams<{ type?: TxType; amount?: string; category?: string; description?: string; date?: 'ontem' }>();
   const { accounts, cards, addTx } = useFinance();
 
   const [step, setStep] = useState(params.amount && params.category ? 2 : 0);
@@ -27,7 +27,7 @@ export default function NovoLancamento() {
   const [installments, setInstallments] = useState(1);
   const [repeat, setRepeat] = useState(1);
   const [desc, setDesc] = useState(params.description ?? '');
-  const [dateMode, setDateMode] = useState<'hoje' | 'ontem' | 'amanha' | 'outra'>('hoje');
+  const [dateMode, setDateMode] = useState<'hoje' | 'ontem' | 'amanha' | 'outra'>(params.date === 'ontem' ? 'ontem' : 'hoje');
   const [customDate, setCustomDate] = useState('');
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
