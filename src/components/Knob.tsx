@@ -44,14 +44,12 @@ function starPath(cx: number, cy: number, R: number) {
   return d + 'Z';
 }
 
-/** seta apontando para fora: ponta perto da borda, haste em direção ao centro */
-function arrowPath(R: number) {
-  const tip = R - R * 0.8;
-  const base = R - R * 0.5;
-  const stemEnd = R - R * 0.2;
-  const hw = R * 0.15; // meia largura da ponta
-  const sw = R * 0.055; // meia largura da haste
-  return `M${R},${tip} L${R + hw},${base} L${R + sw},${base} L${R + sw},${stemEnd} Q${R},${stemEnd + sw * 1.4} ${R - sw},${stemEnd} L${R - sw},${base} L${R - hw},${base} Z`;
+/** dois chevrons ( >> ) apontando para fora, perto da borda */
+function chevrons(R: number) {
+  const w = R * 0.13; // meia largura
+  const h = R * 0.085; // altura de cada chevron
+  const c = (tipY: number) => `M${R - w},${tipY + h} L${R},${tipY} L${R + w},${tipY + h}`;
+  return `${c(R - R * 0.76)} ${c(R - R * 0.6)}`;
 }
 
 export function Knob({ value, onChange, color, size = 200 }: { value: number; onChange: (v: number) => void; color: string; size?: number }) {
@@ -195,10 +193,9 @@ export function Knob({ value, onChange, color, size = 200 }: { value: number; on
             ))}
             <Circle cx={R} cy={R} r={R * 0.84} fill={`url(#body${id})`} />
             <Circle cx={R} cy={R} r={R * 0.84} fill="none" stroke="#000" strokeOpacity={0.35} strokeWidth={1} />
-            {/* seta indicadora na cor escolhida */}
-            <Path d={arrowPath(R)} fill={dot} fillOpacity={0.28} stroke={dot} strokeOpacity={0.28} strokeWidth={R * 0.09} strokeLinejoin="round" />
-            <Path d={arrowPath(R)} fill={dot} />
-            <Path d={`M${R},${R - R * 0.74} L${R - R * 0.05},${R - R * 0.58}`} stroke="#FFFFFF" strokeOpacity={0.45} strokeWidth={R * 0.035} strokeLinecap="round" />
+            {/* indicador >> na cor escolhida */}
+            <Path d={chevrons(R)} fill="none" stroke={dot} strokeOpacity={0.3} strokeWidth={R * 0.11} strokeLinecap="round" strokeLinejoin="round" />
+            <Path d={chevrons(R)} fill="none" stroke={dot} strokeWidth={R * 0.055} strokeLinecap="round" strokeLinejoin="round" />
           </Svg>
         </Animated.View>
       </View>
