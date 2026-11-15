@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ArrowDownLeft, ArrowUpRight, BellRing, CalendarCheck, ChevronRight, Flame, GlassWater, Repeat2, Sunrise, Target, Timer } from 'lucide-react-native';
+import { ArrowDownLeft, ArrowUpRight, BellRing, CalendarCheck, ChevronRight, Flame, Plus, GlassWater, Repeat2, Sunrise, Target, Timer } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Glass } from '@/components/Glass';
@@ -7,7 +7,7 @@ import { AnimatedNumber, Bounce, celebrate, Confetti, Pulse } from '@/components
 import { toast } from '@/store/toast';
 import { TaskRow } from '@/components/TaskRow';
 import { TaskSheet } from '@/components/TaskSheet';
-import { Card, Checkbox, IconTile, List, ProgressRing, Row, Screen, Section, T, tap } from '@/components/ui';
+import { Card, Checkbox, GlassButton, IconTile, List, ProgressRing, Row, Screen, Section, T, tap } from '@/components/ui';
 import { brl, greeting, longToday, today } from '@/lib/date';
 import { habitIcon, MOODS } from '@/lib/icons';
 import { isScheduled, streak, useHabits } from '@/store/habits';
@@ -106,6 +106,8 @@ export default function Hoje() {
         overline={longToday()}
         title={name ? `${greeting()}, ${name.split(' ')[0]}` : greeting()}
         actions={
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+          <GlassButton icon={Plus} accessibilityLabel="Nova tarefa" onPress={() => setCapture(true)} />
           <Pressable accessibilityLabel="Configurações" onPress={() => router.push('/configuracoes')} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
             {avatar ? (
               <Image source={{ uri: mediaUri(avatar) }} style={[styles.avatar, { borderWidth: 1, borderColor: c.border }]} contentFit="cover" />
@@ -117,6 +119,7 @@ export default function Hoje() {
               </Glass>
             )}
           </Pressable>
+          </View>
         }>
         {/* Intenção do check-in (ou convite para fazer) */}
         {intent?.intention ? (

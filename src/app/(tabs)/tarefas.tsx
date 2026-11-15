@@ -1,11 +1,11 @@
-import { ArrowRight, Check, Inbox, RotateCcw } from 'lucide-react-native';
+import { ArrowRight, Check, Inbox, Plus, RotateCcw } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Glass } from '@/components/Glass';
 import { toast } from '@/store/toast';
 import { TaskRow } from '@/components/TaskRow';
 import { TaskSheet } from '@/components/TaskSheet';
-import { Chip, Empty, List, Screen, Segmented, tap } from '@/components/ui';
+import { Chip, Empty, GlassButton, List, Screen, Segmented, tap } from '@/components/ui';
 import { sortTasks, useTasks, type TaskStatus } from '@/store/tasks';
 import { useUI } from '@/store/ui';
 import { space, useColors } from '@/theme';
@@ -42,7 +42,7 @@ export default function Tarefas() {
 
   return (
     <>
-      <Screen tab title="Tarefas" subtitle={`${count('todo')} pendentes · ${count('doing')} em andamento`}>
+      <Screen tab title="Tarefas" actions={<GlassButton icon={Plus} label="Nova" onPress={() => setCapture(true)} />} subtitle={`${count('todo')} pendentes · ${count('doing')} em andamento`}>
         <Segmented value={col} onChange={setCol} options={COLS.map((x) => ({ value: x.value, label: x.label, count: count(x.value) }))} />
 
         {tags.length > 0 && (
