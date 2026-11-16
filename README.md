@@ -1,6 +1,6 @@
 # Órbita — organização pessoal
 
-App de organização pessoal com módulos que ligam e desligam (inspirado no Nexo, feito do zero).
+App de organização pessoal para iPhone, com módulos que podem ser ligados e desligados, captura de tarefas em linguagem natural e o visual Liquid Glass do iOS 26 (inspirado no Nexo, feito do zero).
 Expo SDK 58 · React Native 0.88 · TypeScript · Expo Router · Zustand (dados salvos no aparelho).
 
 ---
