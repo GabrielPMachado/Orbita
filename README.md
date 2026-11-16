@@ -3,6 +3,12 @@
 App de organização pessoal para iPhone, com módulos que podem ser ligados e desligados, captura de tarefas em linguagem natural e o visual Liquid Glass do iOS 26 (inspirado no Nexo, feito do zero).
 Expo SDK 58 · React Native 0.88 · TypeScript · Expo Router · Zustand (dados salvos no aparelho).
 
+<p align="center">
+  <img src="docs/demo.gif" alt="Demonstração animada do projeto: captura em linguagem natural virando tarefa, hábitos e módulos que ligam e desligam" width="640" />
+  <br />
+  <sub>Captura em linguagem natural virando tarefa, hábitos e módulos que ligam e desligam. Demonstração ilustrativa, a mesma do <a href="https://portfolio-financy1.vercel.app">portfólio</a>.</sub>
+</p>
+
 ---
 
 ## 1. Testar rápido no iPhone (Expo Go, sem compilar)
