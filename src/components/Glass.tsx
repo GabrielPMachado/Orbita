@@ -1,7 +1,7 @@
 import { BlurView } from 'expo-blur';
 import { GlassContainer, GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import React, { useId } from 'react';
-import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { useColors } from '@/theme';
 
@@ -49,7 +49,7 @@ export function Glass({
 
   if (tint) return <View style={[style, edge, { backgroundColor: tint }]}>{children}</View>;
 
-  if (!floating || Platform.OS === 'android') {
+  if (!floating) {
     return (
       <View style={[style, edge, { backgroundColor: floating ? 'rgba(24,27,33,0.94)' : 'rgba(255,255,255,0.045)' }]}>
         {/* brilho na borda superior, como no vidro */}
