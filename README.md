@@ -4,7 +4,7 @@ App de organização pessoal para iPhone, com módulos que podem ser ligados e d
 Expo SDK 58 · React Native 0.88 · TypeScript · Expo Router · Zustand (dados salvos no aparelho).
 
 <p align="center">
-  <img src="docs/app-v2.gif" alt="O Órbita numa tela de iPhone: check-in do dia, tarefa criada em linguagem natural e hábitos." width="320" />
+  <img src="docs/app-2k.webp" alt="O Órbita numa tela de iPhone: check-in do dia, tarefa criada em linguagem natural e hábitos." width="320" />
   <br />
   <sub>O Órbita numa tela de iPhone: check-in do dia, tarefa criada em linguagem natural e hábitos. Gravado da versão web do app (Expo).</sub>
 </p>
