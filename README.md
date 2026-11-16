@@ -4,9 +4,9 @@ App de organização pessoal para iPhone, com módulos que podem ser ligados e d
 Expo SDK 58 · React Native 0.88 · TypeScript · Expo Router · Zustand (dados salvos no aparelho).
 
 <p align="center">
-  <img src="docs/demo.gif" alt="Demonstração animada do projeto: captura em linguagem natural virando tarefa, hábitos e módulos que ligam e desligam" width="640" />
+  <img src="docs/app.gif" alt="O Órbita numa tela de iPhone: check-in do dia, tarefa criada em linguagem natural e hábitos." width="320" />
   <br />
-  <sub>Captura em linguagem natural virando tarefa, hábitos e módulos que ligam e desligam. Demonstração ilustrativa, a mesma do <a href="https://portfolio-financy1.vercel.app">portfólio</a>.</sub>
+  <sub>O Órbita numa tela de iPhone: check-in do dia, tarefa criada em linguagem natural e hábitos. Gravado da versão web do app (Expo).</sub>
 </p>
 
 ---
