@@ -1,9 +1,11 @@
 # Publica as releases do GitHub a partir do CHANGELOG.md.
-# - Ao chegar na main uma mudança no CHANGELOG.md, cria a tag e a release da
-#   versão mais nova (a primeira seção ## [X.Y.Z]), se ainda não existirem.
+# - Ao chegar na main uma mudança no CHANGELOG.md, cria a tag e a release de
+#   cada versão do CHANGELOG que ainda não tem release. Uma versão antiga indica
+#   o commit dela com <!-- commit: SHA --> logo abaixo do título; a mais nova,
+#   sem esse comentário, fica no commit que chegou na main.
 # - Ao enviar uma tag vX.Y.Z, cria a release dela.
 # - Em Actions > Publicar release > Run workflow: informe a tag e, se quiser,
-#   o commit (para publicar uma versão antiga).
+#   o commit.
 name: Publicar release
 
 on:
@@ -38,29 +40,41 @@ jobs:
           REF_TIPO: ${{ github.ref_type }}
           REF_NOME: ${{ github.ref_name }}
           TAG_INFORMADA: ${{ inputs.tag }}
-          COMMIT: ${{ inputs.commit || github.sha }}
+          COMMIT_INFORMADO: ${{ inputs.commit }}
         run: |
           set -euo pipefail
-          # a primeira seção do CHANGELOG é a versão mais nova
-          MAIS_NOVA=$(grep -oP '^## \[\K[0-9][^\]]*' CHANGELOG.md | head -1)
-          if [ "$EVENTO" = workflow_dispatch ]; then V="${TAG_INFORMADA#v}"
-          elif [ "$REF_TIPO" = tag ]; then V="${REF_NOME#v}"
-          else V="$MAIS_NOVA"; fi
-          TAG="v$V"
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "A release $TAG já existe."; exit 0
-          fi
-          awk -v v="$V" 'index($0, "## [" v "]") == 1 {f=1; next} f && (/^## / || /^\[/) {exit} f' CHANGELOG.md > notas.md
-          if ! grep -q '[^[:space:]]' notas.md; then
-            echo "::error::A versão $V não está no CHANGELOG.md"; exit 1
-          fi
-          cat >> notas.md <<'TXT'
+          # versões na ordem do CHANGELOG (a primeira é a mais nova)
+          VERSOES=$(grep -oP '^## \[\K[0-9][^\]]*' CHANGELOG.md)
+          MAIS_NOVA=$(echo "$VERSOES" | head -1)
+          if [ "$EVENTO" = workflow_dispatch ]; then ALVO="${TAG_INFORMADA#v}"
+          elif [ "$REF_TIPO" = tag ]; then ALVO="${REF_NOME#v}"
+          else ALVO=$(echo "$VERSOES" | tac); fi   # da mais antiga para a mais nova
+          for V in $ALVO; do
+            TAG="v$V"
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              echo "A release $TAG já existe."; continue
+            fi
+            awk -v v="$V" 'index($0, "## [" v "]") == 1 {f=1; next} f && (/^## / || /^\[/) {exit} f' CHANGELOG.md > secao.md
+            if ! grep -q '[^[:space:]]' secao.md; then
+              echo "::error::A versão $V não está no CHANGELOG.md"; exit 1
+            fi
+            ALVO_COMMIT=$(grep -oP '<!-- commit: \K[0-9a-f]{7,40}' secao.md | head -1 || true)
+            if [ "$EVENTO" = workflow_dispatch ] && [ -n "$COMMIT_INFORMADO" ]; then ALVO_COMMIT="$COMMIT_INFORMADO"; fi
+            if [ -z "$ALVO_COMMIT" ]; then
+              if [ "$V" != "$MAIS_NOVA" ] && [ "$REF_TIPO" != tag ] && [ "$EVENTO" != workflow_dispatch ]; then
+                echo "::warning::A versão $V não indica o commit (<!-- commit: SHA -->), pulando."; continue
+              fi
+              ALVO_COMMIT="$GITHUB_SHA"
+            fi
+            grep -v '^<!-- commit:' secao.md > notas.md
+            # como instalar só faz sentido na versão atual
+            [ "$V" = "$MAIS_NOVA" ] && cat >> notas.md <<'TXT'
 
           ### Como instalar
           O Órbita é só para iPhone e não está na App Store. Rode o workflow **Build iOS** em *Actions* para gerar o `.ipa` e instale pelo [Sideloadly](https://sideloadly.io/).
-
-          Histórico completo no [CHANGELOG.md](${{ github.server_url }}/${{ github.repository }}/blob/main/CHANGELOG.md).
           TXT
-          LATEST=false; [ "$V" = "$MAIS_NOVA" ] && LATEST=true
-          # cria a tag no commit indicado se ela ainda não existir
-          gh release create "$TAG" --target "$COMMIT" --title "Órbita $V" --notes-file notas.md --latest=$LATEST
+            printf '\nHistórico completo no [CHANGELOG.md](%s).\n' "${{ github.server_url }}/${{ github.repository }}/blob/main/CHANGELOG.md" >> notas.md
+            LATEST=false; [ "$V" = "$MAIS_NOVA" ] && LATEST=true
+            # cria a tag no commit indicado se ela ainda não existir
+            gh release create "$TAG" --target "$ALVO_COMMIT" --title "Órbita $V" --notes-file notas.md --latest=$LATEST
+          done

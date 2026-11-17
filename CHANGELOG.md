@@ -16,6 +16,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - O Órbita passa a ser só para iPhone: saem a configuração Android, os ícones Android e o script `npm run android`.
 
 ## [0.9.0] - 2026-11-15
+<!-- commit: 84ae65cec818c5bdfe479be215d65ecda9ad19ea -->
 
 ### Adicionado
 - Ícone próprio (planeta em órbita), irmão do ícone do Financy, com versões escura e tingida do iOS 18.
@@ -28,20 +29,21 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Chave manual, troca de chaves e desconectar ficam em Configurações › Avançado.
 
 ### Corrigido
-- Conferência do App Group no build do CI.
+- Build do CI confere se o widget, o App Group e a Live Activity estão dentro do app (e falha se faltarem).
 
 ## [0.8.0] - 2026-11-14
+<!-- commit: f22d958d746e8d618a6b417d0caec5d39c46fe90 -->
 
 ### Adicionado
 - Interligação com o Financy: abrir o lançamento completo no app ou no site, saldo e mês do Financy nas Configurações e no widget, e categoria das compras do Apple Pay enviada ao Financy com fila offline.
 - Aparência: cores prontas e próprias, roda de intensidade (0 a 11) e estilos de ícone, compartilhada com o Financy nos dois sentidos.
-- Build do CI confere se o widget e a Live Activity estão dentro do app (e falha se faltarem).
 
 ### Alterado
 - Menu inferior no desenho do Financy: uma pílula de vidro única, e o botão + da captura rápida no topo das telas Hoje e Tarefas.
 - Check-in do dia num modal simples de uma tela só, com Salvar e Agora não.
 
 ## [0.7.0] - 2026-11-14
+<!-- commit: 026c73488940038f0ddf07a14fe1cb2093294ac0 -->
 
 Primeira versão pública.
 
