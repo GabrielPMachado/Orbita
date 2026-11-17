@@ -5,6 +5,7 @@
 **App de organização pessoal para iPhone, com módulos que ligam e desligam, captura de tarefas em linguagem natural e o visual Liquid Glass do iOS 26.**
 
 [![CI](https://github.com/GabrielPMachado/Orbita/actions/workflows/ci.yml/badge.svg)](https://github.com/GabrielPMachado/Orbita/actions/workflows/ci.yml)
+[![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-green?style=flat-square)](LICENSE)
 [![Build iOS](https://github.com/GabrielPMachado/Orbita/actions/workflows/build-ios.yml/badge.svg)](https://github.com/GabrielPMachado/Orbita/actions/workflows/build-ios.yml)
 ![Versão](https://img.shields.io/badge/vers%C3%A3o-0.9.1-blue?style=flat-square)
 
@@ -363,7 +364,7 @@ A versão web roda o app com dados de exemplo. O Liquid Glass é exclusivo do iO
 
 ## Licença
 
-Projeto pessoal de [Gabriel Pinto Machado](https://github.com/GabrielPMachado). O arquivo [LICENSE](LICENSE) é a licença MIT do template inicial do Expo, de onde o projeto partiu.
+Projeto de [Gabriel Pinto Machado](https://github.com/GabrielPMachado). Distribuído sob a licença MIT: pode usar, copiar e modificar o código, desde que mantenha o aviso de copyright. Veja o arquivo [LICENSE](LICENSE).
 
 ---
 
@@ -413,6 +414,6 @@ To install the full app, run the **Build iOS** workflow in the Actions tab, down
 
 ### License
 
-Personal project by [Gabriel Pinto Machado](https://github.com/GabrielPMachado). The [LICENSE](LICENSE) file is the MIT license from the original Expo template.
+By [Gabriel Pinto Machado](https://github.com/GabrielPMachado). Released under the [MIT License](LICENSE).
 
 </details>
