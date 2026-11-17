@@ -32,16 +32,11 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Adicionado
 - Interligação com o Financy: abrir o lançamento completo no app ou no site, saldo e mês do Financy nas Configurações e no widget, e categoria das compras do Apple Pay enviada ao Financy com fila offline.
-- Check-in diário na primeira abertura do dia (humor, sono, energia, intenção do dia e o que ficou de ontem), num modal de uma tela só.
 - Aparência: cores prontas e próprias, roda de intensidade (0 a 11) e estilos de ícone, compartilhada com o Financy nos dois sentidos.
-- Painel de diagnóstico com as últimas compras recebidas pelo Atalhos.
 
 ### Alterado
 - Menu inferior no desenho do Financy: uma pílula de vidro única, e o botão + da captura rápida no topo das telas Hoje e Tarefas.
-
-### Corrigido
-- Compras feitas com o app suspenso agora entram: a fila do Atalhos é relida sempre que o app volta ao primeiro plano.
-- Uma compra nunca é descartada: valor não reconhecido entra com R$ 0 e o texto original.
+- Check-in do dia num modal simples de uma tela só, com Salvar e Agora não.
 
 ## [0.7.0] - 2026-11-14
 
@@ -53,6 +48,12 @@ Primeira versão pública.
 - Lançamentos automáticos de compras feitas com Apple Pay (Atalhos do iPhone) e conferência com o Meu Pluggy.
 - Widget de saldo e modo foco com Live Activity.
 - Workflow do GitHub Actions que gera o `.ipa` para instalar pelo Sideloadly.
+- Check-in diário na primeira abertura do dia (humor, sono, energia, intenção do dia e o que ficou de ontem), com a intenção no topo da tela Hoje.
+- Painel de diagnóstico com as últimas compras recebidas pelo Atalhos.
+
+### Corrigido
+- Compras feitas com o app suspenso agora entram: a fila do Atalhos é relida sempre que o app volta ao primeiro plano.
+- Uma compra nunca é descartada: valor não reconhecido entra com R$ 0 e o texto original.
 
 [0.9.1]: https://github.com/GabrielPMachado/Orbita/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/GabrielPMachado/Orbita/compare/v0.8.0...v0.9.0
