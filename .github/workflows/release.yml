@@ -11,7 +11,7 @@ name: Publicar release
 on:
   push:
     branches: [main]
-    paths: [CHANGELOG.md]
+    paths: [CHANGELOG.md, .github/workflows/release.yml]
     tags: ['v*']
   workflow_dispatch:
     inputs:
@@ -49,6 +49,7 @@ jobs:
           if [ "$EVENTO" = workflow_dispatch ]; then ALVO="${TAG_INFORMADA#v}"
           elif [ "$REF_TIPO" = tag ]; then ALVO="${REF_NOME#v}"
           else ALVO=$(echo "$VERSOES" | tac); fi   # da mais antiga para a mais nova
+          FALHAS=""
           for V in $ALVO; do
             TAG="v$V"
             if gh release view "$TAG" >/dev/null 2>&1; then
@@ -76,5 +77,10 @@ jobs:
             printf '\nHistórico completo no [CHANGELOG.md](%s).\n' "${{ github.server_url }}/${{ github.repository }}/blob/main/CHANGELOG.md" >> notas.md
             LATEST=false; [ "$V" = "$MAIS_NOVA" ] && LATEST=true
             # cria a tag no commit indicado se ela ainda não existir
-            gh release create "$TAG" --target "$ALVO_COMMIT" --title "Órbita $V" --notes-file notas.md --latest=$LATEST
+            # O token do Actions não pode criar uma tag num commit antigo cujos
+            # workflows são diferentes dos atuais: nesse caso, crie a tag à mão
+            # (git tag vX.Y.Z SHA && git push origin vX.Y.Z) e rode de novo.
+            gh release create "$TAG" --target "$ALVO_COMMIT" --title "Órbita $V" --notes-file notas.md --latest=$LATEST \
+              || { echo "::error::Não deu para criar $TAG em $ALVO_COMMIT. Crie a tag à mão: git tag $TAG $ALVO_COMMIT && git push origin $TAG"; FALHAS="$FALHAS $TAG"; }
           done
+          [ -z "$FALHAS" ] || { echo "Faltaram:$FALHAS"; exit 1; }
