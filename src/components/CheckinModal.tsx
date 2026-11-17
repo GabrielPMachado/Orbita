@@ -5,9 +5,10 @@
 import { router } from 'expo-router';
 import { Modal } from 'react-native';
 import { BedDouble, Minus, Plus, X } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
-import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
+import { useMemo, useRef, useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
+import { useKeyboardInset, useScrollToFocused, type ScrollRef } from '@/lib/keyboard';
+import Animated, { FadeIn, SlideInDown, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
 import { Bounce, PressScale } from '@/components/motion';
@@ -38,6 +39,10 @@ function CheckinSheet({ onClose }: { onClose: () => void }) {
   const c = useColors();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
+  const kb = useKeyboardInset();
+  const lift = useAnimatedStyle(() => ({ paddingBottom: kb.inset.value }));
+  const scrollRef = useRef<ScrollRef>(null);
+  useScrollToFocused(scrollRef, kb.height);
   const day = today();
   const yesterday = toKey(addDays(new Date(), -1));
   const name = useSettings((s) => s.name);
@@ -72,15 +77,31 @@ function CheckinSheet({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <Animated.View entering={FadeIn.duration(200)} style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.55)' }]}>
         <Pressable style={{ flex: 1 }} onPress={close} accessibilityLabel="Fechar" />
       </Animated.View>
 
-      <View style={[StyleSheet.absoluteFill, styles.wrap]} pointerEvents="box-none">
+      <Animated.View style={[StyleSheet.absoluteFill, styles.wrap, lift]} pointerEvents="box-none">
         <Animated.View entering={SlideInDown.springify().damping(22)} style={{ width: '100%' }}>
-          <Glass floating style={[styles.sheet, { maxHeight: height * 0.9, paddingBottom: insets.bottom + space.md, backgroundColor: c.surface + 'F2' }]}>
-            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: space.lg }}>
+          <Glass
+            floating
+            style={[
+              styles.sheet,
+              {
+                // com o teclado aberto: fica em cima dele e encolhe para caber
+                maxHeight: kb.height ? height - kb.height - insets.top - space.md : height * 0.9,
+                paddingBottom: kb.height ? space.md : insets.bottom + space.md,
+                backgroundColor: c.surface + 'F2',
+              },
+            ]}>
+            <ScrollView
+              ref={scrollRef}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+              showsVerticalScrollIndicator={false}
+              style={{ flexGrow: 0, flexShrink: 1 }}
+              contentContainerStyle={{ gap: space.lg }}>
               <View style={styles.head}>
                 <View style={{ flex: 1 }}>
                   <T v="overline" tone="dim">
@@ -203,8 +224,8 @@ function CheckinSheet({ onClose }: { onClose: () => void }) {
             </ScrollView>
           </Glass>
         </Animated.View>
-      </View>
-    </KeyboardAvoidingView>
+      </Animated.View>
+    </View>
   );
 }
 

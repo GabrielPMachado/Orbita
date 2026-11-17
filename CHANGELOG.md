@@ -3,6 +3,12 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.9.2] - 2026-11-17
+
+### Corrigido
+- Modais e folhas abriam por baixo do teclado: agora sobem junto com ele, encolhem para caber na tela e rolam até o campo em foco.
+- Telas com campos de texto também deixam o campo visível acima do teclado.
+
 ## [0.9.1] - 2026-11-16
 
 ### Adicionado

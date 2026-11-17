@@ -1,9 +1,8 @@
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { Check, ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -12,6 +11,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
   type StyleProp,
   type TextInputProps,
@@ -19,6 +19,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useKeyboardInset, useScrollToFocused, type ScrollRef } from '@/lib/keyboard';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
@@ -239,6 +240,7 @@ export function Screen({
           contentContainerStyle={{ paddingHorizontal: space.lg, paddingBottom: bottom, gap: space.xl }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets
           showsVerticalScrollIndicator={false}
           refreshControl={
             onRefresh ? (
@@ -799,17 +801,25 @@ export function Sheet({
       }
     },
   });
-  const panel = useAnimatedStyle(() => ({ transform: [{ translateY: dy.value }] }));
+  const kb = useKeyboardInset();
+  const scrollRef = useRef<ScrollRef>(null);
+  useScrollToFocused(scrollRef, kb.height);
+  const { height: winH } = useWindowDimensions();
+  const baseBottom = Math.max(insets.bottom, space.sm);
+  // com o teclado aberto a folha fica logo acima dele e encolhe para caber na tela
+  const panel = useAnimatedStyle(() => ({
+    transform: [{ translateY: dy.value }],
+    paddingBottom: kb.inset.value > 0 ? Math.max(baseBottom, kb.inset.value + space.sm) : baseBottom,
+  }));
+  const maxH = Math.min(640, winH - insets.top - space.md - (kb.height ? kb.height + space.sm : baseBottom));
   const backdrop = useAnimatedStyle(() => ({ opacity: interpolate(dy.value, [0, 400], [1, 0], Extrapolation.CLAMP) }));
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.45)' }, backdrop]} />
         <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Fechar" />
-        <Animated.View
-          entering={SlideInDown.springify().damping(20).stiffness(180)}
-          style={[{ paddingHorizontal: space.sm, paddingBottom: Math.max(insets.bottom, space.sm) }, panel]}>
-          <Glass floating style={styles.sheet}>
+        <Animated.View entering={SlideInDown.springify().damping(20).stiffness(180)} style={[{ paddingHorizontal: space.sm }, panel]}>
+          <Glass floating style={[styles.sheet, { maxHeight: maxH }]}>
             <GestureDetector gesture={drag}>
               <View style={{ paddingTop: space.md }}>
                 <View style={[styles.grabber, { backgroundColor: c.textFaint }]} />
@@ -820,12 +830,19 @@ export function Sheet({
                 ) : null}
               </View>
             </GestureDetector>
-            <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: space.lg }} bounces={false} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              ref={scrollRef}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+              style={{ flexGrow: 0, flexShrink: 1 }}
+              contentContainerStyle={{ gap: space.lg, paddingBottom: space.xs }}
+              bounces={false}
+              showsVerticalScrollIndicator={false}>
               {children}
             </ScrollView>
           </Glass>
         </Animated.View>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }
