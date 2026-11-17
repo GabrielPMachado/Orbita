@@ -22,17 +22,20 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Ícone do app em 5 estilos (Grafite, Cor, Claro, Contorno, Mono) e 6 cores, podendo acompanhar a cor do app.
 - Estilos Vidro e Gradiente para os ícones das listas.
 - Conectar ao Financy com um toque (`orbita://financy/conectar`).
-- Build do CI confere se o widget e a Live Activity estão dentro do app.
 
 ### Alterado
 - Tudo sincroniza sozinho, sem botões de sincronizar (puxar a tela ainda atualiza).
 - Chave manual, troca de chaves e desconectar ficam em Configurações › Avançado.
+
+### Corrigido
+- Conferência do App Group no build do CI.
 
 ## [0.8.0] - 2026-11-14
 
 ### Adicionado
 - Interligação com o Financy: abrir o lançamento completo no app ou no site, saldo e mês do Financy nas Configurações e no widget, e categoria das compras do Apple Pay enviada ao Financy com fila offline.
 - Aparência: cores prontas e próprias, roda de intensidade (0 a 11) e estilos de ícone, compartilhada com o Financy nos dois sentidos.
+- Build do CI confere se o widget e a Live Activity estão dentro do app (e falha se faltarem).
 
 ### Alterado
 - Menu inferior no desenho do Financy: uma pílula de vidro única, e o botão + da captura rápida no topo das telas Hoje e Tarefas.
