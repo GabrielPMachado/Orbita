@@ -10,10 +10,10 @@ export const hasLiquidGlass = LIQUID;
 
 /**
  * Superfície de vidro usada em praticamente tudo no app.
- * - iOS 26+: Liquid Glass nativo (expo-glass-effect) em todos os níveis.
- * - Sem Liquid Glass: `floating` (tab bar, botões, sheets) usa desfoque real (expo-blur);
- *   superfícies de conteúdo (cards, campos, chips) usam um vidro translúcido leve — desfoque em
- *   dezenas de cards deixaria iPhones antigos lentos.
+ * - `floating` (tab bar, folhas, cabeçalho): Liquid Glass nativo no iOS 26+, desfoque real antes.
+ * - Conteúdo (cards, campos, chips, botões das telas): vidro translúcido leve com borda, sempre.
+ *   O Liquid Glass some quando a tela entra com fade (o iOS não desenha o efeito se um pai
+ *   está transparente naquele instante), e os cards ficavam sem fundo nem borda.
  */
 export function Glass({
   children,
@@ -32,7 +32,7 @@ export function Glass({
   /** elemento que flutua sobre o conteúdo */
   floating?: boolean;
 }) {
-  if (LIQUID) {
+  if (LIQUID && floating) {
     return (
       <GlassView glassEffectStyle={variant} tintColor={tint} isInteractive={interactive} colorScheme="dark" style={style}>
         {children}
@@ -44,14 +44,14 @@ export function Glass({
   const edge: ViewStyle = {
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: tint ? tint : 'rgba(255,255,255,0.10)',
+    borderColor: tint ? tint : 'rgba(255,255,255,0.11)',
   };
 
   if (tint) return <View style={[style, edge, { backgroundColor: tint }]}>{children}</View>;
 
   if (!floating) {
     return (
-      <View style={[style, edge, { backgroundColor: floating ? 'rgba(24,27,33,0.94)' : 'rgba(255,255,255,0.045)' }]}>
+      <View style={[style, edge, { backgroundColor: 'rgba(255,255,255,0.055)' }]}>
         {/* brilho na borda superior, como no vidro */}
         <View pointerEvents="none" style={[styles.sheen, { borderTopLeftRadius: flat.borderRadius, borderTopRightRadius: flat.borderRadius }]} />
         {children}

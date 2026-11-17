@@ -8,6 +8,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 ### Corrigido
 - Modais e folhas abriam por baixo do teclado: agora sobem junto com ele, encolhem para caber na tela e rolam até o campo em foco.
 - Telas com campos de texto também deixam o campo visível acima do teclado.
+- Cards e botões às vezes ficavam sem fundo nem borda no iOS 26: o Liquid Glass fica só nas partes flutuantes (barra, folhas, cabeçalho) e o conteúdo usa um vidro leve que sempre aparece.
 
 ## [0.9.1] - 2026-11-16
 

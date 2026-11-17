@@ -814,9 +814,10 @@ export function Sheet({
   const maxH = Math.min(640, winH - insets.top - space.md - (kb.height ? kb.height + space.sm : baseBottom));
   const backdrop = useAnimatedStyle(() => ({ opacity: interpolate(dy.value, [0, 400], [1, 0], Extrapolation.CLAMP) }));
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+    // sem fade no Modal: o Liquid Glass da folha não aparece se ela nasce transparente
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1 }}>
-        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.45)' }, backdrop]} />
+        <Animated.View entering={FadeIn.duration(180)} pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.45)' }, backdrop]} />
         <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Fechar" />
         <Animated.View entering={SlideInDown.springify().damping(20).stiffness(180)} style={[{ paddingHorizontal: space.sm }, panel]}>
           <Glass floating style={[styles.sheet, { maxHeight: maxH }]}>
