@@ -11,7 +11,7 @@ name: Publicar release
 on:
   push:
     branches: [main]
-    paths: [CHANGELOG.md]
+    paths: [CHANGELOG.md, .github/workflows/release.yml]
     tags: ['v*']
   workflow_dispatch:
     inputs:
