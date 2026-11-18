@@ -150,6 +150,13 @@ export interface Subject extends Item {
   color: string;
   professor?: string;
   archived?: boolean;
+  /* vindos da Estácio */
+  code?: string;
+  grades?: Record<string, number>;
+  absences?: number;
+  schedule?: string;
+  source?: 'estacio';
+  syncedAt?: number;
 }
 export interface Exam extends Item {
   subjectId: string;
@@ -183,6 +190,17 @@ export interface Title extends Item {
   poster?: string; // foto (lib/media)
   watchedAt?: DateKey;
   notes?: string;
+  /* dados do TMDB (preenchidos ao escolher o título na busca) */
+  tmdbId?: number;
+  posterPath?: string;
+  overview?: string;
+  year?: string;
+  genres?: string[];
+  vote?: number;
+  runtime?: number;
+  seasons?: number;
+  providers?: import('@/lib/tmdb').Providers;
+  providersAt?: number;
 }
 export const useTitles = createCollection<Title>('titles');
 

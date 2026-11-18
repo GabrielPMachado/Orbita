@@ -14,6 +14,7 @@ const daysUntil = (k: string) => Math.round((fromKey(k).getTime() - fromKey(toda
 const hm = (min: number) => (min >= 60 ? `${Math.floor(min / 60)}h${min % 60 ? String(min % 60).padStart(2, '0') : ''}` : `${min} min`);
 
 export default function Estudos() {
+  const lastSync = useSubjects((st) => st.items.reduce((a, x) => Math.max(a, x.syncedAt ?? 0), 0));
   const c = useColors();
   const subjects = useSubjects((s) => s.items);
   const exams = useExams((s) => s.items);
@@ -90,6 +91,16 @@ export default function Estudos() {
           )}
         </Section>
 
+        <Card onPress={() => router.push('/estacio')} style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+          <IconTile icon={GraduationCap} color={c.accent} />
+          <View style={{ flex: 1 }}>
+            <T v="headline">Estácio</T>
+            <T v="caption" tone="dim">
+              {lastSync ? `Atualizado ${friendlySync(lastSync)} · toque para atualizar` : 'Puxar disciplinas, notas e boletos do portal'}
+            </T>
+          </View>
+        </Card>
+
         <Section title="Matérias" action="Nova" onAction={() => setSubjectSheet('new')}>
           {active.length === 0 ? (
             <Empty icon={GraduationCap} title="Nenhuma matéria" hint="Cadastre as disciplinas do semestre." action="Adicionar matéria" onAction={() => setSubjectSheet('new')} />
@@ -103,7 +114,18 @@ export default function Estudos() {
                     key={s.id}
                     leading={<IconTile icon={BookOpen} color={s.color} />}
                     title={s.name}
-                    subtitle={[s.professor, m ? `${hm(m)} na semana` : 'sem estudo na semana'].filter(Boolean).join('  ·  ')}
+                    subtitle={[
+                      s.grades && Object.keys(s.grades).length
+                        ? Object.entries(s.grades)
+                            .map(([k, v]) => `${k} ${v.toFixed(1).replace('.', ',')}`)
+                            .join(' ')
+                        : null,
+                      s.absences != null ? `${s.absences} falta${s.absences === 1 ? '' : 's'}` : null,
+                      s.professor,
+                      m ? `${hm(m)} na semana` : null,
+                    ]
+                      .filter(Boolean)
+                      .join('  ·  ') || 'sem estudo na semana'}
                     onPress={() => setSubjectSheet(s)}
                     trailing={
                       a != null ? (
@@ -308,4 +330,9 @@ function LogSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
       />
     </Sheet>
   );
+}
+
+function friendlySync(t: number) {
+  const d = Math.floor((Date.now() - t) / 864e5);
+  return d <= 0 ? 'hoje' : d === 1 ? 'ontem' : `há ${d} dias`;
 }

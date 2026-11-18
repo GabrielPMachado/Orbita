@@ -1,3 +1,6 @@
+import { Barcode } from 'lucide-react-native';
+import { useBoletos } from '@/store/boletos';
+import { addDays as addDaysBoleto, toKey as toKeyBoleto } from '@/lib/date';
 import { router, type Href } from 'expo-router';
 import { ArrowDownLeft, ArrowUpRight, BadgeCheck, ExternalLink, Calculator, CreditCard, Landmark, PiggyBank, Plus, Smartphone, Wallet, type LucideIcon } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
@@ -33,6 +36,9 @@ import { radius, space, useColors } from '@/theme';
 type Filter = 'all' | 'in' | 'out';
 
 export default function Financas() {
+  const boletos = useBoletos((st) => st.items);
+  const boletosAbertos = boletos.filter((x) => !x.pago).length;
+  const boletosVencendo = boletos.filter((x) => !x.pago && x.vencimento && x.vencimento <= toKeyBoleto(addDaysBoleto(new Date(), 3))).length;
   const c = useColors();
   const { txs, accounts, cards, budgets } = useFinance();
   const [month, setMonth] = useState(thisMonth());
@@ -166,6 +172,13 @@ export default function Financas() {
       </View>
 
       <List>
+        <Row
+          leading={<IconTile icon={Barcode} color={boletosVencendo ? c.warning : c.accent} />}
+          title="Boletos"
+          subtitle={boletosAbertos ? `${boletosAbertos} em aberto${boletosVencendo ? ` · ${boletosVencendo} vencendo` : ''}` : 'Contas a pagar com aviso na véspera'}
+          onPress={() => router.push('/boletos')}
+          chevron
+        />
         <Row
           leading={<IconTile icon={Smartphone} color={c.accent} />}
           title="Lançamentos automáticos"

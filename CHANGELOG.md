@@ -3,6 +3,15 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.10.0] - 2026-11-18
+
+### Adicionado
+- Filmes e Séries buscam no TMDB enquanto você digita: capa, sinopse, ano, gêneros, nota e onde assistir no Brasil (streaming, aluguel e compra), atualizado sozinho. A chave gratuita do TMDB fica no Keychain.
+- Boletos: colar a linha digitável, o código de barras ou o Pix copia e cola, fotografar, abrir print ou PDF (inclusive com senha). Valor, vencimento e banco entram sozinhos, com conferência dos dígitos e aviso na véspera e no dia. Ao pagar, dá para lançar nas Finanças.
+- Estácio: o portal abre dentro do Órbita; depois do login, ele importa disciplinas, notas, faltas e boletos (inclusive em PDF). A senha não passa pelo Órbita.
+- Estudos mostra notas e faltas vindas da Estácio.
+- Tocar no aviso de um boleto abre a tela de Boletos.
+
 ## [0.9.3] - 2026-11-18
 
 ### Corrigido

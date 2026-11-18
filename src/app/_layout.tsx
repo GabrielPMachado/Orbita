@@ -1,3 +1,5 @@
+import * as Notifications from 'expo-notifications';
+import { router } from 'expo-router';
 import '@/lib/notifications';
 import { Manrope_500Medium } from '@expo-google-fonts/manrope/500Medium';
 import { Manrope_600SemiBold } from '@expo-google-fonts/manrope/600SemiBold';
@@ -23,6 +25,17 @@ import { useColors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
+/** Toque numa notificação com `data.url` (ex.: orbita://boletos) abre a tela certa. */
+function useNotificationLinks() {
+  const last = Notifications.useLastNotificationResponse();
+  useEffect(() => {
+    const url = last?.notification.request.content.data?.url;
+    if (typeof url !== 'string' || !url.startsWith('orbita://')) return;
+    const path = '/' + url.replace('orbita://', '');
+    setTimeout(() => router.push(path as never), 300);
+  }, [last]);
+}
+
 export default function RootLayout() {
   const c = useColors();
   useAutoCapture();
@@ -32,6 +45,7 @@ export default function RootLayout() {
   useFinancySync();
   useAppIconFollowsAccent();
   useFinancyBaseSync();
+  useNotificationLinks();
   const [loaded, error] = useFonts({ Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Sora_600SemiBold, Sora_700Bold });
 
   useEffect(() => {

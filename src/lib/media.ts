@@ -90,3 +90,11 @@ export function choosePhotos({ multiple = true, title = 'Adicionar foto' } = {})
     }
   });
 }
+
+/** Guarda uma cópia de um arquivo qualquer (PDF de boleto…) na pasta do app e devolve o nome. */
+export function keepFile(uri: string, ext: string): string {
+  if (isWeb) return uri;
+  const name = `${uid()}.${ext.toLowerCase().slice(0, 4)}`;
+  new File(uri).copySync(new File(mediaDir(), name));
+  return name;
+}

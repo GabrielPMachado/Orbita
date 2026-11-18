@@ -1,4 +1,5 @@
 import {
+  Barcode,
   BellRing,
   Briefcase,
   CalendarCheck,
@@ -49,6 +50,7 @@ export const MODULES: ModuleDef[] = [
   { id: 'saude', name: 'Saúde', section: 'Vida', icon: HeartPulse, ready: true, description: 'Água, sono, peso e remédios com lembrete.' },
   { id: 'academia', name: 'Academia', section: 'Vida', icon: Dumbbell, ready: true, description: 'Fichas de treino, séries e cargas.' },
   { id: 'financas', name: 'Finanças', section: 'Vida', icon: Wallet, ready: true, description: 'Contas, cartões, parcelas, orçamentos e simulador freela.' },
+  { id: 'boletos', name: 'Boletos', section: 'Vida', icon: Barcode, ready: true, description: 'Contas a pagar com código, PDF e aviso na véspera.' },
   { id: 'estudos', name: 'Estudos', section: 'Vida', icon: GraduationCap, ready: true, description: 'Matérias, provas e cadernos.' },
   { id: 'filmes', name: 'Filmes e Séries', section: 'Vida', icon: Film, ready: true, description: 'Lista para ver, vistos e notas.' },
   { id: 'notas', name: 'Notas', section: 'Vida', icon: Library, ready: true, description: 'Anotações com fotos, fixar e busca.' },
