@@ -33,6 +33,27 @@ function load<T>(get: () => T): T | null {
 const saldoWidget = () => (saldo === undefined ? (saldo = load(() => require('@/widgets/SaldoWidget').default as WidgetLike)) : saldo);
 const focoActivity = () => (foco === undefined ? (foco = load(() => require('@/widgets/FocoActivity').default as ActivityFactoryLike)) : foco);
 
+/**
+ * O app e o widget enxergam a mesma pasta (App Group)? null = fora do iPhone.
+ * Se der false, o widget não recebe dados — a assinatura tirou o App Group.
+ */
+export function widgetsShareData(): boolean | null {
+  const m = load(() => require('expo').requireNativeModule('ExpoWidgets') as { widgetsDirectory?: string | null });
+  if (!m) return null;
+  return !!m.widgetsDirectory;
+}
+
+/** Pede ao iOS para redesenhar os widgets agora. */
+export function reloadWidgets() {
+  refreshBalanceWidget();
+  const m = load(() => require('expo').requireNativeModule('ExpoWidgets') as { reloadAllWidgets?: () => void });
+  setTimeout(() => {
+    try {
+      m?.reloadAllWidgets?.();
+    } catch {}
+  }, 1200);
+}
+
 /* ---------- Widget de saldo ---------- */
 
 /** "R$ 4,2 mil" / "R$ 980" — cabe no widget circular */

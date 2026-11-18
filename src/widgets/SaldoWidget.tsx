@@ -39,11 +39,16 @@ export interface SaldoProps {
 
 function SaldoWidget(p: SaldoProps, env: WidgetEnvironment) {
   'widget';
+  // sem dados ainda (app não abriu desde a instalação): mostra o aviso em vez de ficar em branco
+  const q =
+    p && typeof p.saldo === 'string'
+      ? p
+      : { saldo: 'R$ —', saldoCurto: '—', mes: '—', mesPositivo: true, detalhe: '', atualizado: 'Abra o Órbita para atualizar', oculto: false, cor: '#8B5CF6' };
   const fam = env.widgetFamily;
-  const saldo = p.oculto ? 'R$ •••••' : p.saldo;
-  const curto = p.oculto ? '•••' : p.saldoCurto;
-  const mes = p.oculto ? '•••' : p.mes;
-  const corMes = p.mesPositivo ? '#34D399' : '#F87171';
+  const saldo = q.oculto ? 'R$ •••••' : q.saldo;
+  const curto = q.oculto ? '•••' : q.saldoCurto;
+  const mes = q.oculto ? '•••' : q.mes;
+  const corMes = q.mesPositivo ? '#34D399' : '#F87171';
 
   if (fam === 'accessoryInline') {
     return (
@@ -109,7 +114,7 @@ function SaldoWidget(p: SaldoProps, env: WidgetEnvironment) {
         ),
       ]}>
       <HStack spacing={6}>
-        <Image systemName="wallet.bifold.fill" size={13} color={p.cor} />
+        <Image systemName="wallet.bifold.fill" size={13} color={q.cor} />
         <Text modifiers={[font({ size: 13, weight: 'semibold' }), foregroundStyle('#9AA0AA')]}>Saldo atual</Text>
         <Spacer />
       </HStack>
@@ -125,18 +130,27 @@ function SaldoWidget(p: SaldoProps, env: WidgetEnvironment) {
       </Text>
       <Spacer />
       <HStack spacing={4}>
-        <Image systemName={p.mesPositivo ? 'arrow.up.right' : 'arrow.down.right'} size={11} color={corMes} />
+        <Image systemName={q.mesPositivo ? 'arrow.up.right' : 'arrow.down.right'} size={11} color={corMes} />
         <Text modifiers={[font({ size: 13, weight: 'semibold' }), monospacedDigit(), lineLimit(1), minimumScaleFactor(0.7), foregroundStyle(corMes)]}>
           {`${mes} no mês`}
         </Text>
       </HStack>
-      {largo && !p.oculto ? (
-        <Text modifiers={[font({ size: 12, weight: 'medium' }), monospacedDigit(), lineLimit(1), foregroundStyle('#9AA0AA')]}>{p.detalhe}</Text>
+      {largo && !q.oculto ? (
+        <Text modifiers={[font({ size: 12, weight: 'medium' }), monospacedDigit(), lineLimit(1), foregroundStyle('#9AA0AA')]}>{q.detalhe}</Text>
       ) : null}
-      <Text modifiers={[font({ size: 11, weight: 'medium' }), foregroundStyle('#5F6570')]}>{p.atualizado}</Text>
+      <Text modifiers={[font({ size: 11, weight: 'medium' }), foregroundStyle('#5F6570')]}>{q.atualizado}</Text>
     </VStack>
   );
 }
 
-const Saldo = createWidget<SaldoProps>('SaldoWidget', SaldoWidget);
+const Saldo = createWidget<SaldoProps>('SaldoWidget', SaldoWidget, {
+  saldo: 'R$ —',
+  saldoCurto: '—',
+  mes: '—',
+  mesPositivo: true,
+  detalhe: '',
+  atualizado: 'Abra o Órbita para atualizar',
+  oculto: false,
+  cor: '#8B5CF6',
+});
 export default Saldo;

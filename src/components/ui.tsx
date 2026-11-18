@@ -230,7 +230,8 @@ export function Screen({
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: insets.top + space.sm }}>
-      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, scroll && ambient]}>
+      {/* o fundo sobe um pouco ao rolar (parallax): sobra por cima e por baixo para nunca aparecer o preto */}
+      <Animated.View pointerEvents="none" style={[styles.ambientLayer, scroll && ambient]}>
         <Ambient />
       </Animated.View>
       {scroll ? (
@@ -849,6 +850,7 @@ export function Sheet({
 }
 
 const styles = StyleSheet.create({
+  ambientLayer: { position: 'absolute', left: 0, right: 0, top: -48, bottom: -180 },
   glassBtn: { height: 44, width: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   glassPill: { height: 44, borderRadius: 22, paddingLeft: 14, paddingRight: 18, flexDirection: 'row', alignItems: 'center', gap: 6 },
   compactWrap: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20 },

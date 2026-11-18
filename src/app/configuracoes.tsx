@@ -1,3 +1,6 @@
+import { useMemo } from 'react';
+import { toast } from '@/store/toast';
+import { reloadWidgets, widgetsShareData } from '@/lib/nativeWidgets';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { BadgeCheck, Camera, Check, Wallet } from 'lucide-react-native';
@@ -19,6 +22,7 @@ import { space, useColors } from '@/theme';
 
 export default function Configuracoes() {
   const c = useColors();
+  const widgetLink = useMemo(() => widgetsShareData(), []);
   const { name, avatar, accent, disabled, widgetHidden, setName, setAvatar, setAccent, toggleModule, setWidgetHidden } = useSettings();
   const fySaldo = useFinancyLink((s) => s.summary?.saldo);
   const balance = useFinance((s) => balanceFor(s.base, s.accounts, s.txs, fySaldo));
@@ -106,6 +110,21 @@ export default function Configuracoes() {
             subtitle="Mostra R$ ••••• na tela de bloqueio"
             trailing={<Switch value={widgetHidden} onValueChange={setWidgetHidden} trackColor={{ true: c.accent, false: c.surface3 }} />}
           />
+          {widgetLink !== null ? (
+            <Row
+              title={widgetLink ? 'Widget conectado' : 'Widget sem acesso aos dados'}
+              subtitle={
+                widgetLink
+                  ? 'Toque para atualizar o widget agora'
+                  : 'A assinatura do app tirou o App Group. No Sideloadly, deixe o App Group ligado e instale de novo.'
+              }
+              leading={<IconTile icon={widgetLink ? BadgeCheck : Wallet} color={widgetLink ? c.success : c.warning} />}
+              onPress={() => {
+                reloadWidgets();
+                toast({ message: 'Widget atualizado' });
+              }}
+            />
+          ) : null}
         </List>
         <T v="caption" tone="faint">
           Para adicionar: na tela de bloqueio, toque e segure → Personalizar → Tela Bloqueada → toque na área de widgets → Órbita. Também existe a

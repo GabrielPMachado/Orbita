@@ -3,6 +3,15 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.9.3] - 2026-11-18
+
+### Corrigido
+- Faixa preta embaixo das telas ao rolar: o fundo colorido agora cobre a tela toda.
+- Widget de saldo em branco: ele procura o App Group que de fato veio na assinatura (o Sideloadly pode trocar o nome) e, sem dados, mostra "Abra o Órbita para atualizar".
+
+### Adicionado
+- Configurações › Widget de saldo mostra se o widget está conectado ao app e atualiza na hora com um toque.
+
 ## [0.9.2] - 2026-11-17
 
 ### Corrigido

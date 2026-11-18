@@ -1,0 +1,65 @@
+diff --git a/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift b/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift
+index f339d98..cbe28c5 100644
+--- a/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift
++++ b/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift
+@@ -8,8 +8,7 @@ public struct WidgetsTimelineProvider: TimelineProvider {
+   public func getSnapshot(
+     in context: Context, completion: @escaping @Sendable (WidgetsTimelineEntry) -> Void
+   ) {
+-    let groupIdentifier =
+-      Bundle.main.object(forInfoDictionaryKey: "ExpoWidgetsAppGroupIdentifier") as? String
++    let groupIdentifier = WidgetsStorage.appGroupIdentifier
+     guard let groupIdentifier else {
+       completion(WidgetsTimelineEntry(date: Date(), name: name, props: WidgetsLayoutRegistry.initialProps(for: name), entryIndex: nil))
+       return
+@@ -23,11 +22,7 @@ public struct WidgetsTimelineProvider: TimelineProvider {
+     in context: Context,
+     completion: @escaping @Sendable (Timeline<WidgetsTimelineEntry>) -> Void
+   ) {
+-    let groupIdentifier =
+-      Bundle.main.object(forInfoDictionaryKey: "ExpoWidgetsAppGroupIdentifier") as? String
+-    guard let groupIdentifier else {
+-      fatalError("Could not get the app group identifier from Info.plist")
+-    }
++    let groupIdentifier = WidgetsStorage.appGroupIdentifier ?? ""
+ 
+     let entries = parseTimeline(identifier: groupIdentifier, name: name, family: context.family)
+ 
+diff --git a/node_modules/expo-widgets/ios/WidgetsStorage.swift b/node_modules/expo-widgets/ios/WidgetsStorage.swift
+index 86f9d6c..bb68f58 100644
+--- a/node_modules/expo-widgets/ios/WidgetsStorage.swift
++++ b/node_modules/expo-widgets/ios/WidgetsStorage.swift
+@@ -1,5 +1,32 @@
+ public enum WidgetsStorage {
+-  public static var appGroupIdentifier: String? = Bundle.main.object(forInfoDictionaryKey: "ExpoWidgetsAppGroupIdentifier") as? String
++  public static var appGroupIdentifier: String? = resolveAppGroup()
++
++  /// O App Group do Info.plist, ou o que de fato veio na assinatura. Ao reassinar (ex.: Sideloadly
++  /// com Apple ID grátis) o grupo pode ganhar outro nome; app e widget passam a usar o mesmo.
++  static func resolveAppGroup() -> String? {
++    let configured = Bundle.main.object(forInfoDictionaryKey: "ExpoWidgetsAppGroupIdentifier") as? String
++    let granted = provisionedAppGroups()
++    guard let configured else { return granted.first }
++    if granted.isEmpty || granted.contains(configured) { return configured }
++    return granted.first(where: { $0.hasPrefix(configured) || $0.contains(configured) })
++      ?? granted.first(where: { $0.lowercased().contains("orbita") })
++      ?? granted.first
++  }
++
++  static func provisionedAppGroups() -> [String] {
++    guard let url = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision"),
++          let data = try? Data(contentsOf: url),
++          let text = String(data: data, encoding: .isoLatin1),
++          let start = text.range(of: "<?xml"),
++          let end = text.range(of: "</plist>"),
++          let xml = String(text[start.lowerBound..<end.upperBound]).data(using: .isoLatin1),
++          let plist = try? PropertyListSerialization.propertyList(from: xml, format: nil) as? [String: Any],
++          let entitlements = plist["Entitlements"] as? [String: Any],
++          let groups = entitlements["com.apple.security.application-groups"] as? [String] else {
++      return []
++    }
++    return groups
++  }
+   static let defaults = UserDefaults(suiteName: appGroupIdentifier)
+ 
+   static func set(_ value: [String: Any], forKey key: String) {
