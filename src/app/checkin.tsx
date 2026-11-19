@@ -1,3 +1,4 @@
+import { EASE_OUT } from '@/components/motion';
 /**
  * Check-in do dia: aparece na primeira abertura de cada dia (lib/checkin.ts).
  * Humor → sono → energia e intenção → o que ficou de ontem. Tudo pulável.
@@ -70,7 +71,7 @@ export default function Checkin() {
     if (addExpense) setTimeout(() => router.push({ pathname: '/financas/novo', params: { date: 'ontem' } }), 450);
   };
 
-  const enter = dir === 1 ? SlideInRight.springify().damping(20) : SlideInLeft.springify().damping(20);
+  const enter = dir === 1 ? SlideInRight.duration(260).easing(EASE_OUT) : SlideInLeft.duration(260).easing(EASE_OUT);
   const exit = dir === 1 ? SlideOutLeft.duration(180) : SlideOutRight.duration(180);
   const first = name ? name.split(' ')[0] : '';
 
@@ -162,7 +163,12 @@ export default function Checkin() {
                   const lvl = i + 1;
                   const on = energy >= lvl;
                   return (
-                    <PressScale key={label} accessibilityRole="button" accessibilityLabel={label} onPress={() => setEnergy(lvl)} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
+                    <PressScale
+                      key={label}
+                      accessibilityRole="button"
+                      accessibilityLabel={label}
+                      onPress={() => setEnergy(lvl)}
+                      style={{ flex: 1, alignItems: 'center', gap: 6 }}>
                       <View style={[styles.bar, { height: 26 + i * 14, backgroundColor: on ? c.warning : c.surface3 }]} />
                       <Zap size={14} color={on ? c.warning : c.textFaint} fill={energy === lvl ? c.warning : 'transparent'} />
                     </PressScale>
@@ -230,7 +236,11 @@ export default function Checkin() {
                     </T>
                   </View>
                 </Glass>
-                <Pressable onPress={() => setAddExpense(!addExpense)} style={styles.toggleRow} accessibilityRole="checkbox" accessibilityState={{ checked: addExpense }}>
+                <Pressable
+                  onPress={() => setAddExpense(!addExpense)}
+                  style={styles.toggleRow}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: addExpense }}>
                   <View style={{ flex: 1 }}>
                     <T v="body">Gastei algo fora do Apple Pay</T>
                     <T v="caption" tone="dim">
@@ -282,7 +292,15 @@ const styles = StyleSheet.create({
   dot: { height: 7, borderRadius: 4 },
   page: { flex: 1, paddingHorizontal: space.lg, paddingTop: space.xxl, gap: space.lg },
   moodGrid: { flexDirection: 'row', gap: space.sm },
-  moodBtn: { alignItems: 'center', gap: 8, paddingVertical: space.lg, borderRadius: radius.lg, overflow: 'hidden', borderWidth: 1, borderColor: 'transparent' },
+  moodBtn: {
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: space.lg,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
   sleepRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: space.lg },
   big: { fontFamily: FONTS.display, fontSize: 56, lineHeight: 64, letterSpacing: -1 },
   round: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },

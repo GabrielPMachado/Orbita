@@ -1,3 +1,4 @@
+import { EASE_OUT } from '@/components/motion';
 import { router, type Href } from 'expo-router';
 import { ChevronRight, Settings } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -23,31 +24,36 @@ export default function Modulos() {
           <Section key={section} title={section}>
             <View style={styles.grid}>
               {mods.map((m, i) => (
-                <Animated.View key={m.id} entering={FadeInDown.delay(i * 40).springify().damping(18)} style={styles.tileWrap}>
-                <PressScale
-                  accessibilityRole="button"
-                  accessibilityLabel={m.name}
-                  scaleTo={0.95}
-                  onPress={() => {
-                    tap();
-                    router.push(moduleHref(m) as Href);
-                  }}
-                  style={{ flex: 1, opacity: m.ready ? 1 : 0.62 }}>
-                  <Glass interactive style={styles.tile}>
-                  <View style={styles.tileTop}>
-                    <IconTile icon={m.icon} color={m.ready ? c.accent : c.textDim} />
-                    {m.ready ? <ChevronRight size={16} color={c.textFaint} /> : <Badge label="Em breve" />}
-                  </View>
-                  <View style={{ gap: 2 }}>
-                    <T v="headline" numberOfLines={1}>
-                      {m.name}
-                    </T>
-                    <T v="caption" tone="dim" numberOfLines={2}>
-                      {m.description}
-                    </T>
-                  </View>
-                  </Glass>
-                </PressScale>
+                <Animated.View
+                  key={m.id}
+                  entering={FadeInDown.delay(i * 40)
+                    .duration(260)
+                    .easing(EASE_OUT)}
+                  style={styles.tileWrap}>
+                  <PressScale
+                    accessibilityRole="button"
+                    accessibilityLabel={m.name}
+                    scaleTo={0.95}
+                    onPress={() => {
+                      tap();
+                      router.push(moduleHref(m) as Href);
+                    }}
+                    style={{ flex: 1, opacity: m.ready ? 1 : 0.62 }}>
+                    <Glass interactive style={styles.tile}>
+                      <View style={styles.tileTop}>
+                        <IconTile icon={m.icon} color={m.ready ? c.accent : c.textDim} />
+                        {m.ready ? <ChevronRight size={16} color={c.textFaint} /> : <Badge label="Em breve" />}
+                      </View>
+                      <View style={{ gap: 2 }}>
+                        <T v="headline" numberOfLines={1}>
+                          {m.name}
+                        </T>
+                        <T v="caption" tone="dim" numberOfLines={2}>
+                          {m.description}
+                        </T>
+                      </View>
+                    </Glass>
+                  </PressScale>
                 </Animated.View>
               ))}
             </View>
@@ -56,7 +62,13 @@ export default function Modulos() {
       })}
 
       <List>
-        <Row leading={<IconTile icon={Settings} color={c.textDim} />} title="Configurações" subtitle="Perfil, cor de destaque e módulos" chevron onPress={() => router.push('/configuracoes')} />
+        <Row
+          leading={<IconTile icon={Settings} color={c.textDim} />}
+          title="Configurações"
+          subtitle="Perfil, cor de destaque e módulos"
+          chevron
+          onPress={() => router.push('/configuracoes')}
+        />
       </List>
     </Screen>
   );
@@ -65,13 +77,6 @@ export default function Modulos() {
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   tileWrap: { width: '47%', flexGrow: 1 },
-  tile: {
-    flex: 1,
-    minHeight: 132,
-    borderRadius: radius.lg,
-    padding: space.lg,
-    justifyContent: 'space-between',
-    gap: space.md,
-  },
+  tile: { flex: 1, minHeight: 132, borderRadius: radius.lg, padding: space.lg, justifyContent: 'space-between', gap: space.md },
   tileTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
 });

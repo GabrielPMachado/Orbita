@@ -29,7 +29,13 @@ import { radius, space, useColors } from '@/theme';
 import { Glass } from './Glass';
 import { T } from './ui';
 
-export const SPRING = { damping: 16, stiffness: 220, mass: 0.7 };
+/**
+ * Movimento do Órbita: deslizar suave, sem quicar. As molas são criticamente amortecidas
+ * (não passam do ponto) e as entradas usam ease-out curto com um leve fade.
+ */
+export const SPRING = { damping: 30, stiffness: 320, mass: 0.9, overshootClamping: true };
+export const EASE_OUT = Easing.bezier(0.22, 1, 0.36, 1);
+export const SMOOTH = { duration: 240, easing: EASE_OUT };
 
 /* ---------- Pressionar com mola ---------- */
 const APressable = Animated.createAnimatedComponent(Pressable);
@@ -43,16 +49,20 @@ export function PressScale({
 }: PressableProps & { children: React.ReactNode; scaleTo?: number; style?: StyleProp<ViewStyle> }) {
   const s = useSharedValue(1);
   const reduce = useReducedMotion();
-  const anim = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
+  // ao tocar: encolhe pouquinho e esmaece; ao soltar, volta deslizando (sem quicar)
+  const anim = useAnimatedStyle(() => {
+    const t = (1 - s.value) / (1 - scaleTo || 1); // 0 solto → 1 pressionado
+    return { transform: [{ scale: 1 - t * (1 - scaleTo) * 0.6 }], opacity: 1 - t * 0.22 };
+  });
   return (
     <APressable
       {...props}
       onPressIn={(e) => {
-        if (!reduce) s.value = withSpring(scaleTo, SPRING);
+        if (!reduce) s.value = withTiming(scaleTo, { duration: 110, easing: EASE_OUT });
         props.onPressIn?.(e);
       }}
       onPressOut={(e) => {
-        s.value = withSpring(1, SPRING);
+        s.value = withTiming(1, { duration: 260, easing: EASE_OUT });
         props.onPressOut?.(e);
       }}
       style={[style, anim]}>
@@ -92,7 +102,15 @@ export function useCountUp(value: number, duration = 650) {
   return shown;
 }
 
-export function AnimatedNumber({ value, format = (n) => String(Math.round(n)), render }: { value: number; format?: (n: number) => string; render?: (text: string) => React.ReactNode }) {
+export function AnimatedNumber({
+  value,
+  format = (n) => String(Math.round(n)),
+  render,
+}: {
+  value: number;
+  format?: (n: number) => string;
+  render?: (text: string) => React.ReactNode;
+}) {
   const n = useCountUp(value);
   const text = format(n);
   return <>{render ? render(text) : text}</>;
@@ -122,7 +140,17 @@ export function GrowFromBottom({ grow, children, style }: { grow: SharedValue<nu
 
 /* ---------- Pulo (bounce) ---------- */
 /** Dá um pulinho sempre que `trigger` muda. */
-export function Bounce({ trigger, children, style, amount = 1.18 }: { trigger: unknown; children: React.ReactNode; style?: StyleProp<ViewStyle>; amount?: number }) {
+export function Bounce({
+  trigger,
+  children,
+  style,
+  amount = 1.18,
+}: {
+  trigger: unknown;
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+  amount?: number;
+}) {
   const s = useSharedValue(1);
   const first = useRef(true);
   const reduce = useReducedMotion();
@@ -132,7 +160,7 @@ export function Bounce({ trigger, children, style, amount = 1.18 }: { trigger: u
       return;
     }
     if (reduce) return;
-    s.value = withSequence(withSpring(amount, { damping: 6, stiffness: 400 }), withSpring(1, SPRING));
+    s.value = withSequence(withTiming(amount, { duration: 120, easing: EASE_OUT }), withTiming(1, { duration: 260, easing: EASE_OUT }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trigger]);
   const a = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
@@ -188,7 +216,14 @@ function Piece({ color, delay, run }: { color: string; delay: number; run: numbe
       transform: [{ translateX: spec.x0 + spec.dx * t }, { translateY: y }, { rotate: `${spec.rot * t}deg` }],
     };
   });
-  return <Animated.View style={[{ position: 'absolute', top: 0, left: 0, width: spec.w, height: spec.h, borderRadius: spec.round ? spec.w : 2, backgroundColor: color }, a]} />;
+  return (
+    <Animated.View
+      style={[
+        { position: 'absolute', top: 0, left: 0, width: spec.w, height: spec.h, borderRadius: spec.round ? spec.w : 2, backgroundColor: color },
+        a,
+      ]}
+    />
+  );
 }
 
 /** Explosão de confete. Incremente `run` para disparar. */
@@ -243,7 +278,14 @@ function ActionPanel({ action, side, tx }: { action: SwipeAction; side: 'left' |
   });
   const Icon = action.icon;
   return (
-    <Animated.View pointerEvents="none" style={[styles.actionPanel, side === 'left' ? { left: 0 } : { right: 0 }, { backgroundColor: action.color, alignItems: side === 'left' ? 'flex-start' : 'flex-end' }, panel]}>
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.actionPanel,
+        side === 'left' ? { left: 0 } : { right: 0 },
+        { backgroundColor: action.color, alignItems: side === 'left' ? 'flex-start' : 'flex-end' },
+        panel,
+      ]}>
       <Animated.View style={[{ alignItems: 'center', gap: 2, paddingHorizontal: space.xl, minWidth: 88 }, a]}>
         <Icon size={20} color="#fff" strokeWidth={2.4} />
         <T v="caption" color="#fff" style={{ fontSize: 11 }}>
@@ -326,7 +368,7 @@ export function ToastHost() {
   return (
     <Animated.View
       key={t.id}
-      entering={FadeInDown.springify().damping(16).reduceMotion(ReduceMotion.System)}
+      entering={FadeInDown.duration(260).easing(EASE_OUT).reduceMotion(ReduceMotion.System)}
       exiting={FadeOutDown.duration(180)}
       pointerEvents="box-none"
       style={[styles.toastWrap, { bottom: insets.bottom + 92 }]}>

@@ -1,3 +1,4 @@
+import { EASE_OUT, SMOOTH } from './motion';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { Check, ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-react-native';
@@ -46,7 +47,7 @@ import { Ambient, Glass } from './Glass';
 import { PressScale, SPRING } from './motion';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-const LIST_LAYOUT = LinearTransition.springify().damping(20).stiffness(200);
+const LIST_LAYOUT = LinearTransition.duration(260).easing(EASE_OUT);
 
 export const tap = () => Haptics.selectionAsync().catch(() => {});
 export const impact = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -178,7 +179,10 @@ export function Screen({
   // título grande some enquanto a barra compacta de vidro aparece
   const titleFade = useAnimatedStyle(() => ({
     opacity: interpolate(y.value, [0, 70], [1, 0], Extrapolation.CLAMP),
-    transform: [{ translateY: interpolate(y.value, [-120, 0], [24, 0], Extrapolation.CLAMP) }, { scale: interpolate(y.value, [-120, 0, 70], [1.08, 1, 0.96], Extrapolation.CLAMP) }],
+    transform: [
+      { translateY: interpolate(y.value, [-120, 0], [24, 0], Extrapolation.CLAMP) },
+      { scale: interpolate(y.value, [-120, 0, 70], [1.08, 1, 0.96], Extrapolation.CLAMP) },
+    ],
   }));
   const compact = useAnimatedStyle(() => ({
     opacity: interpolate(y.value, [56, 96], [0, 1], Extrapolation.CLAMP),
@@ -223,7 +227,11 @@ export function Screen({
   const blocks = React.Children.toArray(children)
     .filter(Boolean)
     .map((child, i) => (
-      <Animated.View key={(child as React.ReactElement).key ?? i} entering={FadeInDown.delay(Math.min(i, 8) * 45).springify().damping(18)}>
+      <Animated.View
+        key={(child as React.ReactElement).key ?? i}
+        entering={FadeInDown.delay(Math.min(i, 8) * 45)
+          .duration(260)
+          .easing(EASE_OUT)}>
         {child}
       </Animated.View>
     ));
@@ -329,7 +337,11 @@ export function List({ children, style }: { children: React.ReactNode; style?: S
     <Animated.View layout={LIST_LAYOUT}>
       <Card padded={false} style={[{ overflow: 'hidden' }, style]}>
         {items.map((child, i) => (
-          <Animated.View key={(child as React.ReactElement).key ?? i} layout={LIST_LAYOUT} entering={FadeIn.duration(260)} exiting={FadeOut.duration(160)}>
+          <Animated.View
+            key={(child as React.ReactElement).key ?? i}
+            layout={LIST_LAYOUT}
+            entering={FadeIn.duration(260)}
+            exiting={FadeOut.duration(160)}>
             {i > 0 && <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: c.border, marginLeft: 64 }} />}
             {child}
           </Animated.View>
@@ -411,7 +423,16 @@ export function IconTile({ icon: Icon, color, size = 36 }: { icon: LucideIcon; c
   }
   if (style === 'vidro') {
     return (
-      <View style={[box, { backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)', borderTopColor: 'rgba(255,255,255,0.24)' }]}>
+      <View
+        style={[
+          box,
+          {
+            backgroundColor: 'rgba(255,255,255,0.07)',
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.14)',
+            borderTopColor: 'rgba(255,255,255,0.24)',
+          },
+        ]}>
         <Icon size={size * 0.5} color={col} strokeWidth={2} />
       </View>
     );
@@ -499,7 +520,9 @@ export function Empty({
           {hint}
         </T>
       ) : null}
-      {action && onAction ? <Button label={action} onPress={onAction} variant="secondary" style={{ marginTop: space.sm, alignSelf: 'center' }} /> : null}
+      {action && onAction ? (
+        <Button label={action} onPress={onAction} variant="secondary" style={{ marginTop: space.sm, alignSelf: 'center' }} />
+      ) : null}
     </View>
   );
 }
@@ -640,13 +663,13 @@ export function Checkbox({ checked, onPress, color }: { checked: boolean; onPres
       hitSlop={12}
       onPress={() => {
         impact();
-        sc.value = withSequence(withSpring(0.78, { damping: 10, stiffness: 500 }), withSpring(1, { damping: 7, stiffness: 300 }));
+        sc.value = withSequence(withTiming(0.86, { duration: 100, easing: EASE_OUT }), withTiming(1, { duration: 240, easing: EASE_OUT }));
         onPress();
       }}>
       <Animated.View style={[styles.check, { borderColor: checked ? col : c.textFaint }, box]}>
         <Animated.View style={[StyleSheet.absoluteFill, { borderRadius: 12, backgroundColor: col }, bg]} />
         {checked && (
-          <Animated.View entering={ZoomIn.springify().damping(10)}>
+          <Animated.View entering={ZoomIn.duration(260).easing(EASE_OUT)}>
             <Check size={14} color={c.bg} strokeWidth={3.2} />
           </Animated.View>
         )}
@@ -661,7 +684,7 @@ export function Progress({ value, color, height = 6 }: { value: number; color?: 
   const v = useSharedValue(0);
   useEffect(() => {
     const target = Math.min(100, Math.max(0, value * 100));
-    v.value = reduce ? target : withSpring(target, { damping: 20, stiffness: 120 });
+    v.value = reduce ? target : withTiming(target, SMOOTH);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, reduce]);
   const bar = useAnimatedStyle(() => ({ width: `${v.value}%` }));
@@ -692,7 +715,7 @@ export function ProgressRing({
   const v = Math.min(1, Math.max(0, value));
   const p = useSharedValue(0);
   useEffect(() => {
-    p.value = reduce ? v : withSpring(v, { damping: 18, stiffness: 90 });
+    p.value = reduce ? v : withTiming(v, SMOOTH);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [v, reduce]);
   const arc = useAnimatedProps(() => ({ strokeDashoffset: circ * (1 - p.value) }));
@@ -728,7 +751,10 @@ export function Segmented<V extends string>({
   onChange: (v: V) => void;
 }) {
   const [w, setW] = useState(0);
-  const idx = Math.max(0, options.findIndex((o) => o.value === value));
+  const idx = Math.max(
+    0,
+    options.findIndex((o) => o.value === value),
+  );
   const seg = w > 0 ? (w - 8) / options.length : 0;
   const x = useSharedValue(0);
   useEffect(() => {
@@ -771,17 +797,7 @@ export function Segmented<V extends string>({
 /* =========================================================
  * Sheet flutuante de vidro
  * ========================================================= */
-export function Sheet({
-  visible,
-  onClose,
-  title,
-  children,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  title?: string;
-  children: React.ReactNode;
-}) {
+export function Sheet({ visible, onClose, title, children }: { visible: boolean; onClose: () => void; title?: string; children: React.ReactNode }) {
   const c = useColors();
   const insets = useSafeAreaInsets();
   const dy = useSharedValue(0);
@@ -822,9 +838,13 @@ export function Sheet({
     // sem fade no Modal: o Liquid Glass da folha não aparece se ela nasce transparente
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1 }}>
-        <Animated.View entering={FadeIn.duration(180)} pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.45)' }, backdrop]} />
+        <Animated.View
+          entering={FadeIn.duration(180)}
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.45)' }, backdrop]}
+        />
         <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Fechar" />
-        <Animated.View entering={SlideInDown.springify().damping(20).stiffness(180)} style={[{ paddingHorizontal: space.sm }, panel]}>
+        <Animated.View entering={SlideInDown.duration(260).easing(EASE_OUT)} style={[{ paddingHorizontal: space.sm }, panel]}>
           <Glass floating style={[styles.sheet, { maxHeight: maxH }]}>
             <GestureDetector gesture={drag}>
               <View style={{ paddingTop: space.md }}>
@@ -866,7 +886,15 @@ const styles = StyleSheet.create({
   rowLeading: { width: 36, alignItems: 'center' },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.xs },
   emptyIcon: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: space.sm },
-  btn: { height: 52, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xl, flexDirection: 'row', gap: space.sm },
+  btn: {
+    height: 52,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: space.xl,
+    flexDirection: 'row',
+    gap: space.sm,
+  },
   inputGlass: { borderRadius: radius.sm },
   input: { paddingHorizontal: space.lg, minHeight: 52, paddingVertical: 14 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: space.md, height: 34, borderRadius: radius.pill },

@@ -1,3 +1,4 @@
+import { SMOOTH } from './motion';
 /**
  * Roda de intensidade (0–11): botão giratório com marcações em volta e uma estrela no
  * fim. A cor escolhida pinta o anel, o ponto e o fundo do cartão, que vai esquentando
@@ -7,7 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { useEffect, useId, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { withTiming, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import Svg, { Circle, Defs, G, Line, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 export const KNOB_MAX = 11;
@@ -19,7 +20,15 @@ const hex = (h: string) => {
   const n = parseInt(h.replace('#', ''), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 };
-const toHex = (rgb: number[]) => '#' + rgb.map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
+const toHex = (rgb: number[]) =>
+  '#' +
+  rgb
+    .map((v) =>
+      Math.round(Math.max(0, Math.min(255, v)))
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('');
 /** mistura a → b (t = 0 → a, 1 → b) */
 export const mix = (a: string, b: string, t: number) => {
   const A = hex(a);
@@ -75,7 +84,7 @@ export function Knob({ value, onChange, color, size = 200 }: { value: number; on
   /* ---------- rotação suave ---------- */
   const rot = useSharedValue(angleOf(v));
   useEffect(() => {
-    rot.value = withSpring(angleOf(v), { damping: 18, stiffness: 220, mass: 0.6 });
+    rot.value = withTiming(angleOf(v), SMOOTH);
   }, [v, rot]);
   const spin = useAnimatedStyle(() => ({ transform: [{ rotate: `${rot.value}deg` }] }));
 
@@ -93,12 +102,7 @@ export function Knob({ value, onChange, color, size = 200 }: { value: number; on
       onChange(next);
     }
   };
-  const pan = usePanGesture({
-    runOnJS: true,
-    minDistance: 0,
-    onBegin: (e) => pick(e.x, e.y),
-    onUpdate: (e) => pick(e.x, e.y),
-  });
+  const pan = usePanGesture({ runOnJS: true, minDistance: 0, onBegin: (e) => pick(e.x, e.y), onUpdate: (e) => pick(e.x, e.y) });
 
   /* ---------- partes fixas ---------- */
   const knurl = useMemo(
@@ -204,6 +208,4 @@ export function Knob({ value, onChange, color, size = 200 }: { value: number; on
   );
 }
 
-const styles = StyleSheet.create({
-  card: { overflow: 'hidden' },
-});
+const styles = StyleSheet.create({ card: { overflow: 'hidden' } });

@@ -3,6 +3,11 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.13.1] - 2026-11-19
+
+### Mudado
+- Movimento sem efeito elástico em todo o app: folhas, listas, abas e botões deslizam com ease-out curto e não passam do ponto. Ao tocar, cards e botões encolhem pouquinho e esmaecem, em vez de afundar e quicar.
+
 ## [0.13.0] - 2026-11-19
 
 ### Adicionado

@@ -1,3 +1,4 @@
+import { EASE_OUT } from './motion';
 /**
  * Aparência (Configurações): cor do app (prontas + suas), a roda de intensidade
  * e o estilo/cor dos ícones.
@@ -8,26 +9,71 @@ import { Alert, Modal, Pressable, ScrollView, StyleSheet, Switch, TextInput, Vie
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { useSettings } from '@/store/settings';
-import { ACCENTS, FONTS, ICON_STYLES, ICON_TONES, radius, readableOn, resolveAccent, space, useColors, type AccentName, type IconStyle, type IconTone } from '@/theme';
+import {
+  ACCENTS,
+  FONTS,
+  ICON_STYLES,
+  ICON_TONES,
+  radius,
+  readableOn,
+  resolveAccent,
+  space,
+  useColors,
+  type AccentName,
+  type IconStyle,
+  type IconTone,
+} from '@/theme';
 import { Image } from 'expo-image';
 import { ICON_COLORS, ICON_LOOKS, iconThumb, nearestIconColor, setAppIcon, type IconColor, type IconLook } from '@/lib/appIcon';
 import { Knob } from './Knob';
 import { Button, Chip, IconTile, Section, Segmented, Sheet, T, tap } from './ui';
 
 const MORE = [
-  '#FF3B30', '#FF6B6B', '#F97316', '#FB923C', '#F5A524', '#FACC15',
-  '#A3E635', '#22C55E', '#10B981', '#2DD4BF', '#22D3EE', '#38BDF8',
-  '#3B82F6', '#6366F1', '#8B5CF6', '#A855F7', '#D946EF', '#EC4899',
-  '#F43F5E', '#B45309', '#78716C', '#94A3B8', '#E5E7EB', '#C9A227',
+  '#FF3B30',
+  '#FF6B6B',
+  '#F97316',
+  '#FB923C',
+  '#F5A524',
+  '#FACC15',
+  '#A3E635',
+  '#22C55E',
+  '#10B981',
+  '#2DD4BF',
+  '#22D3EE',
+  '#38BDF8',
+  '#3B82F6',
+  '#6366F1',
+  '#8B5CF6',
+  '#A855F7',
+  '#D946EF',
+  '#EC4899',
+  '#F43F5E',
+  '#B45309',
+  '#78716C',
+  '#94A3B8',
+  '#E5E7EB',
+  '#C9A227',
 ];
 
-function Swatch({ color, active, onPress, onLongPress, label }: { color: string; active: boolean; onPress: () => void; onLongPress?: () => void; label: string }) {
+function Swatch({
+  color,
+  active,
+  onPress,
+  onLongPress,
+  label,
+}: {
+  color: string;
+  active: boolean;
+  onPress: () => void;
+  onLongPress?: () => void;
+  label: string;
+}) {
   return (
     <Pressable accessibilityLabel={label} accessibilityState={{ selected: active }} onPress={onPress} onLongPress={onLongPress} hitSlop={4}>
       <View style={[styles.swatchRing, { borderColor: active ? color : 'transparent' }]}>
         <View style={[styles.swatch, { backgroundColor: color }]}>
           {active ? (
-            <Animated.View entering={ZoomIn.springify()}>
+            <Animated.View entering={ZoomIn.duration(260).easing(EASE_OUT)}>
               <Check size={16} color={readableOn(color)} strokeWidth={3} />
             </Animated.View>
           ) : null}
@@ -39,8 +85,19 @@ function Swatch({ color, active, onPress, onLongPress, label }: { color: string;
 
 export function Appearance() {
   const c = useColors();
-  const { accent, customColors = [], intensity = 4, iconStyle = 'suave', iconTone = 'colorido', setAccent, addColor, removeColor, setIntensity, setIconStyle, setIconTone } =
-    useSettings();
+  const {
+    accent,
+    customColors = [],
+    intensity = 4,
+    iconStyle = 'suave',
+    iconTone = 'colorido',
+    setAccent,
+    addColor,
+    removeColor,
+    setIntensity,
+    setIconStyle,
+    setIconTone,
+  } = useSettings();
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('#F2415A');
   const [hexText, setHexText] = useState('');
@@ -109,9 +166,12 @@ export function Appearance() {
             <Animated.View entering={FadeIn.duration(160)} style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
               <Pressable style={{ flex: 1 }} accessibilityLabel="Fechar" onPress={() => setKnobOpen(false)} />
             </Animated.View>
-            <Animated.View entering={ZoomIn.springify().damping(18)} style={{ alignItems: 'center', gap: space.md }}>
+            <Animated.View entering={ZoomIn.duration(260).easing(EASE_OUT)} style={{ alignItems: 'center', gap: space.md }}>
               <View style={styles.knobSwatches}>
-                {[...(Object.keys(ACCENTS) as AccentName[]).map((a) => ({ key: a, color: ACCENTS[a].color })), ...customColors.map((h) => ({ key: h, color: h }))].map((o) => (
+                {[
+                  ...(Object.keys(ACCENTS) as AccentName[]).map((a) => ({ key: a, color: ACCENTS[a].color })),
+                  ...customColors.map((h) => ({ key: h, color: h })),
+                ].map((o) => (
                   <Swatch key={o.key} label={o.key} color={o.color} active={accent === o.key} onPress={() => (tap(), setAccent(o.key))} />
                 ))}
               </View>
@@ -139,7 +199,11 @@ export function Appearance() {
             <Chip key={k} label={ICON_STYLES[k]} active={iconStyle === k} onPress={() => (tap(), setIconStyle(k))} />
           ))}
         </View>
-        <Segmented<IconTone> value={iconTone} onChange={setIconTone} options={(Object.keys(ICON_TONES) as IconTone[]).map((k) => ({ value: k, label: ICON_TONES[k] }))} />
+        <Segmented<IconTone>
+          value={iconTone}
+          onChange={setIconTone}
+          options={(Object.keys(ICON_TONES) as IconTone[]).map((k) => ({ value: k, label: ICON_TONES[k] }))}
+        />
       </Section>
 
       <Section title="Ícone do app">
@@ -166,20 +230,32 @@ export function Appearance() {
         <View style={[styles.iconColors, appIconFollows && { opacity: 0.4 }]} pointerEvents={appIconFollows ? 'none' : 'auto'}>
           {ICON_COLORS.map((col) => (
             <Pressable key={col.key} accessibilityLabel={`Cor do ícone ${col.key}`} onPress={() => chooseIcon({ appIconColor: col.key })} hitSlop={4}>
-              <View style={[styles.swatchRing, { width: 40, height: 40, borderRadius: 20, borderColor: iconColor === col.key ? col.hex : 'transparent' }]}>
+              <View
+                style={[
+                  styles.swatchRing,
+                  { width: 40, height: 40, borderRadius: 20, borderColor: iconColor === col.key ? col.hex : 'transparent' },
+                ]}>
                 <View style={[styles.swatch, { width: 28, height: 28, borderRadius: 14, backgroundColor: col.hex }]} />
               </View>
             </Pressable>
           ))}
         </View>
-        <Pressable onPress={() => chooseIcon({ appIconFollows: !appIconFollows })} style={styles.followRow} accessibilityRole="switch" accessibilityState={{ checked: appIconFollows }}>
+        <Pressable
+          onPress={() => chooseIcon({ appIconFollows: !appIconFollows })}
+          style={styles.followRow}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: appIconFollows }}>
           <View style={{ flex: 1 }}>
             <T v="body">Acompanhar a cor do app</T>
             <T v="caption" tone="dim">
               O ícone muda junto quando você troca a cor (usa a cor pronta mais próxima)
             </T>
           </View>
-          <Switch value={appIconFollows} onValueChange={(v) => chooseIcon({ appIconFollows: v })} trackColor={{ true: c.accent, false: c.surface3 }} />
+          <Switch
+            value={appIconFollows}
+            onValueChange={(v) => chooseIcon({ appIconFollows: v })}
+            trackColor={{ true: c.accent, false: c.surface3 }}
+          />
         </Pressable>
         <T v="caption" tone="faint">
           O iOS avisa a cada troca de ícone. No modo escuro ou tingido da tela inicial, ele usa a versão própria automaticamente.
@@ -229,7 +305,16 @@ export function Appearance() {
 const styles = StyleSheet.create({
   swatches: { paddingHorizontal: space.lg, gap: space.sm, alignItems: 'center' },
   modalWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.lg },
-  knobSwatches: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 4, maxWidth: 340, backgroundColor: 'rgba(17,19,23,0.92)', borderRadius: 32, padding: 6 },
+  knobSwatches: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 4,
+    maxWidth: 340,
+    backgroundColor: 'rgba(17,19,23,0.92)',
+    borderRadius: 32,
+    padding: 6,
+  },
   done: { paddingHorizontal: space.xl, paddingVertical: space.sm, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.12)' },
   swatchRing: { width: 50, height: 50, borderRadius: 25, borderWidth: 2.5, alignItems: 'center', justifyContent: 'center' },
   swatch: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },

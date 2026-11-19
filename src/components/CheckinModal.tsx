@@ -1,3 +1,4 @@
+import { EASE_OUT } from './motion';
 /**
  * Check-in do dia: um modal simples, de uma tela só, na primeira abertura de cada dia
  * (lib/checkin.ts). Humor, sono, energia, foco do dia e o que ficou de ontem. Tudo opcional.
@@ -83,7 +84,7 @@ function CheckinSheet({ onClose }: { onClose: () => void }) {
       </Animated.View>
 
       <Animated.View style={[StyleSheet.absoluteFill, styles.wrap, lift]} pointerEvents="box-none">
-        <Animated.View entering={SlideInDown.springify().damping(22)} style={{ width: '100%' }}>
+        <Animated.View entering={SlideInDown.duration(260).easing(EASE_OUT)} style={{ width: '100%' }}>
           <Glass
             floating
             style={[
@@ -130,7 +131,8 @@ function CheckinSheet({ onClose }: { onClose: () => void }) {
                           setMood(i + 1);
                         }}
                         style={{ flex: 1 }}>
-                        <View style={[styles.mood, { backgroundColor: on ? c.accent + '2E' : c.surface2, borderColor: on ? c.accent : 'transparent' }]}>
+                        <View
+                          style={[styles.mood, { backgroundColor: on ? c.accent + '2E' : c.surface2, borderColor: on ? c.accent : 'transparent' }]}>
                           <Bounce trigger={on ? mood : null} amount={1.3}>
                             <Icon size={22} color={on ? c.accent : c.textDim} />
                           </Bounce>
@@ -175,7 +177,12 @@ function CheckinSheet({ onClose }: { onClose: () => void }) {
                   </View>
                   <View style={styles.bars}>
                     {ENERGY.map((label, i) => (
-                      <Pressable key={label} accessibilityLabel={label} hitSlop={6} onPress={() => setEnergy(i + 1)} style={{ flex: 1, justifyContent: 'flex-end', height: 30 }}>
+                      <Pressable
+                        key={label}
+                        accessibilityLabel={label}
+                        hitSlop={6}
+                        onPress={() => setEnergy(i + 1)}
+                        style={{ flex: 1, justifyContent: 'flex-end', height: 30 }}>
                         <View style={{ height: 8 + i * 5, borderRadius: 3, backgroundColor: energy > i ? c.warning : c.surface3 }} />
                       </Pressable>
                     ))}
@@ -194,7 +201,11 @@ function CheckinSheet({ onClose }: { onClose: () => void }) {
                   placeholderTextColor={c.textFaint}
                   maxLength={80}
                   returnKeyType="done"
-                  style={[styles.input, { color: c.text, backgroundColor: c.surface2, fontFamily: FONTS.regular }, Platform.OS === 'web' && ({ outlineStyle: 'none' } as object)]}
+                  style={[
+                    styles.input,
+                    { color: c.text, backgroundColor: c.surface2, fontFamily: FONTS.regular },
+                    Platform.OS === 'web' && ({ outlineStyle: 'none' } as object),
+                  ]}
                 />
               </View>
 
@@ -209,7 +220,11 @@ function CheckinSheet({ onClose }: { onClose: () => void }) {
                     ))}
                   </View>
                 )}
-                <Pressable onPress={() => setAddExpense(!addExpense)} style={styles.check} accessibilityRole="checkbox" accessibilityState={{ checked: addExpense }}>
+                <Pressable
+                  onPress={() => setAddExpense(!addExpense)}
+                  style={styles.check}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: addExpense }}>
                   <Checkbox checked={addExpense} onPress={() => setAddExpense(!addExpense)} />
                   <T v="callout" style={{ flex: 1 }}>
                     Gastei algo fora do Apple Pay

@@ -1,3 +1,4 @@
+import { EASE_OUT } from './motion';
 import { Briefcase, CalendarDays, Clock3, Flag, Hash, Inbox, Sparkles } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
@@ -50,22 +51,22 @@ export function QuickCapture({ visible, onClose }: { visible: boolean; onClose: 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
           {/* cada pedaço entendido "pula" para dentro enquanto você digita */}
           {parsed.due && (
-            <Animated.View key={'d' + parsed.due} entering={ZoomIn.springify().damping(12)} exiting={ZoomOut.duration(120)}>
+            <Animated.View key={'d' + parsed.due} entering={ZoomIn.duration(260).easing(EASE_OUT)} exiting={ZoomOut.duration(120)}>
               <Chip icon={CalendarDays} label={friendlyDate(parsed.due)} active />
             </Animated.View>
           )}
           {parsed.time && (
-            <Animated.View key={'t' + parsed.time} entering={ZoomIn.springify().damping(12)} exiting={ZoomOut.duration(120)}>
+            <Animated.View key={'t' + parsed.time} entering={ZoomIn.duration(260).easing(EASE_OUT)} exiting={ZoomOut.duration(120)}>
               <Chip icon={Clock3} label={parsed.time} active />
             </Animated.View>
           )}
           {parsed.priority && (
-            <Animated.View key={'p' + parsed.priority} entering={ZoomIn.springify().damping(12)} exiting={ZoomOut.duration(120)}>
+            <Animated.View key={'p' + parsed.priority} entering={ZoomIn.duration(260).easing(EASE_OUT)} exiting={ZoomOut.duration(120)}>
               <Chip icon={Flag} label={PRIORITY[parsed.priority].label} active color={PRIORITY[parsed.priority].color} />
             </Animated.View>
           )}
           {parsed.tags.map((t) => (
-            <Animated.View key={'#' + t} entering={ZoomIn.springify().damping(12)} exiting={ZoomOut.duration(120)}>
+            <Animated.View key={'#' + t} entering={ZoomIn.duration(260).easing(EASE_OUT)} exiting={ZoomOut.duration(120)}>
               <Chip icon={Hash} label={t} active color={c.textDim} />
             </Animated.View>
           ))}
