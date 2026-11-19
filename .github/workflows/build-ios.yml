@@ -13,9 +13,9 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -29,6 +29,29 @@ jobs:
           echo "Usando $XCODE"
           sudo xcode-select -s "$XCODE"
           xcodebuild -version
+
+      # ccache guarda o que já foi compilado (C/ObjC/C++ dos pods) entre um build e outro;
+      # o cache do CocoaPods evita baixar de novo as dependências (incl. o React Native pré-compilado).
+      - name: Preparar ccache
+        run: |
+          brew list ccache >/dev/null 2>&1 || brew install ccache
+          echo "CCACHE_DIR=$HOME/.ccache" >> "$GITHUB_ENV"
+          echo "USE_CCACHE=1" >> "$GITHUB_ENV"
+          ccache --max-size=3G
+          ccache --set-config=sloppiness=clang_index_store,file_stat_matches,include_file_ctime,include_file_mtime,ivfsoverlay,pch_defines,modules,system_headers,time_macros
+          ccache --set-config=file_clone=true
+          ccache --zero-stats
+
+      - name: Restaurar caches de compilação
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.ccache
+            ~/Library/Caches/CocoaPods
+          key: ios-build-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.run_id }}
+          restore-keys: |
+            ios-build-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+            ios-build-${{ runner.os }}-
 
       - name: Gerar projeto nativo (expo prebuild)
         env:
@@ -49,7 +72,13 @@ jobs:
             -destination 'generic/platform=iOS' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            DEBUG_INFORMATION_FORMAT=dwarf \
+            GCC_WARN_INHIBIT_ALL_WARNINGS=YES \
+            SWIFT_SUPPRESS_WARNINGS=YES \
+            CLANG_WARN_DOCUMENTATION_COMMENTS=NO \
             -quiet
+          ccache --show-stats || true
 
       - name: Embutir entitlements (App Group do widget)
         # Sem assinatura o binário sai sem entitlements e o Sideloadly não saberia que app e widget
@@ -108,7 +137,7 @@ jobs:
           zip -qry Orbita.ipa Payload
           ls -lh Orbita.ipa
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: Orbita-ipa
           path: Orbita.ipa
