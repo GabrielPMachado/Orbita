@@ -30,24 +30,11 @@ jobs:
           sudo xcode-select -s "$XCODE"
           xcodebuild -version
 
-      # ccache guarda o que já foi compilado (C/ObjC/C++ dos pods) entre um build e outro;
-      # o cache do CocoaPods evita baixar de novo as dependências (incl. o React Native pré-compilado).
-      - name: Preparar ccache
-        run: |
-          brew list ccache >/dev/null 2>&1 || brew install ccache
-          echo "CCACHE_DIR=$HOME/.ccache" >> "$GITHUB_ENV"
-          echo "USE_CCACHE=1" >> "$GITHUB_ENV"
-          ccache --max-size=3G
-          ccache --set-config=sloppiness=clang_index_store,file_stat_matches,include_file_ctime,include_file_mtime,ivfsoverlay,pch_defines,modules,system_headers,time_macros
-          ccache --set-config=file_clone=true
-          ccache --zero-stats
-
+      # o cache do CocoaPods evita baixar de novo as dependências (incl. o React Native pré-compilado)
       - name: Restaurar caches de compilação
         uses: actions/cache@v6
         with:
-          path: |
-            ~/.ccache
-            ~/Library/Caches/CocoaPods
+          path: ~/Library/Caches/CocoaPods
           key: ios-build-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.run_id }}
           restore-keys: |
             ios-build-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
@@ -78,7 +65,6 @@ jobs:
             SWIFT_SUPPRESS_WARNINGS=YES \
             CLANG_WARN_DOCUMENTATION_COMMENTS=NO \
             -quiet
-          ccache --show-stats || true
 
       - name: Embutir entitlements (App Group do widget)
         # Sem assinatura o binário sai sem entitlements e o Sideloadly não saberia que app e widget
