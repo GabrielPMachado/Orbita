@@ -95,7 +95,9 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
   }, [finish]);
 
   /* ---------- roteiro do portal atual (estudante.estacio.br + sala de avaliações) ---------- */
-  type Passo = { label?: string; run: () => void; wait: number };
+  type Passo = { label?: string; run: () => void; wait: number; disc?: number };
+  /** disciplina que o roteiro está lendo agora (para casar respostas sem código) */
+  const atual = useRef<number | undefined>(undefined);
   const roteiro = useRef<Passo[]>([]);
   const feitos = useRef(0);
   const passo = useCallback(() => {
@@ -104,6 +106,7 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
     if (Date.now() - started.current > MAX_TIME * 2) return finish();
     const p = roteiro.current.shift();
     if (!p) return finish();
+    if (p.disc !== undefined) atual.current = p.disc;
     feitos.current++;
     onSweep?.({ phase: 'sweeping', visited: feitos.current, total: feitos.current + roteiro.current.length, label: p.label });
     try {
@@ -119,8 +122,8 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
     const passos: Passo[] = [];
     for (let i = 0; i < Math.min(n, 12); i++) {
       passos.push(
-        { label: 'Avaliações', run: () => setUrl(`${PORTAL.avaliacoes}?d=${i}`), wait: 7000 },
-        { label: `Disciplina ${i + 1} de ${n}`, run: js(PORTAL.abrir(i)), wait: 9000 },
+        { label: 'Avaliações', run: () => setUrl(`${PORTAL.avaliacoes}?d=${i}`), wait: 7000, disc: -1 },
+        { label: `Disciplina ${i + 1} de ${n}`, run: js(PORTAL.abrir(i)), wait: 9000, disc: i },
         { label: `Disciplina ${i + 1}: Prova AVS`, run: js(PORTAL.aba('Prova AVS')), wait: 4000 },
         { label: `Disciplina ${i + 1}: notas`, run: js(PORTAL.aba('Minhas notas')), wait: 4500 },
       );
@@ -188,7 +191,13 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
       }
       const cp = cap.current;
       if (m.type === 'json' && typeof m.body === 'string') {
-        cp.json.push({ url: String(m.url), body: m.body });
+        cp.json.push({
+          ordem: atual.current !== undefined && atual.current >= 0 ? atual.current : undefined,
+          url: String(m.url),
+          body: m.body,
+          page: typeof m.page === 'string' ? m.page : undefined,
+          disc: typeof m.disc === 'string' ? m.disc : undefined,
+        });
         if (cp.json.length > 400) cp.json.shift();
         changed();
       } else if (m.type === 'page') {

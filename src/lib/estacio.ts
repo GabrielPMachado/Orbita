@@ -24,7 +24,9 @@ export const HOOK_JS = `
   var keep = function(url, text){
     if (!text || text.length < 2 || text.length > 400000) return;
     var c = text.trim()[0]; if (c !== '{' && c !== '[') return;
-    send({ type: 'json', url: String(url).slice(0, 300), page: location.href.slice(0, 300), body: text });
+    var disc = (location.pathname.match(/avaliacoes\/([A-Z]{2,4}\d{3,5})/) || [])[1];
+    try { disc = disc || new URLSearchParams(location.search).get('discipline') || sessionStorage.getItem('DisciplineId') || undefined; } catch(e){}
+    send({ type: 'json', url: String(url).slice(0, 300), page: location.href.slice(0, 300), disc: disc, body: text });
   };
   var f = window.fetch;
   if (f) window.fetch = function(){ var a = arguments; return f.apply(this, a).then(function(r){ try { r.clone().text().then(function(t){ keep(r.url || a[0], t); }); } catch(e){} return r; }); };
@@ -194,7 +196,7 @@ function titleCase(s: string) {
 }
 
 export interface Captura {
-  json: { url: string; body: string; page?: string }[];
+  json: { url: string; body: string; page?: string; disc?: string; ordem?: number }[];
   pages: Map<string, { url: string; title: string; text: string; tables: string[][][] }>;
   /** a última página pedia senha (sessão expirada ou ainda não entrou) */
   login?: boolean;
@@ -211,6 +213,10 @@ export interface Evento {
   data: string; // AAAA-MM-DD (início, ou o dia)
   ate?: string; // fim da janela (agendamento, entrega)
   disciplina?: string;
+  /** código da disciplina na Estácio (ex.: ARA3555) */
+  codigo?: string;
+  /** nota já lançada (prova feita) */
+  nota?: number;
   /** só se precisar (ex.: AVS) */
   opcional?: boolean;
 }

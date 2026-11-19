@@ -3,6 +3,12 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.12.2] - 2026-11-19
+
+### Corrigido
+- Provas da Estácio iam para uma matéria genérica "Estácio": agora cada uma vai para a matéria certa, pelo código da disciplina (ARA…), com a mesma matéria que você já tinha (mesmo com acento diferente).
+- Prova feita entra com a nota; a janela de agendamento aparece na própria matéria ("Prova AVS · agendar até 03/12") e vira tarefa com o nome da matéria.
+
 ## [0.12.1] - 2026-11-19
 
 ### Melhorado

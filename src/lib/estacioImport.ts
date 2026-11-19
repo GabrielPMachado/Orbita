@@ -26,16 +26,25 @@ export type Resultado = {
   arquivos?: { texto: string; arquivo?: string }[];
 };
 
-function subjectFor(nome: string | undefined, now: number) {
+function subjectFor(nome: string | undefined, now: number, codigo?: string) {
   const subs = useSubjects.getState();
+  if (codigo) {
+    const byCode = subs.items.find((s) => s.code === codigo);
+    if (byCode) return byCode.id;
+  }
   if (!nome) {
     const geral = subs.items.find((s) => s.source === 'estacio' && s.name === 'Estácio');
     if (geral) return geral.id;
     return subs.add({ name: 'Estácio', color: PALETTE[0], source: 'estacio', syncedAt: now });
   }
-  const ex = subs.items.find((s) => norm(s.name) === norm(nome));
-  if (ex) return ex.id;
-  return subs.add({ name: nome, color: PALETTE[subs.items.length % PALETTE.length], source: 'estacio', syncedAt: now });
+  // nome igual, ou um contém o outro ("Computação em Nuvem" × "Computacao em Nuvem I")
+  const n = norm(nome);
+  const ex = subs.items.find((s) => norm(s.name) === n) ?? subs.items.find((s) => norm(s.name).includes(n) || n.includes(norm(s.name)));
+  if (ex) {
+    if (codigo && !ex.code) subs.update(ex.id, { code: codigo });
+    return ex.id;
+  }
+  return subs.add({ name: nome, code: codigo, color: PALETTE[subs.items.length % PALETTE.length], source: 'estacio', syncedAt: now });
 }
 
 export function importarEstacio(r: Resultado) {
@@ -72,25 +81,54 @@ export function importarEstacio(r: Resultado) {
     const n = d?.notas ?? {};
     return n.Parcial ?? (n.AV !== undefined ? (n.AV ?? 0) + (n.Progresso ?? 0) + (n.Sim1 ?? 0) + (n.Sim2 ?? 0) : undefined);
   };
-  for (const e of r.eventos) {
+  for (let e of r.eventos) {
     if (/^Período da/i.test(e.titulo)) continue; // só informativo
     if (e.opcional) {
       const p = parcial(e.disciplina);
       if (p !== undefined && p >= 6) continue; // já passou: AVS não precisa
     }
     if (e.tipo === 'prova' || e.tipo === 'entrega') {
-      const subjectId = subjectFor(e.disciplina, now);
+      const subjectId = subjectFor(e.disciplina, now, e.codigo);
       const exams = useExams.getState();
       const titulo = e.titulo.length > 60 ? e.titulo.slice(0, 60) : e.titulo;
-      const dup = exams.items.find((x) => x.subjectId === subjectId && x.date === e.data && norm(x.title) === norm(titulo));
-      if (dup) continue;
-      exams.add({ subjectId, title: titulo, kind: e.tipo === 'prova' ? 'prova' : 'entrega', date: e.data });
+      // nota da prova (AV/AVS) vinda de "Minhas notas"
+      const d = r.disciplinas.find((x) => (e.codigo && x.codigo === e.codigo) || (e.disciplina && norm(x.nome) === norm(e.disciplina)));
+      const sigla = /Prova (AVS|AV)\b/.exec(titulo)?.[1];
+      const grade = e.nota ?? (sigla ? d?.notas[sigla] : undefined);
+      // a mesma prova (já marcada, ou o aviso de agendamento dela) é atualizada, não duplicada
+      const dup =
+        exams.items.find((x) => x.subjectId === subjectId && x.date === e.data && norm(x.title) === norm(titulo)) ??
+        (sigla
+          ? exams.items.find((x) => x.subjectId === subjectId && new RegExp(`^Prova ${sigla}\\b`).test(x.title) && x.title.includes('agendar'))
+          : undefined);
+      if (dup) {
+        exams.update(dup.id, { title: titulo, date: e.data, grade: grade ?? dup.grade, weight: sigla ? 8 : dup.weight });
+        continue;
+      }
+      exams.add({ subjectId, title: titulo, kind: e.tipo === 'prova' ? 'prova' : 'entrega', date: e.data, grade, weight: sigla ? 8 : undefined });
       avaliacoes++;
     } else {
+      // janela de agendamento de prova: aparece também na matéria, no último dia para agendar
+      const sigla = /(AVS|AV)\b/.exec(e.titulo)?.[1];
+      if (e.tipo === 'agendamento' && sigla && (e.disciplina || e.codigo) && (e.ate ?? e.data) >= new Date().toISOString().slice(0, 10)) {
+        const subjectId = subjectFor(e.disciplina, now, e.codigo);
+        const exams = useExams.getState();
+        const tituloProva = `Prova ${sigla} · agendar até ${br(e.ate ?? e.data)}${e.opcional ? ' (substitutiva)' : ''}`;
+        const ja = exams.items.find((x) => x.subjectId === subjectId && new RegExp(`^Prova ${sigla}\\b`).test(x.title));
+        if (!ja) {
+          exams.add({ subjectId, title: tituloProva, kind: 'prova', date: e.ate ?? e.data, weight: 8 });
+          avaliacoes++;
+        } else if (ja.title.includes('agendar')) exams.update(ja.id, { title: tituloProva, date: e.ate ?? e.data });
+      }
       // agendamento/prazo vira tarefa com prazo no último dia da janela
       const fim = e.ate ?? e.data;
       if (fim < new Date().toISOString().slice(0, 10)) continue;
       const p = e.opcional ? parcial(e.disciplina) : undefined;
+      // usa o nome da matéria como está no Órbita (com acento, do jeito que você escreveu)
+      if (e.disciplina || e.codigo) {
+        const sid = subjectFor(e.disciplina, now, e.codigo);
+        e = { ...e, disciplina: useSubjects.getState().items.find((x) => x.id === sid)?.name ?? e.disciplina };
+      }
       const titulo =
         e.tipo === 'agendamento'
           ? `Agendar ${e.titulo.replace(/^agendamento( d[aeo])?\s*/i, '') || 'prova'}${e.opcional ? (p !== undefined ? ` (nota ${p.toFixed(1).replace('.', ',')}/6)` : ' (se precisar)') : ''}${e.disciplina ? ` · ${e.disciplina}` : ''}${e.ate ? ` · até ${br(e.ate)}` : ''}`

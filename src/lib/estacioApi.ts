@@ -72,12 +72,17 @@ function notasDoTexto(text: string): Record<string, number> {
 
 export function lerPortal(c: Captura): LeituraEstacio {
   const discs = new Map<string, Disciplina>(); // por código
+  const ordem: string[] = []; // códigos na ordem da tela "Avaliações"
   const nomes = new Map<string, string>(); // código → nome
   const eventos: Evento[] = [];
   const mensalidades: MensalidadeAviso[] = [];
   let renovacao = false;
 
-  for (const j of c.json) {
+  // primeiro as listas (nomes e ordem das disciplinas), depois o resto
+  const lista = [...c.json].sort(
+    (a, b) => Number(/v3\/avaliacoes|turmas\/estacio_/.test(b.url)) - Number(/v3\/avaliacoes|turmas\/estacio_/.test(a.url)),
+  );
+  for (const j of lista) {
     const u = j.url;
     const body = parse(j.body);
     if (!body) continue;
@@ -109,6 +114,7 @@ export function lerPortal(c: Captura): LeituraEstacio {
     if (/\/rest\/v3\/avaliacoes/.test(u) && Array.isArray(body)) {
       for (const a of body as { id?: string; nome?: string }[]) {
         if (!a.id || !a.nome) continue;
+        if (!ordem.includes(a.id)) ordem.push(a.id);
         nomes.set(a.id, nomes.get(a.id) ?? titleCase(a.nome));
         if (!discs.has(a.id)) discs.set(a.id, { nome: titleCase(a.nome), codigo: a.id, notas: {} });
       }
@@ -152,7 +158,11 @@ export function lerPortal(c: Captura): LeituraEstacio {
 
     // sala de avaliações: cartão da prova (AV / AVS) — a disciplina vem da página
     if (/sirius-student-api\/evaluation-card/.test(u)) {
-      const cod = /\/avaliacoes\/([A-Z]{2,4}\d{3,5})/.exec(j.page ?? '')?.[1];
+      const cod =
+        (j.disc && /^[A-Z]{2,4}\d{3,5}$/.test(j.disc) ? j.disc : undefined) ??
+        /\/avaliacoes\/([A-Z]{2,4}\d{3,5})/.exec(j.page ?? '')?.[1] ??
+        /[?&]discipline=([A-Z]{2,4}\d{3,5})/.exec(j.page ?? '')?.[1] ??
+        (j.ordem !== undefined ? ordem[j.ordem] : undefined);
       const d = (body as { data?: Record<string, unknown> }).data as
         | {
             code?: string;
@@ -176,7 +186,7 @@ export function lerPortal(c: Captura): LeituraEstacio {
             .filter(([k, v]) => typeof v === 'string' && /date|data|start|inicio/i.test(k) && /\d{4}-\d{2}-\d{2}/.test(v as string))
             .map(([, v]) => v as string);
           const quando = day(datas[0]);
-          if (quando) eventos.push({ titulo: `Prova ${prova}`, tipo: 'prova', data: quando, disciplina: disc });
+          if (quando) eventos.push({ titulo: `Prova ${prova}`, tipo: 'prova', data: quando, disciplina: disc, codigo: cod });
         }
       } else if (d.isScheduleAvailable && d.scheduleEndDate) {
         eventos.push({
@@ -185,19 +195,27 @@ export function lerPortal(c: Captura): LeituraEstacio {
           data: day(d.scheduleStartDate) ?? day(d.scheduleEndDate)!,
           ate: day(d.scheduleEndDate),
           disciplina: disc,
+          codigo: cod,
           // a AVS só é necessária se a nota não bastar
           opcional: prova === 'AVS',
         });
       }
       if (d.startDate && d.endDate && !agendada) {
-        eventos.push({ titulo: `Período da Prova ${prova}`, tipo: 'prazo', data: day(d.startDate)!, ate: day(d.endDate), disciplina: disc });
+        eventos.push({
+          titulo: `Período da Prova ${prova}`,
+          tipo: 'prazo',
+          data: day(d.startDate)!,
+          ate: day(d.endDate),
+          disciplina: disc,
+          codigo: cod,
+        });
       }
     }
   }
 
   // notas (texto da página "Minhas notas" de cada disciplina)
   for (const p of c.pages.values()) {
-    const cod = /\/avaliacoes\/([A-Z]{2,4}\d{3,5})/.exec(p.url)?.[1];
+    const cod = /\/avaliacoes\/([A-Z]{2,4}\d{3,5})/.exec(p.url)?.[1] ?? /[?&]discipline=([A-Z]{2,4}\d{3,5})/.exec(p.url)?.[1];
     if (!cod || !/Minhas notas/.test(p.text)) continue;
     const n = notasDoTexto(p.text);
     if (!Object.keys(n).length) continue;
