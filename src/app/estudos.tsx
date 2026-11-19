@@ -1,3 +1,4 @@
+import { useEstacio } from '@/store/estacio';
 import { router } from 'expo-router';
 import { BookOpen, CalendarClock, GraduationCap, Plus, Timer, Trash } from 'lucide-react-native';
 import { useState } from 'react';
@@ -14,7 +15,11 @@ const daysUntil = (k: string) => Math.round((fromKey(k).getTime() - fromKey(toda
 const hm = (min: number) => (min >= 60 ? `${Math.floor(min / 60)}h${min % 60 ? String(min % 60).padStart(2, '0') : ''}` : `${min} min`);
 
 export default function Estudos() {
-  const lastSync = useSubjects((st) => st.items.reduce((a, x) => Math.max(a, x.syncedAt ?? 0), 0));
+  const est = useEstacio();
+  const lastSync = Math.max(
+    est.lastSweep,
+    useSubjects((st) => st.items.reduce((a, x) => Math.max(a, x.syncedAt ?? 0), 0)),
+  );
   const c = useColors();
   const subjects = useSubjects((s) => s.items);
   const exams = useExams((s) => s.items);
@@ -62,7 +67,11 @@ export default function Estudos() {
 
   return (
     <>
-      <Screen back title="Estudos" subtitle="Matérias, provas e tempo de estudo" actions={<GlassButton icon={Plus} label="Avaliação" onPress={() => setExamSheet('new')} />}>
+      <Screen
+        back
+        title="Estudos"
+        subtitle="Matérias, provas e tempo de estudo"
+        actions={<GlassButton icon={Plus} label="Avaliação" onPress={() => setExamSheet('new')} />}>
         <View style={{ flexDirection: 'row', gap: space.sm }}>
           <Stat label="Estudo na semana" value={hm(weekMin)} hint="com o timer de foco" />
           <Stat
@@ -96,14 +105,24 @@ export default function Estudos() {
           <View style={{ flex: 1 }}>
             <T v="headline">Estácio</T>
             <T v="caption" tone="dim">
-              {lastSync ? `Atualizado ${friendlySync(lastSync)} · toque para atualizar` : 'Puxar disciplinas, notas e boletos do portal'}
+              {est.needsLogin
+                ? 'A sessão expirou · toque para entrar de novo'
+                : lastSync
+                  ? `${est.auto ? 'Atualiza sozinho todo dia' : 'Atualizado'} · ${friendlySync(lastSync)}`
+                  : 'Puxar disciplinas, provas, prazos, notas e boletos'}
             </T>
           </View>
         </Card>
 
         <Section title="Matérias" action="Nova" onAction={() => setSubjectSheet('new')}>
           {active.length === 0 ? (
-            <Empty icon={GraduationCap} title="Nenhuma matéria" hint="Cadastre as disciplinas do semestre." action="Adicionar matéria" onAction={() => setSubjectSheet('new')} />
+            <Empty
+              icon={GraduationCap}
+              title="Nenhuma matéria"
+              hint="Cadastre as disciplinas do semestre."
+              action="Adicionar matéria"
+              onAction={() => setSubjectSheet('new')}
+            />
           ) : (
             <List>
               {active.map((s) => {
@@ -114,18 +133,20 @@ export default function Estudos() {
                     key={s.id}
                     leading={<IconTile icon={BookOpen} color={s.color} />}
                     title={s.name}
-                    subtitle={[
-                      s.grades && Object.keys(s.grades).length
-                        ? Object.entries(s.grades)
-                            .map(([k, v]) => `${k} ${v.toFixed(1).replace('.', ',')}`)
-                            .join(' ')
-                        : null,
-                      s.absences != null ? `${s.absences} falta${s.absences === 1 ? '' : 's'}` : null,
-                      s.professor,
-                      m ? `${hm(m)} na semana` : null,
-                    ]
-                      .filter(Boolean)
-                      .join('  ·  ') || 'sem estudo na semana'}
+                    subtitle={
+                      [
+                        s.grades && Object.keys(s.grades).length
+                          ? Object.entries(s.grades)
+                              .map(([k, v]) => `${k} ${v.toFixed(1).replace('.', ',')}`)
+                              .join(' ')
+                          : null,
+                        s.absences != null ? `${s.absences} falta${s.absences === 1 ? '' : 's'}` : null,
+                        s.professor,
+                        m ? `${hm(m)} na semana` : null,
+                      ]
+                        .filter(Boolean)
+                        .join('  ·  ') || 'sem estudo na semana'
+                    }
                     onPress={() => setSubjectSheet(s)}
                     trailing={
                       a != null ? (
@@ -166,7 +187,7 @@ function SubjectSheet({ editing, onClose }: { editing: Subject | 'new' | null; o
   const [professor, setProfessor] = useState('');
   const [color, setColor] = useState(PALETTE[0]);
   const [key, setKey] = useState<string | null>(null);
-  const k = editing === 'new' ? 'new' : editing?.id ?? null;
+  const k = editing === 'new' ? 'new' : (editing?.id ?? null);
   if (k !== key) {
     setKey(k);
     const e = editing && editing !== 'new' ? editing : undefined;
@@ -227,7 +248,7 @@ function ExamSheet({ editing, onClose }: { editing: Exam | 'new' | null; onClose
   const [grade, setGrade] = useState('');
   const [weight, setWeight] = useState(1);
   const [key, setKey] = useState<string | null>(null);
-  const k = editing === 'new' ? 'new' : editing?.id ?? null;
+  const k = editing === 'new' ? 'new' : (editing?.id ?? null);
   if (k !== key) {
     setKey(k);
     const e = editing && editing !== 'new' ? editing : undefined;
@@ -278,7 +299,15 @@ function ExamSheet({ editing, onClose }: { editing: Exam | 'new' | null; onClose
         <Field label="Nota" value={grade} onChangeText={setGrade} placeholder="—" keyboardType="decimal-pad" style={{ flex: 1 }} />
       </View>
       <Card>
-        <Stepper label="Peso na média" value={weight} min={0.5} max={10} step={0.5} onChange={setWeight} format={(v) => String(v).replace('.', ',')} />
+        <Stepper
+          label="Peso na média"
+          value={weight}
+          min={0.5}
+          max={10}
+          step={0.5}
+          onChange={setWeight}
+          format={(v) => String(v).replace('.', ',')}
+        />
       </Card>
       <Button
         label="Salvar"

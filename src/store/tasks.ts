@@ -18,7 +18,7 @@ export interface Task {
   /** projeto do módulo Trabalho */
   projectId?: string;
   /** de onde veio quando não é de um projeto */
-  source?: 'captura' | 'hoje' | 'atalho' | 'revisao';
+  source?: 'captura' | 'hoje' | 'atalho' | 'revisao' | 'estacio';
   createdAt: number;
   doneAt?: number;
 }

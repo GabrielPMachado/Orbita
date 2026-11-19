@@ -1,3 +1,4 @@
+import { EstacioBackground } from '@/components/EstacioBackground';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
@@ -22,6 +23,7 @@ import { useAutoPluggySync } from '@/lib/pluggySync';
 import { useFinancySync } from '@/lib/financy';
 import { useAppIconFollowsAccent } from '@/lib/appIcon';
 import { useFinancyBaseSync } from '@/lib/financyData';
+import { useAutoBackup } from '@/lib/backup';
 import { useColors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -55,6 +57,7 @@ export default function RootLayout() {
   useAppIconFollowsAccent();
   useFinancyBaseSync();
   useNotificationLinks();
+  useAutoBackup();
   const [loaded, error] = useFonts({ Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Sora_600SemiBold, Sora_700Bold });
 
   useEffect(() => {
@@ -71,6 +74,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="foco" options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: '#050506' } }} />
         </Stack>
+        <EstacioBackground />
         <ToastHost />
       </SafeAreaProvider>
     </GestureHandlerRootView>

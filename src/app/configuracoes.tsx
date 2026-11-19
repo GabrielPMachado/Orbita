@@ -1,3 +1,4 @@
+import { BackupSection } from '@/components/BackupSection';
 import { useMemo } from 'react';
 import { toast } from '@/store/toast';
 import { reloadWidgets, widgetsShareData } from '@/lib/nativeWidgets';
@@ -66,7 +67,20 @@ export default function Configuracoes() {
                 <T v="title">{(name.trim()[0] ?? 'O').toUpperCase()}</T>
               </Glass>
             )}
-            <View style={{ position: 'absolute', right: -2, bottom: -2, width: 26, height: 26, borderRadius: 13, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: c.bg }}>
+            <View
+              style={{
+                position: 'absolute',
+                right: -2,
+                bottom: -2,
+                width: 26,
+                height: 26,
+                borderRadius: 13,
+                backgroundColor: c.accent,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 2,
+                borderColor: c.bg,
+              }}>
               <Camera size={13} color={c.onAccent} strokeWidth={2.4} />
             </View>
           </Pressable>
@@ -92,7 +106,8 @@ export default function Configuracoes() {
       <Section title="Widget de saldo">
         {/* prévia de como fica na tela de bloqueio */}
         <View style={{ alignItems: 'center', paddingVertical: space.md }}>
-          <View style={{ width: 172, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.12)', gap: 1 }}>
+          <View
+            style={{ width: 172, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.12)', gap: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Wallet size={11} color="#fff" />
               <T v="caption" color="rgba(255,255,255,0.7)" style={{ fontSize: 12 }}>
@@ -135,13 +150,6 @@ export default function Configuracoes() {
       <Section title="Integrações">
         <List>
           <Row
-            leading={<IconTile icon={BadgeCheck} color={c.success} />}
-            title="Meu Pluggy"
-            subtitle={pluggyOn ? 'Conferência com o banco ativa' : 'Conferir lançamentos com o extrato'}
-            onPress={() => router.push('/financas/pluggy')}
-            chevron
-          />
-          <Row
             leading={<IconTile icon={Wallet} color="#10B981" />}
             title="Financy"
             subtitle={financyOn ? 'Conectado · saldo e categorias do Apple Pay' : 'Abrir e conectar o seu app de finanças'}
@@ -150,6 +158,8 @@ export default function Configuracoes() {
           />
         </List>
       </Section>
+
+      <BackupSection />
 
       {SECTIONS.map((section) => (
         <Section key={section} title={`Módulos · ${section}`}>
@@ -163,7 +173,13 @@ export default function Configuracoes() {
                 trailing={
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
                     {!m.ready && <Badge label="Em breve" />}
-                    <Switch value={!disabled.includes(m.id)} onValueChange={() => toggleModule(m.id)} trackColor={{ true: c.accent, false: c.surface3 }} thumbColor="#FFFFFF" ios_backgroundColor={c.surface3} />
+                    <Switch
+                      value={!disabled.includes(m.id)}
+                      onValueChange={() => toggleModule(m.id)}
+                      trackColor={{ true: c.accent, false: c.surface3 }}
+                      thumbColor="#FFFFFF"
+                      ios_backgroundColor={c.surface3}
+                    />
                   </View>
                 }
               />

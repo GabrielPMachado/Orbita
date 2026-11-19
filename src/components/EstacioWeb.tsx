@@ -1,0 +1,223 @@
+import { File, Paths } from 'expo-file-system';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react';
+import { type StyleProp, type ViewStyle } from 'react-native';
+import WebView, { type WebViewMessageEvent, type WebViewProps } from 'react-native-webview';
+import type { FileDownloadEvent, ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes';
+import { OrbitaDocs } from '../../modules/orbita-docs';
+import { lerTexto } from '@/lib/boleto';
+import { analisar, ESTACIO_URLS, HOOK_JS, LINKS_JS, novaCaptura, PAGE_JS, pdfJs, type Captura } from '@/lib/estacio';
+import type { Resultado } from '@/lib/estacioImport';
+import { keepFile } from '@/lib/media';
+import { uid } from '@/lib/storage';
+
+// os tipos da WebView 14 não fecham com o React 19; o componente em si é o mesmo
+const WV = WebView as unknown as (p: WebViewProps & { ref?: Ref<WebView> }) => React.ReactElement;
+
+const PAGE_WAIT = 4500; // a página monta o conteúdo depois de carregar
+const MAX_PAGES = 18;
+const MAX_TIME = 150_000;
+
+export type SweepState = { phase: 'idle' | 'login' | 'sweeping' | 'done'; visited: number; total: number; label?: string };
+export type EstacioWebHandle = { sweep: () => void; reload: () => void; capture: () => Captura; result: () => Resultado; go: (url: string) => void };
+
+/**
+ * O portal da Estácio numa WebView que copia o que a página recebe (JSON, texto, tabelas, PDFs).
+ * `autoSweep`: depois de entrar, visita sozinho as páginas do menu ligadas a notas, provas,
+ * agendamento, calendário e financeiro, e chama `onDone` com o que achou.
+ */
+export const EstacioWeb = forwardRef(function EstacioWeb(
+  {
+    style,
+    autoSweep = false,
+    onChange,
+    onSweep,
+    onDone,
+    onLoading,
+  }: {
+    style?: StyleProp<ViewStyle>;
+    autoSweep?: boolean;
+    onChange?: (r: Resultado) => void;
+    onSweep?: (s: SweepState) => void;
+    onDone?: (r: Resultado, s: { loggedOut: boolean }) => void;
+    onLoading?: (l: boolean) => void;
+  },
+  ref: Ref<EstacioWebHandle>,
+) {
+  const web = useRef<WebView>(null);
+  const cap = useRef(novaCaptura());
+  const pdfs = useRef<{ texto: string; arquivo?: string }[]>([]);
+  const [url, setUrl] = useState(ESTACIO_URLS[0].url);
+
+  // varredura
+  const queue = useRef<{ text: string; href: string }[]>([]);
+  const visited = useRef(new Set<string>());
+  const phase = useRef<SweepState['phase']>('idle');
+  const started = useRef(0);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const wantSweep = useRef(autoSweep);
+
+  const result = useCallback((): Resultado => {
+    const r = analisar(
+      cap.current,
+      pdfs.current.map((p) => p.texto),
+    );
+    return { ...r, arquivos: pdfs.current };
+  }, []);
+
+  const emit = (s: Partial<SweepState>) =>
+    onSweep?.({ phase: phase.current, visited: visited.current.size, total: visited.current.size + queue.current.length, ...s });
+
+  const finish = useCallback(
+    (loggedOut = false) => {
+      clearTimeout(timer.current);
+      phase.current = loggedOut ? 'login' : 'done';
+      emit({});
+      onDone?.(result(), { loggedOut });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onDone, result],
+  );
+
+  const next = useCallback(() => {
+    clearTimeout(timer.current);
+    if (phase.current !== 'sweeping') return;
+    if (Date.now() - started.current > MAX_TIME || visited.current.size >= MAX_PAGES) return finish();
+    const n = queue.current.shift();
+    if (!n) return finish();
+    if (visited.current.has(n.href)) return next();
+    visited.current.add(n.href);
+    emit({ label: n.text });
+    setUrl(n.href);
+    // se a página não terminar de carregar, segue mesmo assim
+    timer.current = setTimeout(next, PAGE_WAIT * 3);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finish]);
+
+  const startSweep = useCallback(() => {
+    if (cap.current.login) {
+      phase.current = 'login';
+      emit({});
+      return;
+    }
+    phase.current = 'sweeping';
+    started.current = Date.now();
+    visited.current = new Set([url]);
+    emit({});
+    web.current?.injectJavaScript(LINKS_JS);
+    timer.current = setTimeout(next, 1500);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [next, url]);
+
+  useImperativeHandle(ref, () => ({
+    sweep: () => {
+      wantSweep.current = true;
+      startSweep();
+    },
+    reload: () => web.current?.reload(),
+    capture: () => cap.current,
+    result,
+    go: (u: string) => setUrl(u),
+  }));
+
+  const bump = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const changed = () => {
+    clearTimeout(bump.current);
+    bump.current = setTimeout(() => onChange?.(result()), 600);
+  };
+
+  const onMessage = useCallback(
+    async (e: WebViewMessageEvent) => {
+      let m: { type: string; [k: string]: unknown };
+      try {
+        m = JSON.parse(e.nativeEvent.data);
+      } catch {
+        return;
+      }
+      const cp = cap.current;
+      if (m.type === 'json' && typeof m.body === 'string') {
+        cp.json.push({ url: String(m.url), body: m.body });
+        if (cp.json.length > 400) cp.json.shift();
+        changed();
+      } else if (m.type === 'page') {
+        cp.login = !!m.login;
+        cp.pages.set(String(m.url), {
+          url: String(m.url),
+          title: String(m.title ?? ''),
+          text: String(m.text ?? ''),
+          tables: (m.tables as string[][][]) ?? [],
+        });
+        changed();
+      } else if (m.type === 'links' && Array.isArray(m.items)) {
+        for (const it of m.items as { text: string; href: string }[]) {
+          if (!visited.current.has(it.href) && !queue.current.some((q) => q.href === it.href)) queue.current.push(it);
+        }
+        emit({});
+      } else if (m.type === 'pdf' && typeof m.b64 === 'string' && OrbitaDocs) {
+        // boleto em PDF aberto dentro do portal: lê no próprio iPhone
+        try {
+          const f = new File(Paths.cache, `estacio-${uid()}.pdf`);
+          f.write(m.b64, { encoding: 'base64' });
+          const r = await OrbitaDocs.readPdf(f.uri, null);
+          if (!r.locked && lerTexto(r.text, r.codes).length) {
+            pdfs.current.push({ texto: r.text + '\n' + r.codes.join('\n'), arquivo: keepFile(f.uri, 'pdf') });
+            changed();
+          }
+        } catch {}
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // terminou de carregar uma página: lê, e na varredura procura mais links e segue
+  const onLoadEnd = () => {
+    onLoading?.(false);
+    web.current?.injectJavaScript(PAGE_JS);
+    setTimeout(() => {
+      if (phase.current === 'sweeping') {
+        web.current?.injectJavaScript(LINKS_JS);
+        clearTimeout(timer.current);
+        timer.current = setTimeout(next, PAGE_WAIT);
+      } else if (wantSweep.current && phase.current === 'idle') {
+        // primeira página depois do login: começa sozinho
+        if (cap.current.login) {
+          phase.current = 'login';
+          emit({});
+          if (!onSweep) return;
+        } else startSweep();
+      } else if (phase.current === 'login' && !cap.current.login && wantSweep.current) {
+        // acabou de entrar
+        phase.current = 'idle';
+        startSweep();
+      }
+    }, PAGE_WAIT);
+  };
+
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const source = useMemo(() => ({ uri: url }), [url]);
+
+  return (
+    <WV
+      ref={web}
+      source={source}
+      style={style}
+      sharedCookiesEnabled
+      javaScriptEnabled
+      domStorageEnabled
+      allowsBackForwardNavigationGestures
+      injectedJavaScriptBeforeContentLoaded={HOOK_JS}
+      injectedJavaScript={PAGE_JS}
+      onLoadStart={() => onLoading?.(true)}
+      onLoadEnd={onLoadEnd}
+      onMessage={onMessage}
+      onShouldStartLoadWithRequest={(req: ShouldStartLoadRequest) => {
+        if (/\.pdf(\?|$)/i.test(req.url) || /boleto.*(pdf|imprimir|download)|(pdf|imprimir|download).*boleto/i.test(req.url)) {
+          web.current?.injectJavaScript(pdfJs(req.url));
+        }
+        return true;
+      }}
+      onFileDownload={({ nativeEvent }: FileDownloadEvent) => web.current?.injectJavaScript(pdfJs(nativeEvent.downloadUrl))}
+    />
+  );
+});

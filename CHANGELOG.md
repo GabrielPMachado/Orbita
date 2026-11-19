@@ -3,6 +3,16 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.12.0] - 2026-11-19
+
+### Adicionado
+- Backup automático dos dados na sua conta (a mesma do Financy) sempre que o app vai para o fundo; numa instalação nova o Órbita oferece restaurar. Também dá para exportar e importar um arquivo .json (Configurações › Seus dados).
+- Estácio lê tudo sozinha: depois do login, percorre as páginas de notas, provas, agendamento, calendário e financeiro. Provas e entregas viram avaliações em Estudos; janelas de agendamento e prazos viram tarefas de prioridade alta; boletos vão para Boletos.
+- Atualização diária da Estácio em segundo plano (pode desligar); se a sessão expirar, Estudos avisa para entrar de novo.
+
+### Mudado
+- Build do IPA com ccache e cache do CocoaPods, sem avisos dos pods e com actions em Node 24.
+
 ## [0.11.1] - 2026-11-19
 
 ### Corrigido
