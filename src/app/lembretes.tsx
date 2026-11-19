@@ -93,7 +93,7 @@ export default function Lembretes() {
       </Screen>
 
       <Sheet visible={open} onClose={() => setOpen(false)} title="Novo lembrete">
-        <Field value={text} onChangeText={setText} placeholder="Ex.: Tomar remédio amanhã 8h" autoFocus />
+        <Field value={text} onChangeText={setText} placeholder="Ex.: Tomar remédio amanhã 8h" />
         <Segmented<RepeatMode>
           value={repeat}
           onChange={setRepeat}

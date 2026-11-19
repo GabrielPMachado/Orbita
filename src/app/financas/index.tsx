@@ -2,7 +2,20 @@ import { Barcode } from 'lucide-react-native';
 import { useBoletos } from '@/store/boletos';
 import { addDays as addDaysBoleto, toKey as toKeyBoleto } from '@/lib/date';
 import { router, type Href } from 'expo-router';
-import { ArrowDownLeft, ArrowUpRight, BadgeCheck, ExternalLink, Calculator, CreditCard, Landmark, PiggyBank, Plus, Smartphone, Wallet, type LucideIcon } from 'lucide-react-native';
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  BadgeCheck,
+  ExternalLink,
+  Calculator,
+  CreditCard,
+  Landmark,
+  PiggyBank,
+  Plus,
+  Smartphone,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { BarChart } from '@/components/BarChart';
@@ -58,7 +71,8 @@ export default function Financas() {
   // com o Financy como base: saldo dele + o que ainda vai entrar/sair até o fim do mês escolhido
   const projected =
     base === 'financy' && fySaldo !== undefined
-      ? fySaldo + txs.filter((t) => t.date > today() && cashMonth(t, cards) <= month).reduce((a, t) => a + (t.type === 'in' ? t.amount : -t.amount), 0)
+      ? fySaldo +
+        txs.filter((t) => t.date > today() && cashMonth(t, cards) <= month).reduce((a, t) => a + (t.type === 'in' ? t.amount : -t.amount), 0)
       : projectedBalance(accounts, txs, cards, month);
   const cats = byCategory(txs, month);
 
@@ -88,9 +102,20 @@ export default function Financas() {
     <Screen
       back
       title="Finanças"
-      subtitle={base === 'financy' ? 'Lançamentos do Financy' : undefined}
-      onRefresh={base === 'financy' ? () => pullFinancy(true).catch(() => {}) : undefined}
-      actions={<GlassButton icon={Plus} label="Lançar" onPress={() => router.push('/financas/novo')} />}>
+      subtitle={financy.connected ? 'Lido do Financy' : 'Conecte o Financy para ver suas finanças'}
+      onRefresh={financy.connected ? () => pullFinancy(true).catch(() => {}) : undefined}
+      actions={<GlassButton icon={Plus} label="Lançar" onPress={() => openFinancy({ action: 'novo' })} />}>
+      {!financy.connected ? (
+        <Card onPress={() => router.push('/financas/financy')} style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+          <IconTile icon={Wallet} color="#10B981" />
+          <View style={{ flex: 1 }}>
+            <T v="headline">Conectar com o Financy</T>
+            <T v="caption" tone="dim">
+              O Órbita mostra saldo, lançamentos e cartões do Financy. Lançar e editar continua lá.
+            </T>
+          </View>
+        </Card>
+      ) : null}
       {/* Saldo */}
       <Card style={{ padding: space.xl, gap: space.lg }}>
         <View style={{ gap: 2 }}>
@@ -175,26 +200,32 @@ export default function Financas() {
         <Row
           leading={<IconTile icon={Barcode} color={boletosVencendo ? c.warning : c.accent} />}
           title="Boletos"
-          subtitle={boletosAbertos ? `${boletosAbertos} em aberto${boletosVencendo ? ` · ${boletosVencendo} vencendo` : ''}` : 'Contas a pagar com aviso na véspera'}
+          subtitle={
+            boletosAbertos
+              ? `${boletosAbertos} em aberto${boletosVencendo ? ` · ${boletosVencendo} vencendo` : ''}`
+              : 'Contas a pagar com aviso na véspera'
+          }
           onPress={() => router.push('/boletos')}
           chevron
         />
         <Row
           leading={<IconTile icon={Smartphone} color={c.accent} />}
           title="Lançamentos automáticos"
-          subtitle={`Apple Pay · ${txs.filter((t) => t.source === 'applepay').length} registrados`}
+          subtitle="Compras do Apple Pay vão para o Financy com a categoria"
           onPress={() => router.push('/financas/automatico')}
           chevron
         />
-        {base !== 'financy' && <Row
-          leading={<IconTile icon={BadgeCheck} color={c.success} />}
-          title="Conferência com o banco"
-          subtitle={pluggy.configured ? `Meu Pluggy · ${pending ? `${pending} para revisar` : 'tudo em dia'}` : 'Conectar o Meu Pluggy'}
-          subtitleTone={pending ? 'warning' : 'dim'}
-          trailing={pending ? <Badge label={String(pending)} color={c.warning} /> : undefined}
-          onPress={() => router.push(pluggy.configured ? '/financas/conferencia' : '/financas/pluggy')}
-          chevron
-        />}
+        {base !== 'financy' && (
+          <Row
+            leading={<IconTile icon={BadgeCheck} color={c.success} />}
+            title="Conferência com o banco"
+            subtitle={pluggy.configured ? `Meu Pluggy · ${pending ? `${pending} para revisar` : 'tudo em dia'}` : 'Conectar o Meu Pluggy'}
+            subtitleTone={pending ? 'warning' : 'dim'}
+            trailing={pending ? <Badge label={String(pending)} color={c.warning} /> : undefined}
+            onPress={() => router.push(pluggy.configured ? '/financas/conferencia' : '/financas/pluggy')}
+            chevron
+          />
+        )}
       </List>
 
       {/* Gráfico */}
@@ -213,13 +244,17 @@ export default function Financas() {
               const inv = invoice(txs, card, open);
               const used = cardUsed(txs, card);
               return (
-                <Pressable key={card.id} onPress={() => router.push('/financas/cartoes')} style={({ pressed }) => [{ padding: space.lg, gap: space.sm }, pressed && { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
+                <Pressable
+                  key={card.id}
+                  onPress={() => router.push('/financas/cartoes')}
+                  style={({ pressed }) => [{ padding: space.lg, gap: space.sm }, pressed && { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
                     <IconTile icon={CreditCard} color={card.color} />
                     <View style={{ flex: 1 }}>
                       <T v="headline">{card.name}</T>
                       <T v="caption" tone="dim">
-                        Fatura aberta · vence {String(card.dueDay).padStart(2, '0')}/{open.slice(5)} · {inv.items.length} {inv.items.length === 1 ? 'compra' : 'compras'}
+                        Fatura aberta · vence {String(card.dueDay).padStart(2, '0')}/{open.slice(5)} · {inv.items.length}{' '}
+                        {inv.items.length === 1 ? 'compra' : 'compras'}
                       </T>
                     </View>
                     <T v="headline" tabular>
@@ -289,9 +324,9 @@ export default function Financas() {
         <Empty
           icon={Wallet}
           title={`Nada em ${monthName(month).split(' ')[0].toLowerCase()}`}
-          hint="Registre entradas e saídas: dá pra parcelar no cartão, repetir contas fixas e anexar o comprovante."
-          action="Novo lançamento"
-          onAction={() => router.push('/financas/novo')}
+          hint="Os lançamentos aparecem aqui assim que entram no Financy."
+          action="Lançar no Financy"
+          onAction={() => openFinancy({ action: 'novo' })}
         />
       ) : (
         Object.entries(byDay).map(([day, items]) => {

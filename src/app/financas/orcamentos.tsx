@@ -97,7 +97,7 @@ export default function Orcamentos() {
       </Screen>
 
       <Sheet visible={!!editing} onClose={() => setEditing(null)} title={editing ? `Limite · ${editing}` : ''}>
-        <Field label="Limite mensal (R$)" value={value} onChangeText={setValue} placeholder="0,00" keyboardType="decimal-pad" autoFocus />
+        <Field label="Limite mensal (R$)" value={value} onChangeText={setValue} placeholder="0,00" keyboardType="decimal-pad" />
         <Button
           label="Salvar limite"
           onPress={() => {

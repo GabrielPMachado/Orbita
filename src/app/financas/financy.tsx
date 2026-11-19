@@ -9,8 +9,7 @@ import { Button, Card, Checkbox, Field, IconTile, List, Row, Screen, Section, T 
 import { brl } from '@/lib/date';
 import { connectFinancy, disconnectFinancy, openFinancy, refreshFinancy, requestFinancyLink } from '@/lib/financy';
 import { Advanced } from '@/components/Advanced';
-import { pullFinancy, uploadLocalBackup } from '@/lib/financyData';
-import { useFinance } from '@/store/finance';
+import { pullFinancy } from '@/lib/financyData';
 import { useFinancyLink } from '@/store/financyLink';
 import { toast } from '@/store/toast';
 import { space, useColors } from '@/theme';
@@ -61,14 +60,6 @@ export default function FinancyScreen() {
   };
 
   const s = f.summary;
-  const base = useFinance((st) => st.base);
-  const backupCount = useFinance((st) => st.localBackup?.txs.length ?? 0);
-  const toggleBase = () => {
-    const next = base === 'financy' ? 'orbita' : 'financy';
-    useFinance.getState().setBase(next);
-    f.setBaseOptOut(next === 'orbita');
-    if (next === 'financy') pullFinancy(true).catch(() => {});
-  };
 
   return (
     <Screen back title="Financy" subtitle="Seu app de finanças completo" onRefresh={f.connected ? refresh : undefined}>
@@ -80,7 +71,15 @@ export default function FinancyScreen() {
               <T v="caption" tone="dim">
                 Saldo no Financy
               </T>
-              <AnimatedNumber value={s.saldo} format={brl} render={(t) => <T v="title" tabular color={s.saldo < 0 ? c.danger : c.text}>{t}</T>} />
+              <AnimatedNumber
+                value={s.saldo}
+                format={brl}
+                render={(t) => (
+                  <T v="title" tabular color={s.saldo < 0 ? c.danger : c.text}>
+                    {t}
+                  </T>
+                )}
+              />
             </View>
           </View>
           <View style={{ flexDirection: 'row', gap: space.lg }}>
@@ -117,8 +116,8 @@ export default function FinancyScreen() {
         <Section title="Conectar">
           <View style={{ gap: space.sm }}>
             <T v="callout" tone="dim">
-              Um toque abre o Financy, que devolve a conexão para cá sozinho. Depois disso o Órbita mostra seu saldo do Financy, manda a categoria de cada
-              compra do Apple Pay e os dois ficam com a mesma aparência.
+              Um toque abre o Financy, que devolve a conexão para cá sozinho. Depois disso o Órbita mostra seu saldo do Financy, manda a categoria de
+              cada compra do Apple Pay e os dois ficam com a mesma aparência.
             </T>
             <Button label="Conectar com o Financy" icon={Link2} onPress={() => requestFinancyLink()} />
             <Advanced>
@@ -150,12 +149,6 @@ export default function FinancyScreen() {
           <Section title="Interligação">
             <List>
               <Row
-                title="Financy como base das Finanças"
-                subtitle="Finanças do Órbita mostra e edita os lançamentos do Financy"
-                trailing={<Checkbox checked={base === 'financy'} onPress={toggleBase} />}
-                onPress={toggleBase}
-              />
-              <Row
                 title="Enviar categorias do Apple Pay"
                 subtitle="O Financy aplica a categoria quando a compra chega do banco, sem duplicar"
                 trailing={<Checkbox checked={f.forwardApplePay} onPress={() => f.setForward(!f.forwardApplePay)} />}
@@ -168,27 +161,26 @@ export default function FinancyScreen() {
                 onPress={() => f.setWidgetFromFinancy(!f.widgetFromFinancy)}
               />
               {f.pendingHints.length > 0 && (
-                <Row title={`${f.pendingHints.length} compra${f.pendingHints.length > 1 ? 's' : ''} aguardando envio`} subtitle="Vão sozinhas quando houver internet" subtitleTone="warning" />
+                <Row
+                  title={`${f.pendingHints.length} compra${f.pendingHints.length > 1 ? 's' : ''} aguardando envio`}
+                  subtitle="Vão sozinhas quando houver internet"
+                  subtitleTone="warning"
+                />
               )}
             </List>
           </Section>
           <Advanced>
-            {backupCount > 0 && base === 'financy' ? (
-              <Button
-                label={`Enviar ${backupCount} lançamento${backupCount > 1 ? 's' : ''} antigo${backupCount > 1 ? 's' : ''} do Órbita`}
-                variant="secondary"
-                onPress={() => {
-                  const n = uploadLocalBackup();
-                  toast({ message: `${n} lançamento${n === 1 ? '' : 's'} enviado${n === 1 ? '' : 's'} ao Financy` });
-                }}
-              />
-            ) : null}
             <Button
               label="Desconectar"
               icon={Unplug}
               variant="danger"
               onPress={() =>
-                confirmDelete('Desconectar o Financy?', 'A chave sai do Keychain. Nada é apagado no Financy.', () => disconnectFinancy(), 'Desconectar')
+                confirmDelete(
+                  'Desconectar o Financy?',
+                  'A chave sai do Keychain. Nada é apagado no Financy.',
+                  () => disconnectFinancy(),
+                  'Desconectar',
+                )
               }
             />
           </Advanced>

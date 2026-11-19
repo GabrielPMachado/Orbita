@@ -10,7 +10,7 @@ import { brl, friendlyDate, toKey } from '@/lib/date';
 import { parseMoney } from '@/lib/finance';
 import { mediaUri } from '@/lib/media';
 import { useBoletos, type Boleto } from '@/store/boletos';
-import { useFinance } from '@/store/finance';
+import { openFinancy } from '@/lib/financy';
 import { toast } from '@/store/toast';
 import { radius, space, useColors } from '@/theme';
 
@@ -42,10 +42,7 @@ export default function Boletos() {
   const [form, setForm] = useState<Partial<Boleto> | null>(null);
   const [open, setOpen] = useState<Boleto | null>(null);
 
-  const abertos = useMemo(
-    () => items.filter((b) => !b.pago).sort((a, b) => (a.vencimento ?? '9999').localeCompare(b.vencimento ?? '9999')),
-    [items],
-  );
+  const abertos = useMemo(() => items.filter((b) => !b.pago).sort((a, b) => (a.vencimento ?? '9999').localeCompare(b.vencimento ?? '9999')), [items]);
   const pagos = useMemo(() => items.filter((b) => b.pago).sort((a, b) => (b.pagoEm ?? '').localeCompare(a.pagoEm ?? '')), [items]);
   const totalAberto = abertos.reduce((a, b) => a + (b.valor ?? 0), 0);
   const vencidos = abertos.filter((b) => b.vencimento && dias(b.vencimento) < 0);
@@ -54,7 +51,12 @@ export default function Boletos() {
   const receber = (l: Lido | null) => {
     if (!l) return;
     if (!l.infos.length) {
-      Alert.alert('Nenhum boleto encontrado', l.origem === 'colar' ? 'Copie a linha digitável, o código de barras ou o Pix copia e cola.' : 'Não achei código de boleto aqui. Tente outra foto ou digite.');
+      Alert.alert(
+        'Nenhum boleto encontrado',
+        l.origem === 'colar'
+          ? 'Copie a linha digitável, o código de barras ou o Pix copia e cola.'
+          : 'Não achei código de boleto aqui. Tente outra foto ou digite.',
+      );
       return;
     }
     const usar = (i: BoletoInfo) => {
@@ -75,7 +77,9 @@ export default function Boletos() {
     };
     if (l.infos.length === 1 || Platform.OS !== 'ios') return usar(l.infos[0]);
     // mais de um código no documento (ex.: boleto + Pix): escolhe
-    const opts = l.infos.map((i) => `${i.tipo === 'pix' ? 'Pix' : 'Boleto'}${i.valor ? ` · ${brl(i.valor)}` : ''}${i.vencimento ? ` · ${dataBR(i.vencimento)}` : ''}`);
+    const opts = l.infos.map(
+      (i) => `${i.tipo === 'pix' ? 'Pix' : 'Boleto'}${i.valor ? ` · ${brl(i.valor)}` : ''}${i.vencimento ? ` · ${dataBR(i.vencimento)}` : ''}`,
+    );
     ActionSheetIOS.showActionSheetWithOptions({ title: 'Qual usar?', options: [...opts, 'Cancelar'], cancelButtonIndex: opts.length }, (k) => {
       if (k < opts.length) usar(l.infos[k]);
     });
@@ -96,7 +100,8 @@ export default function Boletos() {
           <Card style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
             <IconTile icon={TriangleAlert} color={c.danger} />
             <T v="callout" style={{ flex: 1 }}>
-              {vencidos.length === 1 ? '1 boleto vencido' : `${vencidos.length} boletos vencidos`} · {brl(vencidos.reduce((a, b) => a + (b.valor ?? 0), 0))}
+              {vencidos.length === 1 ? '1 boleto vencido' : `${vencidos.length} boletos vencidos`} ·{' '}
+              {brl(vencidos.reduce((a, b) => a + (b.valor ?? 0), 0))}
             </T>
           </Card>
         ) : null}
@@ -144,10 +149,34 @@ export default function Boletos() {
       {/* de onde vem o boleto */}
       <Sheet visible={adding} onClose={() => setAdding(false)} title="Adicionar boleto">
         <List>
-          <Row leading={<IconTile icon={ClipboardPaste} color={c.accent} />} title="Colar código" subtitle="Linha digitável, código de barras ou Pix" onPress={guard(async () => (await doClipboard()) ?? { infos: [], origem: 'colar' })} chevron />
-          <Row leading={<IconTile icon={Camera} color={c.accent} />} title="Fotografar o boleto" subtitle="Lê o código de barras ou o QR do Pix" onPress={guard(() => deFoto('camera'))} chevron />
-          <Row leading={<IconTile icon={ImageIcon} color={c.accent} />} title="Foto ou print" subtitle="Da galeria" onPress={guard(() => deFoto('library'))} chevron />
-          <Row leading={<IconTile icon={FileText} color={c.accent} />} title="Abrir PDF" subtitle="Do Arquivos, do Mail ou de um download" onPress={guard(dePdf)} chevron />
+          <Row
+            leading={<IconTile icon={ClipboardPaste} color={c.accent} />}
+            title="Colar código"
+            subtitle="Linha digitável, código de barras ou Pix"
+            onPress={guard(async () => (await doClipboard()) ?? { infos: [], origem: 'colar' })}
+            chevron
+          />
+          <Row
+            leading={<IconTile icon={Camera} color={c.accent} />}
+            title="Fotografar o boleto"
+            subtitle="Lê o código de barras ou o QR do Pix"
+            onPress={guard(() => deFoto('camera'))}
+            chevron
+          />
+          <Row
+            leading={<IconTile icon={ImageIcon} color={c.accent} />}
+            title="Foto ou print"
+            subtitle="Da galeria"
+            onPress={guard(() => deFoto('library'))}
+            chevron
+          />
+          <Row
+            leading={<IconTile icon={FileText} color={c.accent} />}
+            title="Abrir PDF"
+            subtitle="Do Arquivos, do Mail ou de um download"
+            onPress={guard(dePdf)}
+            chevron
+          />
           <Row
             leading={<IconTile icon={Keyboard} color={c.accent} />}
             title="Digitar"
@@ -165,7 +194,14 @@ export default function Boletos() {
       </Sheet>
 
       <BoletoForm draft={form} onClose={() => setForm(null)} />
-      <BoletoDetail b={open ? (items.find((x) => x.id === open.id) ?? null) : null} onClose={() => setOpen(null)} onEdit={(b) => { setOpen(null); setForm(b); }} />
+      <BoletoDetail
+        b={open ? (items.find((x) => x.id === open.id) ?? null) : null}
+        onClose={() => setOpen(null)}
+        onEdit={(b) => {
+          setOpen(null);
+          setForm(b);
+        }}
+      />
     </>
   );
 }
@@ -215,7 +251,14 @@ function BoletoForm({ draft, onClose }: { draft: Partial<Boleto> | null; onClose
       <Field label="Descrição" value={desc} onChangeText={setDesc} placeholder="Ex.: Mensalidade Estácio" />
       <View style={{ flexDirection: 'row', gap: space.md }}>
         <Field label="Valor" value={valor} onChangeText={setValor} placeholder="0,00" keyboardType="decimal-pad" style={{ flex: 1 }} />
-        <Field label="Vencimento" value={venc} onChangeText={setVenc} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" style={{ flex: 1 }} />
+        <Field
+          label="Vencimento"
+          value={venc}
+          onChangeText={setVenc}
+          placeholder="dd/mm/aaaa"
+          keyboardType="numbers-and-punctuation"
+          style={{ flex: 1 }}
+        />
       </View>
       <Field
         label="Código (opcional)"
@@ -243,7 +286,12 @@ function BoletoForm({ draft, onClose }: { draft: Partial<Boleto> | null; onClose
 
 function BoletoDetail({ b, onClose, onEdit }: { b: Boleto | null; onClose: () => void; onEdit: (b: Boleto) => void }) {
   const c = useColors();
-  if (!b) return <Sheet visible={false} onClose={onClose}>{null}</Sheet>;
+  if (!b)
+    return (
+      <Sheet visible={false} onClose={onClose}>
+        {null}
+      </Sheet>
+    );
   const copiar = async (v: string, o: string) => {
     tap();
     await Clipboard.setStringAsync(v);
@@ -252,17 +300,25 @@ function BoletoDetail({ b, onClose, onEdit }: { b: Boleto | null; onClose: () =>
   const pagar = () => {
     const marcar = (lancar: boolean) => {
       if (lancar && b.valor) {
-        useFinance.getState().addTx({ type: 'out', amount: b.valor, category: /est[aá]cio|faculdade|mensalidade/i.test(b.descricao) ? 'Educação' : 'Contas', description: b.descricao, date: hoje() });
+        // quem lança é o Financy: abre lá já preenchido
+        openFinancy({
+          action: 'novo',
+          tipo: 'expense',
+          valor: b.valor,
+          descricao: b.descricao,
+          categoria: /est[aá]cio|faculdade|mensalidade/i.test(b.descricao) ? 'Educação' : 'Contas',
+          data: hoje(),
+        });
       }
       cancelarAvisos(b.avisos);
       useBoletos.getState().update(b.id, { pago: true, pagoEm: hoje(), avisos: [] });
-      toast({ message: lancar ? 'Pago e lançado nas Finanças' : 'Marcado como pago' });
+      toast({ message: lancar ? 'Pago · confirme o lançamento no Financy' : 'Marcado como pago' });
       onClose();
     };
     if (!b.valor) return marcar(false);
-    Alert.alert('Marcar como pago', `Lançar ${brl(b.valor)} nas Finanças também?`, [
+    Alert.alert('Marcar como pago', `Lançar ${brl(b.valor)} no Financy também?`, [
       { text: 'Só marcar', onPress: () => marcar(false) },
-      { text: 'Lançar', style: 'default', onPress: () => marcar(true) },
+      { text: 'Abrir no Financy', style: 'default', onPress: () => marcar(true) },
     ]);
   };
   return (
@@ -272,7 +328,13 @@ function BoletoDetail({ b, onClose, onEdit }: { b: Boleto | null; onClose: () =>
           {b.valor ? brl(b.valor) : 'Sem valor'}
         </T>
         <T v="callout" tone="dim">
-          {[quando(b), b.vencimento && !b.pago ? dataBR(b.vencimento) : null, b.beneficiario && b.beneficiario !== b.descricao ? b.beneficiario : b.banco].filter(Boolean).join(' · ')}
+          {[
+            quando(b),
+            b.vencimento && !b.pago ? dataBR(b.vencimento) : null,
+            b.beneficiario && b.beneficiario !== b.descricao ? b.beneficiario : b.banco,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
         </T>
       </View>
       {b.linha ? (
@@ -289,7 +351,9 @@ function BoletoDetail({ b, onClose, onEdit }: { b: Boleto | null; onClose: () =>
       {b.arquivo ? (
         <Button label="Abrir PDF" icon={Share2} variant="secondary" onPress={() => Share.share({ url: mediaUri(b.arquivo!) }).catch(() => {})} />
       ) : null}
-      {!b.pago ? <Button label="Marcar como pago" onPress={pagar} /> : (
+      {!b.pago ? (
+        <Button label="Marcar como pago" onPress={pagar} />
+      ) : (
         <Button
           label="Voltar para em aberto"
           variant="secondary"
@@ -320,7 +384,4 @@ function BoletoDetail({ b, onClose, onEdit }: { b: Boleto | null; onClose: () =>
   );
 }
 
-const styles = StyleSheet.create({
-  code: { gap: 4, padding: space.md, borderRadius: radius.sm },
-});
-
+const styles = StyleSheet.create({ code: { gap: 4, padding: space.md, borderRadius: radius.sm } });

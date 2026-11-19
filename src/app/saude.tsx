@@ -183,7 +183,7 @@ export default function Saude() {
       </Screen>
 
       <Sheet visible={weightOpen} onClose={() => setWeightOpen(false)} title="Registrar peso">
-        <Field label="Peso de hoje (kg)" value={weightText} onChangeText={setWeightText} placeholder={lastW ? String(lastW.kg).replace('.', ',') : '72,5'} keyboardType="decimal-pad" autoFocus />
+        <Field label="Peso de hoje (kg)" value={weightText} onChangeText={setWeightText} placeholder={lastW ? String(lastW.kg).replace('.', ',') : '72,5'} keyboardType="decimal-pad" />
         <Button
           label="Salvar"
           disabled={!parseMoney(weightText)}
@@ -267,7 +267,7 @@ function MedSheet({ editing, onClose }: { editing: Med | 'new' | null; onClose: 
 
   return (
     <Sheet visible={!!editing} onClose={onClose} title={editing === 'new' ? 'Novo remédio' : 'Editar remédio'}>
-      <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Vitamina D" autoFocus={editing === 'new'} />
+      <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Vitamina D" />
       <View style={{ flexDirection: 'row', gap: space.sm }}>
         <Field label="Dose" value={dose} onChangeText={setDose} placeholder="1 cápsula" style={{ flex: 1 }} />
         <Field label="Horário" value={time} onChangeText={setTime} placeholder="08:00" keyboardType="numbers-and-punctuation" style={{ flex: 1 }} />

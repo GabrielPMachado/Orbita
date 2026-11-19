@@ -1,13 +1,11 @@
 import { router } from 'expo-router';
-import { BadgeCheck, Check, ChevronLeft, ChevronRight, CreditCard, Delete, Paperclip, Smartphone, Trash, Undo2 } from 'lucide-react-native';
+import { BadgeCheck, ChevronLeft, ChevronRight, CreditCard, Delete, Paperclip, Smartphone } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { brl, friendlyDate } from '@/lib/date';
 import { addMonthKey, category, monthName, txLabel, type MonthKey } from '@/lib/finance';
 import { useFinance, type Tx } from '@/store/finance';
 import { radius, space, useColors } from '@/theme';
 import { Glass } from './Glass';
-import { SwipeRow } from './motion';
-import { toast } from '@/store/toast';
 import { Badge, GlassButton, IconTile, Row, T, impact } from './ui';
 
 export function MonthSwitcher({ month, onChange }: { month: MonthKey; onChange: (m: MonthKey) => void }) {
@@ -27,43 +25,30 @@ export function TxRow({ tx, showDate }: { tx: Tx; showDate?: boolean }) {
   const card = useFinance((s) => (tx.cardId ? s.cards.find((x) => x.id === tx.cardId) : undefined));
   const sub = [showDate ? friendlyDate(tx.date) : null, card?.name ?? account?.name ?? tx.category].filter(Boolean).join('  ·  ');
 
-  const remove = () => {
-    const undo = useFinance.getState().softRemoveTx(tx.id);
-    toast({ message: `${txLabel(tx)} excluído`, kind: 'danger', action: { label: 'Desfazer', onPress: undo } });
-  };
-  const togglePaid = () => {
-    useFinance.getState().updateTx(tx.id, { paid: !tx.paid });
-    toast({ message: tx.paid ? 'Marcado como pendente' : tx.type === 'in' ? 'Marcado como recebido' : 'Marcado como pago', kind: 'info' });
-  };
-
   return (
-    <SwipeRow
-      left={tx.cardId ? undefined : { icon: tx.paid ? Undo2 : Check, label: tx.paid ? 'Pendente' : tx.type === 'in' ? 'Recebido' : 'Pago', color: tx.paid ? '#5B9DFF' : c.success, onAction: togglePaid }}
-      right={{ icon: Trash, label: 'Excluir', color: c.danger, onAction: remove }}>
     <View>
-    <Row
-      leading={<IconTile icon={cat.icon} color={cat.color} />}
-      title={txLabel(tx)}
-      subtitle={sub}
-      onPress={() => router.push(`/financas/${tx.id}`)}
-      trailing={
-        <View style={{ alignItems: 'flex-end', gap: 4 }}>
-          <T v="headline" tabular color={tx.type === 'in' ? c.success : c.text}>
-            {tx.type === 'in' ? '+ ' : '− '}
-            {brl(tx.amount)}
-          </T>
-          <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
-            {tx.verified && <BadgeCheck size={12} color={c.success} />}
-            {tx.source === 'applepay' && <Smartphone size={12} color={c.textFaint} />}
-            {tx.attachments.length > 0 && <Paperclip size={12} color={c.textFaint} />}
-            {tx.cardId && <CreditCard size={12} color={c.textFaint} />}
-            {!tx.paid && <Badge label={tx.type === 'in' ? 'A receber' : 'A pagar'} color={c.warning} />}
+      <Row
+        leading={<IconTile icon={cat.icon} color={cat.color} />}
+        title={txLabel(tx)}
+        subtitle={sub}
+        onPress={() => router.push(`/financas/${tx.id}`)}
+        trailing={
+          <View style={{ alignItems: 'flex-end', gap: 4 }}>
+            <T v="headline" tabular color={tx.type === 'in' ? c.success : c.text}>
+              {tx.type === 'in' ? '+ ' : '− '}
+              {brl(tx.amount)}
+            </T>
+            <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
+              {tx.verified && <BadgeCheck size={12} color={c.success} />}
+              {tx.source === 'applepay' && <Smartphone size={12} color={c.textFaint} />}
+              {tx.attachments.length > 0 && <Paperclip size={12} color={c.textFaint} />}
+              {tx.cardId && <CreditCard size={12} color={c.textFaint} />}
+              {!tx.paid && <Badge label={tx.type === 'in' ? 'A receber' : 'A pagar'} color={c.warning} />}
+            </View>
           </View>
-        </View>
-      }
-    />
+        }
+      />
     </View>
-    </SwipeRow>
   );
 }
 

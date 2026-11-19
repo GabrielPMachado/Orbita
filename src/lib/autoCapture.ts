@@ -7,7 +7,7 @@ import { toast } from '@/store/toast';
 import { brl } from './date';
 import { forwardPurchase } from './financy';
 import { toKey } from './date';
-import { categoryOptions, normalizeName, parseAmount } from './finance';
+import { categoryOptions, parseAmount } from './finance';
 
 /**
  * Lançamentos automáticos (Apple Pay → app Atalhos → "Registrar compra").
@@ -35,54 +35,26 @@ function handleCompra(inv: AppIntentInvocation) {
   const p = (inv.params ?? {}) as Record<string, unknown>;
   const amount = parseAmount(str(p.valor));
   const merchant = str(p.estabelecimento).trim();
-  const cardName = normalizeName(str(p.cartao));
   const catName = str(p.categoria);
   const st0 = useFinance.getState();
   const category = categoryOptions('out', st0.base === 'financy' ? st0.fyCategories : []).some((c) => c.name === catName) ? catName : 'Outros';
 
-  // casa o nome do cartão da Carteira com um cartão/conta cadastrado
-  const matches = (name: string) => {
-    const n = normalizeName(name);
-    return !!cardName && !!n && (cardName.includes(n) || n.includes(cardName));
-  };
-  const card = state.cards.find((k) => matches(k.name));
-  const account = card ? undefined : state.accounts.find((a) => matches(a.name));
-
   const ok = amount > 0;
   state.logIntent({ at: Date.now(), valor: str(p.valor), estabelecimento: merchant, cartao: str(p.cartao), categoria: catName, ok });
-  // nunca descarta: se o valor não for reconhecido, entra com R$ 0 e o valor original nas notas
-  {
-    state.addTx({
-      type: 'out',
-      amount,
-      category,
-      description: merchant,
-      date: toKey(new Date(inv.createdAt || Date.now())),
-      cardId: card?.id,
-      accountId: account?.id,
-      source: 'applepay',
-      notes: !ok
-        ? `Valor recebido do Atalhos não reconhecido: "${str(p.valor)}". Corrija o valor.`
-        : !card && !account && p.cartao
-          ? `Cartão na Carteira: ${str(p.cartao)}`
-          : undefined,
-    });
-  }
-  // com o Financy como base a compra já foi para lá como provisória; o aviso separado só no modo antigo
-  if (ok && state.base !== 'financy') {
-    const at = new Date(inv.createdAt || Date.now());
-    forwardPurchase({
-      id: inv.id,
-      valor: amount,
-      data: toKey(at),
-      hora: `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`,
-      estabelecimento: merchant || undefined,
-      cartao: str(p.cartao) || undefined,
-      categoria: category,
-    });
-  }
-  return ok ? `${brl(amount)}${merchant ? ` · ${merchant}` : ''}` : `${merchant || 'Compra'} (confira o valor)`;
+  // o Órbita não grava lançamentos: a compra vai para o Financy, que casa com a do banco
+  // (mesmo valor, até 2 dias) e aplica a categoria escolhida aqui
   state.markIntentProcessed(inv.id);
+  const at = new Date(inv.createdAt || Date.now());
+  forwardPurchase({
+    id: inv.id,
+    valor: amount,
+    data: toKey(at),
+    hora: `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`,
+    estabelecimento: merchant || undefined,
+    cartao: str(p.cartao) || undefined,
+    categoria: category,
+  });
+  return ok ? `${brl(amount)}${merchant ? ` · ${merchant}` : ''}` : `${merchant || 'Compra'} (confira o valor no Financy)`;
 }
 
 let busy: Promise<number> = Promise.resolve(0);
@@ -102,8 +74,8 @@ function process(pending: AppIntentInvocation[]) {
         console.warn('Falha ao processar lançamento automático', e);
       }
     }
-    if (added.length === 1) toast({ message: `Compra registrada: ${added[0]}` });
-    else if (added.length > 1) toast({ message: `${added.length} compras do Apple Pay registradas` });
+    if (added.length === 1) toast({ message: `Compra enviada ao Financy: ${added[0]}` });
+    else if (added.length > 1) toast({ message: `${added.length} compras do Apple Pay enviadas ao Financy` });
     return added.length;
   });
   return busy;

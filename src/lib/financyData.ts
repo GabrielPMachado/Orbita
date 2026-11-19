@@ -4,10 +4,8 @@
  * Os lançamentos moram no Financy (users/{uid}/despesas | receitas | investimentos).
  * O Órbita guarda um espelho no aparelho (funciona offline) e:
  *  - puxa tudo ao abrir/voltar ao app e ao puxar a tela;
- *  - envia o que foi criado, editado ou apagado aqui (fila com `sync` / `pendingDeletes`);
- *  - compras do Apple Pay entram na hora como lançamento provisório (source 'applepay').
- *    Quando a mesma compra chega do banco pelo Open Finance, a categoria escolhida vai
- *    para a compra do banco e o provisório é apagado: nada fica em dobro.
+ *  - nunca escreve lá: lançar, editar e apagar é no Financy (o Órbita abre o app já preenchido);
+ *  - compras do Apple Pay viram só um aviso de categoria que o Financy aplica na compra do banco.
  */
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
@@ -40,11 +38,6 @@ function val(v?: FsValue & { mapValue?: { fields?: Record<string, FsValue> }; nu
   if (v.arrayValue) return (v.arrayValue.values ?? []).map((x) => val(x));
   if (v.mapValue) return Object.fromEntries(Object.entries(v.mapValue.fields ?? {}).map(([k, x]) => [k, val(x)]));
   return undefined;
-}
-function toFs(v: unknown): FsValue {
-  if (typeof v === 'number') return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
-  if (typeof v === 'boolean') return { booleanValue: v };
-  return { stringValue: String(v) };
 }
 const idOf = (d: FsDoc) => d.name.split('/').pop()!;
 
@@ -104,97 +97,8 @@ function cardFrom(d: FsDoc): Card {
   };
 }
 
-/* ---------- Órbita → Financy ---------- */
-
-const colFor = (t: Tx): FyCol => (t.type === 'in' ? 'receitas' : t.fyCol === 'investimentos' ? 'investimentos' : 'despesas');
-
-function fieldsFor(t: Tx) {
-  const d = new Date(t.createdAt || Date.now());
-  const f: Record<string, unknown> = {
-    description: t.description || t.category,
-    amount: t.amount,
-    type: t.type === 'in' ? 'income' : colFor(t) === 'investimentos' ? 'investment' : 'expense',
-    category: t.category,
-    date: t.date,
-    time: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
-  };
-  if (t.cardId) f.cardId = t.cardId;
-  if (t.fixed) f.isRecurring = true;
-  if (t.source === 'applepay') f.source = 'applepay';
-  return f;
-}
-
-async function putDoc(col: FyCol, id: string, fields: Record<string, unknown>, mask?: string[]) {
-  const m = mask ? '?' + mask.map((k) => `updateMask.fieldPaths=${k}`).join('&') : '';
-  const res = await fsRequest(`${col}/${encodeURIComponent(id)}${m}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ fields: Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, toFs(v)])) }),
-  });
-  if (!res.ok) throw new Error(`Financy respondeu ${res.status} ao salvar`);
-}
-async function deleteDoc(col: FyCol, id: string) {
-  const res = await fsRequest(`${col}/${encodeURIComponent(id)}`, { method: 'DELETE' });
-  if (!res.ok && res.status !== 404) throw new Error(`Financy respondeu ${res.status} ao apagar`);
-}
-
-/* ---------- sincronização ---------- */
-
-let pushing = false;
-/** Envia criações, edições e exclusões feitas aqui. */
-export async function pushChanges() {
-  const st = useFinance.getState();
-  if (st.base !== 'financy' || pushing) return;
-  pushing = true;
-  try {
-    const done: string[] = [];
-    for (const t of st.txs.filter((x) => x.sync)) {
-      const col = colFor(t);
-      if (t.sync === 'dirty' && t.fyCol && t.fyCol !== col) {
-        // mudou de tipo (gasto ⇄ entrada): sai de uma coleção e entra na outra
-        await deleteDoc(t.fyCol, t.id);
-        await putDoc(col, t.id, fieldsFor(t));
-      } else if (t.sync === 'dirty') {
-        const f = fieldsFor(t);
-        await putDoc(col, t.id, f, Object.keys(f)); // só os campos do Órbita; o resto do Financy fica
-      } else {
-        await putDoc(col, t.id, fieldsFor(t));
-      }
-      done.push(t.id);
-      useFinance.setState((s) => ({ txs: s.txs.map((x) => (x.id === t.id ? { ...x, fyCol: col } : x)) }));
-    }
-    const gone: string[] = [];
-    for (const d of st.pendingDeletes) {
-      await deleteDoc(d.col, d.id);
-      gone.push(d.id);
-    }
-    useFinance.getState().markSynced(done, gone);
-  } finally {
-    pushing = false;
-  }
-}
-
-/**
- * Compra do Apple Pay (provisória) × a mesma compra vinda do banco: mesmo valor, banco
- * até 2 dias depois. A categoria vai para a do banco e o provisório sai.
- */
-async function resolveApplePay(txs: Tx[]) {
-  const prov = txs.filter((t) => t.source === 'applepay' && t.fyCol === 'despesas' && !t.sync);
-  const bank = txs.filter((t) => t.source === 'pluggy' && t.type === 'out');
-  const used = new Set<string>();
-  const dayDiff = (a: string, b: string) => (Date.parse(`${a}T12:00:00`) - Date.parse(`${b}T12:00:00`)) / 86400000;
-  let n = 0;
-  for (const p of prov) {
-    const hit = bank
-      .filter((b) => !used.has(b.id) && Math.abs(b.amount - p.amount) < 0.01 && dayDiff(b.date, p.date) >= 0 && dayDiff(b.date, p.date) <= 2)
-      .sort((a, b) => dayDiff(a.date, p.date) - dayDiff(b.date, p.date))[0];
-    if (!hit) continue;
-    used.add(hit.id);
-    await putDoc('despesas', hit.id, { category: p.category, applePayCategory: true }, ['category', 'applePayCategory']);
-    await deleteDoc('despesas', p.id);
-    n++;
-  }
-  return n;
-}
+/** O Órbita não escreve no Financy: só lê. (Mantido para quem ainda chama.) */
+export async function pushChanges() {}
 
 let pulling: Promise<void> | null = null;
 let lastPull = 0;
@@ -206,24 +110,23 @@ export function pullFinancy(force = false) {
   if (pulling) return pulling;
   pulling = (async () => {
     try {
-      await pushChanges();
       const [tx, cards, cats] = await Promise.all([
         Promise.all(COLS.map(async (c) => (await listAll(c)).map((d) => fromFinancy(d, c)).filter((x): x is Tx => !!x))),
         listAll('cartoes'),
         listAll('categorias'),
       ]);
-      let all = tx.flat();
-      if (await resolveApplePay(all)) {
-        // casou compra do Apple Pay com a do banco: lê de novo já resolvido
-        all = (await Promise.all(COLS.map(async (c) => (await listAll(c)).map((d) => fromFinancy(d, c)).filter((x): x is Tx => !!x)))).flat();
-      }
+      const all = tx.flat();
       useFinance.getState().applyMirror({
         txs: all.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt),
         cards: cards.map(cardFrom),
         categories: cats
           .map((d) => {
             const f = Object.fromEntries(Object.entries(d.fields ?? {}).map(([k, v]) => [k, val(v)])) as Record<string, unknown>;
-            return { name: String(f.name ?? ''), type: f.type === 'income' ? ('in' as const) : ('out' as const), color: typeof f.color === 'string' ? f.color : undefined };
+            return {
+              name: String(f.name ?? ''),
+              type: f.type === 'income' ? ('in' as const) : ('out' as const),
+              color: typeof f.color === 'string' ? f.color : undefined,
+            };
           })
           .filter((c) => c.name),
       });
@@ -237,18 +140,6 @@ export function pullFinancy(force = false) {
     }
   })();
   return pulling;
-}
-
-/** Envia os lançamentos antigos do Órbita (de antes de virar Financy) para lá. */
-export function uploadLocalBackup() {
-  const st = useFinance.getState();
-  const bk = st.localBackup;
-  if (!bk?.txs.length) return 0;
-  const ids = new Set(st.txs.map((t) => t.id));
-  const fresh = bk.txs.filter((t) => !ids.has(t.id)).map((t) => ({ ...t, accountId: undefined, cardId: undefined, sync: 'new' as const }));
-  useFinance.setState((s) => ({ txs: [...fresh, ...s.txs], localBackup: { ...bk, txs: [] } }));
-  pushChanges().catch(() => {});
-  return fresh.length;
 }
 
 /** Montado na raiz: liga o modo base ao conectar, sincroniza ao abrir e a cada mudança. */
@@ -265,7 +156,7 @@ export function useFinancyBaseSync() {
       const link = useFinancyLink.getState();
       const fin = useFinance.getState();
       // conectado ao Financy (e sem ter desligado): ele é a base das Finanças
-      if (link.connected && !link.baseOptOut && fin.base !== 'financy') {
+      if (link.connected && fin.base !== 'financy') {
         fin.setBase('financy');
         run(true);
       }
@@ -279,22 +170,12 @@ export function useFinancyBaseSync() {
     ensure();
     const t = setTimeout(() => run(true), 1200);
     const sub = AppState.addEventListener('change', (a) => a === 'active' && run());
-    // mudou algo aqui: envia logo
-    let deb: ReturnType<typeof setTimeout> | undefined;
-    const unsubFin = useFinance.subscribe((n, p) => {
-      if (n.base !== 'financy' || (n.txs === p.txs && n.pendingDeletes === p.pendingDeletes)) return;
-      if (!n.txs.some((x) => x.sync) && !n.pendingDeletes.length) return;
-      clearTimeout(deb);
-      deb = setTimeout(() => pushChanges().catch(() => {}), 800);
-    });
     return () => {
       clearTimeout(t);
-      clearTimeout(deb);
       sub.remove();
       unsubLink();
       h1();
       h2();
-      unsubFin();
     };
   }, []);
 }

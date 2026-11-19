@@ -53,15 +53,19 @@ export default function Cartoes() {
 
   return (
     <>
-      <Screen back title="Cartões" subtitle="Faturas por mês de vencimento" actions={fyBase ? undefined : <GlassButton icon={Plus} label="Novo" onPress={() => open('new')} />}>
-      {fyBase ? (
-        <UICard onPress={() => openFinancy()} style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
-          <IconTile icon={Wallet} color="#10B981" />
-          <T v="callout" tone="dim" style={{ flex: 1 }}>
-            Os cartões vêm do Financy. Para adicionar ou editar, abra o Financy.
-          </T>
-        </UICard>
-      ) : null}
+      <Screen
+        back
+        title="Cartões"
+        subtitle="Faturas por mês de vencimento"
+        actions={fyBase ? undefined : <GlassButton icon={Plus} label="Novo" onPress={() => open('new')} />}>
+        {fyBase ? (
+          <UICard onPress={() => openFinancy()} style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+            <IconTile icon={Wallet} color="#10B981" />
+            <T v="callout" tone="dim" style={{ flex: 1 }}>
+              Os cartões vêm do Financy. Para adicionar ou editar, abra o Financy.
+            </T>
+          </UICard>
+        ) : null}
         {cards.length === 0 ? (
           <Empty
             icon={CreditCard}
@@ -88,8 +92,8 @@ export default function Cartoes() {
                     </View>
                     <View style={{ gap: 2 }}>
                       <T v="caption" color="rgba(255,255,255,0.75)">
-                        {month === invoiceMonth(today(), k) ? 'Fatura aberta' : month < invoiceMonth(today(), k) ? 'Fatura fechada' : 'Fatura futura'} · vence{' '}
-                        {String(k.dueDay).padStart(2, '0')}/{month.slice(5)}
+                        {month === invoiceMonth(today(), k) ? 'Fatura aberta' : month < invoiceMonth(today(), k) ? 'Fatura fechada' : 'Fatura futura'}{' '}
+                        · vence {String(k.dueDay).padStart(2, '0')}/{month.slice(5)}
                       </T>
                       <T v="largeTitle" tabular color="#fff" style={{ fontSize: 30 }}>
                         {brl(inv.total)}
@@ -134,10 +138,18 @@ export default function Cartoes() {
       </Screen>
 
       <Sheet visible={!!editing} onClose={() => setEditing(null)} title={editing === 'new' ? 'Novo cartão' : 'Editar cartão'}>
-        <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Nubank Roxinho" autoFocus={editing === 'new'} />
+        <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Nubank Roxinho" />
         <Field label="Limite (R$)" value={limit} onChangeText={setLimit} placeholder="0,00" keyboardType="decimal-pad" />
         <View style={{ flexDirection: 'row', gap: space.sm }}>
-          <Field label="Fecha dia" value={closing} onChangeText={setClosing} placeholder="3" keyboardType="number-pad" maxLength={2} style={{ flex: 1 }} />
+          <Field
+            label="Fecha dia"
+            value={closing}
+            onChangeText={setClosing}
+            placeholder="3"
+            keyboardType="number-pad"
+            maxLength={2}
+            style={{ flex: 1 }}
+          />
           <Field label="Vence dia" value={due} onChangeText={setDue} placeholder="10" keyboardType="number-pad" maxLength={2} style={{ flex: 1 }} />
         </View>
         <View style={{ flexDirection: 'row', gap: space.sm }}>
@@ -149,7 +161,14 @@ export default function Cartoes() {
                 tap();
                 setColor(col);
               }}
-              style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: col, borderWidth: 3, borderColor: color === col ? c.text : 'transparent' }}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: col,
+                borderWidth: 3,
+                borderColor: color === col ? c.text : 'transparent',
+              }}
             />
           ))}
         </View>

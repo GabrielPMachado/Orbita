@@ -44,7 +44,7 @@ export function ClientSheet({ editing, onClose, onDeleted }: { editing: Client |
 
   return (
     <Sheet visible={!!editing} onClose={onClose} title={editing === 'new' ? 'Novo cliente' : 'Editar cliente'}>
-      <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Dindo" autoFocus={editing === 'new'} autoCapitalize="words" />
+      <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Dindo" autoCapitalize="words" />
       <Field label="Empresa" value={company} onChangeText={setCompany} placeholder="Opcional" />
       <View style={{ flexDirection: 'row', gap: space.sm }}>
         <Field label="WhatsApp / telefone" value={phone} onChangeText={setPhone} placeholder="(51) 99999-0000" keyboardType="phone-pad" style={{ flex: 1 }} />

@@ -1,10 +1,12 @@
-import { CalendarDays, Clock3, Flag, Hash, Sparkles } from 'lucide-react-native';
+import { Briefcase, CalendarDays, Clock3, Flag, Hash, Inbox, Sparkles } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import Animated, { ZoomIn, ZoomOut } from 'react-native-reanimated';
 import { friendlyDate } from '@/lib/date';
 import { parseInput } from '@/lib/parse';
+import { useProjects } from '@/store/modules';
 import { useTasks } from '@/store/tasks';
+import type { Priority } from '@/lib/parse';
 import { PRIORITY, space, useColors } from '@/theme';
 import { Button, Chip, Field, Sheet, T } from './ui';
 
@@ -15,12 +17,26 @@ export function QuickCapture({ visible, onClose }: { visible: boolean; onClose: 
   const c = useColors();
   const add = useTasks((s) => s.add);
   const [text, setText] = useState('');
+  const [prio, setPrio] = useState<Priority | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const projects = useProjects((s) => s.items.filter((p) => !p.archived));
   const parsed = useMemo(() => parseInput(text), [text]);
+  const priority = prio ?? parsed.priority;
 
   const save = () => {
     if (!parsed.title) return;
-    add({ title: parsed.title, due: parsed.due, time: parsed.time, tags: parsed.tags, priority: parsed.priority });
+    add({
+      title: parsed.title,
+      due: parsed.due,
+      time: parsed.time,
+      tags: parsed.tags,
+      priority,
+      projectId: projectId ?? undefined,
+      source: projectId ? undefined : 'captura',
+    });
     setText('');
+    setPrio(null);
+    setProjectId(null);
     onClose();
   };
 
@@ -28,14 +44,7 @@ export function QuickCapture({ visible, onClose }: { visible: boolean; onClose: 
 
   return (
     <Sheet visible={visible} onClose={onClose} title="Nova tarefa">
-      <Field
-        autoFocus
-        value={text}
-        onChangeText={setText}
-        placeholder="O que precisa ser feito?"
-        returnKeyType="done"
-        onSubmitEditing={save}
-      />
+      <Field value={text} onChangeText={setText} placeholder="O que precisa ser feito?" returnKeyType="done" onSubmitEditing={save} />
       {text.trim() && hasMeta ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
           {/* cada pedaço entendido "pula" para dentro enquanto você digita */}
@@ -78,6 +87,48 @@ export function QuickCapture({ visible, onClose }: { visible: boolean; onClose: 
           ))}
         </View>
       )}
+      {/* prioridade e lugar da tarefa, sem precisar escrever */}
+      <View style={{ gap: space.sm }}>
+        <T v="overline" tone="dim">
+          Prioridade
+        </T>
+        <View style={{ flexDirection: 'row', gap: space.sm }}>
+          {(Object.keys(PRIORITY) as Priority[]).map((k) => (
+            <Chip
+              key={k}
+              icon={Flag}
+              label={PRIORITY[k].label}
+              color={PRIORITY[k].color}
+              active={priority === k}
+              onPress={() => setPrio(priority === k ? null : k)}
+            />
+          ))}
+        </View>
+        {projects.length ? (
+          <>
+            <T v="overline" tone="dim">
+              Onde
+            </T>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ gap: space.sm }}>
+              <Chip icon={Inbox} label="Caixa de entrada" active={!projectId} onPress={() => setProjectId(null)} />
+              {projects.map((p) => (
+                <Chip
+                  key={p.id}
+                  icon={Briefcase}
+                  label={p.name}
+                  color={p.color}
+                  active={projectId === p.id}
+                  onPress={() => setProjectId(projectId === p.id ? null : p.id)}
+                />
+              ))}
+            </ScrollView>
+          </>
+        ) : null}
+      </View>
       <Button label="Adicionar tarefa" onPress={save} disabled={!parsed.title} />
     </Sheet>
   );

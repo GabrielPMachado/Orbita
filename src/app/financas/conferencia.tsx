@@ -1,5 +1,17 @@
 import { router } from 'expo-router';
-import { ArrowDownLeft, ArrowUpRight, BadgeCheck, CircleHelp, Download, EyeOff, Landmark, RefreshCw, Settings2, ThumbsUp, Undo2 } from 'lucide-react-native';
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  BadgeCheck,
+  CircleHelp,
+  Download,
+  EyeOff,
+  Landmark,
+  RefreshCw,
+  Settings2,
+  ThumbsUp,
+  Undo2,
+} from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { AnimatedNumber, SwipeRow } from '@/components/motion';
@@ -36,7 +48,9 @@ export default function Conferencia() {
 
   const r = useMemo(() => review(txs, p), [txs, p]);
   const accountName = (b: BankTx) => {
-    const a = p.accounts.find((x) => (b.localCardId && x.localCardId === b.localCardId) || (b.localAccountId && x.localAccountId === b.localAccountId));
+    const a = p.accounts.find(
+      (x) => (b.localCardId && x.localCardId === b.localCardId) || (b.localAccountId && x.localAccountId === b.localAccountId),
+    );
     return a ? `${a.bank} · ${a.name}` : 'Banco';
   };
 
@@ -44,7 +58,11 @@ export default function Conferencia() {
     setSyncing(true);
     try {
       const res = await syncPluggy();
-      toast({ message: res.verified ? `${res.verified} novo${res.verified > 1 ? 's' : ''} conferido${res.verified > 1 ? 's' : ''}` : 'Tudo em dia com o banco' });
+      toast({
+        message: res.verified
+          ? `${res.verified} novo${res.verified > 1 ? 's' : ''} conferido${res.verified > 1 ? 's' : ''}`
+          : 'Tudo em dia com o banco',
+      });
     } catch (e) {
       toast({ message: e instanceof Error ? e.message : 'Falha ao sincronizar', kind: 'danger' });
     } finally {
@@ -101,7 +119,14 @@ export default function Conferencia() {
             { label: 'Só no app', value: r.localOnly.length, color: c.danger },
           ].map((s) => (
             <View key={s.label} style={{ flex: 1, gap: 2 }}>
-              <AnimatedNumber value={s.value} render={(t) => <T v="title" tabular color={s.value ? s.color : c.textFaint}>{t}</T>} />
+              <AnimatedNumber
+                value={s.value}
+                render={(t) => (
+                  <T v="title" tabular color={s.value ? s.color : c.textFaint}>
+                    {t}
+                  </T>
+                )}
+              />
               <T v="caption" tone="dim">
                 {s.label}
               </T>
@@ -282,4 +307,3 @@ export default function Conferencia() {
     </Screen>
   );
 }
-

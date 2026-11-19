@@ -176,7 +176,7 @@ function SubjectSheet({ editing, onClose }: { editing: Subject | 'new' | null; o
   }
   return (
     <Sheet visible={!!editing} onClose={onClose} title={editing === 'new' ? 'Nova matéria' : 'Matéria'}>
-      <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Estrutura de Dados" autoFocus={editing === 'new'} />
+      <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Estrutura de Dados" />
       <Field label="Professor(a)" value={professor} onChangeText={setProfessor} placeholder="Opcional" />
       <ColorPicker value={color} onChange={setColor} />
       <Button

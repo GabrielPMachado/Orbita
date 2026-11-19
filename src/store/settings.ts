@@ -16,7 +16,7 @@ interface SettingsState {
   iconStyle: IconStyle;
   /** ícone do app na tela inicial */
   appIconLook: 'grafite' | 'cor' | 'claro' | 'contorno' | 'mono';
-  appIconColor: 'Carmim' | 'Ambar' | 'Azul' | 'Menta' | 'Lima' | 'Verde';
+  appIconColor: import('@/lib/appIcon').IconColor;
   /** o ícone do app acompanha a cor escolhida no app */
   appIconFollows: boolean;
   setAppIcon: (p: Partial<Pick<SettingsState, 'appIconLook' | 'appIconColor' | 'appIconFollows'>>) => void;

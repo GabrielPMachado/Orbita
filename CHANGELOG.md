@@ -3,6 +3,17 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.11.0] - 2026-11-19
+
+### Mudado
+- Finanças só leem o Financy: o Órbita não grava, edita nem apaga lançamentos. "Lançar" (e o check-in, os boletos, as cobranças e o simulador) abre o Financy já preenchido; compras do Apple Pay vão para o Financy só com a categoria.
+- Modais e folhas abrem sem o teclado; ele só aparece quando você toca no campo.
+- Tarefas agrupadas por prazo, origem ou prioridade, com selos de prioridade, projeto de origem (ou caixa de entrada) e prazo em cada tarefa.
+- Nova tarefa: escolha prioridade e projeto com um toque.
+
+### Corrigido
+- Ícone do app acompanhando a cor: escolhe pelo matiz, tem 5 cores novas (roxo, índigo, rosa, laranja, ciano), aplica ao ligar a opção e ao abrir o app, e tenta de novo se o iOS recusar.
+
 ## [0.10.0] - 2026-11-18
 
 ### Adicionado

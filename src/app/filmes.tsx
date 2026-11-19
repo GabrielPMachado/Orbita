@@ -319,7 +319,7 @@ function TitleSheet({ editing, defaultStatus, onClose }: { editing: Title | 'new
               }
             }}
             placeholder={hasKey ? 'Buscar filme ou série' : 'Nome'}
-            autoFocus={editing === 'new'}
+           
             returnKeyType="search"
           />
           <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center' }}>

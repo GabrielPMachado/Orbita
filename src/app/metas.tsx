@@ -126,7 +126,7 @@ export default function Metas() {
       <Confetti run={burst} />
 
       <Sheet visible={open} onClose={() => setOpen(false)} title="Nova meta">
-        <Field label="Objetivo" value={title} onChangeText={setTitle} placeholder="Ex.: Ler livros em 2027" autoFocus />
+        <Field label="Objetivo" value={title} onChangeText={setTitle} placeholder="Ex.: Ler livros em 2027" />
         <View style={{ flexDirection: 'row', gap: space.sm }}>
           <Field label="Alvo" value={target} onChangeText={setTarget} placeholder="12" keyboardType="decimal-pad" style={{ flex: 1 }} />
           <Field label="Unidade" value={unit} onChangeText={setUnit} placeholder="livros" style={{ flex: 1 }} />

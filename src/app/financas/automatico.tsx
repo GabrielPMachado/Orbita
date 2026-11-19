@@ -1,13 +1,11 @@
-import { BadgeCheck, CircleCheck, CircleDashed, Landmark, RefreshCw, Smartphone, Zap } from 'lucide-react-native';
+import { CircleCheck, CircleDashed, RefreshCw, Smartphone } from 'lucide-react-native';
 import { useState } from 'react';
-import { router } from 'expo-router';
 import { View } from 'react-native';
 import { TxRow } from '@/components/finance';
-import { Badge, Button, Card, Empty, IconTile, List, Row, Screen, Section, T } from '@/components/ui';
+import { Button, Card, Empty, IconTile, List, Row, Screen, Section, T } from '@/components/ui';
 import { autoCaptureAvailable, checkPendingPurchases } from '@/lib/autoCapture';
 import { toast } from '@/store/toast';
 import { useFinance } from '@/store/finance';
-import { usePluggy } from '@/store/pluggy';
 import { space, useColors } from '@/theme';
 
 const STEPS = [
@@ -24,7 +22,6 @@ const STEPS = [
 
 export default function Automatico() {
   const c = useColors();
-  const pluggy = usePluggy((s) => s.configured);
   const txs = useFinance((s) => s.txs);
   const recent = txs.filter((t) => t.source === 'applepay').slice(0, 10);
   const cards = useFinance((s) => s.cards);
@@ -34,7 +31,12 @@ export default function Automatico() {
     setChecking(true);
     try {
       const r = await checkPendingPurchases();
-      toast({ message: r.pending ? `${r.added} compra${r.added === 1 ? '' : 's'} importada${r.added === 1 ? '' : 's'}` : 'Nenhuma compra na fila. A automação não chegou a rodar.' , kind: r.pending ? 'success' : 'info' });
+      toast({
+        message: r.pending
+          ? `${r.added} compra${r.added === 1 ? '' : 's'} importada${r.added === 1 ? '' : 's'}`
+          : 'Nenhuma compra na fila. A automação não chegou a rodar.',
+        kind: r.pending ? 'success' : 'info',
+      });
     } catch (e) {
       toast({ message: e instanceof Error ? e.message : 'Não foi possível ler a fila', kind: 'danger' });
     } finally {
@@ -60,7 +62,8 @@ export default function Automatico() {
         <List>
           {STEPS.map((s, i) => (
             <View key={s.title} style={{ flexDirection: 'row', gap: space.md, padding: space.lg }}>
-              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+              <View
+                style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
                 <T v="caption" tone="accent" tabular>
                   {i + 1}
                 </T>
@@ -93,7 +96,13 @@ export default function Automatico() {
       </Section>
 
       <Section title="Diagnóstico">
-        <Button label={checking ? 'Verificando…' : 'Verificar compras pendentes'} icon={RefreshCw} variant="secondary" disabled={checking || !autoCaptureAvailable} onPress={check} />
+        <Button
+          label={checking ? 'Verificando…' : 'Verificar compras pendentes'}
+          icon={RefreshCw}
+          variant="secondary"
+          disabled={checking || !autoCaptureAvailable}
+          onPress={check}
+        />
         {log.length ? (
           <List>
             {log.map((e) => (
@@ -112,38 +121,13 @@ export default function Automatico() {
         )}
       </Section>
 
-      <Section title="Conferência com o banco">
-        <Card onPress={() => router.push(pluggy ? '/financas/conferencia' : '/financas/pluggy')} style={{ gap: space.md }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
-            <IconTile icon={Landmark} color={c.info} />
-            <View style={{ flex: 1 }}>
-              <T v="headline">Meu Pluggy</T>
-              <T v="caption" tone="dim">
-                Open Finance · {pluggy ? 'conectado' : 'toque para conectar'}
-              </T>
-            </View>
-            <Badge label={pluggy ? 'Ativo' : 'Configurar'} color={pluggy ? c.success : undefined} />
-          </View>
-          <T v="callout" tone="dim">
-            O extrato oficial confere cada compra registrada pelo Apple Pay. O que bater ganha o selo de verificado; o que só existir no banco
-            (cartão físico, Pix, débito automático) vira sugestão de lançamento.
-          </T>
-          <View style={{ flexDirection: 'row', gap: space.lg }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Zap size={14} color={c.textDim} />
-              <T v="caption" tone="dim">
-                Apple Pay: na hora
-              </T>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <BadgeCheck size={14} color={c.success} />
-              <T v="caption" tone="dim">
-                Banco: confirma depois
-              </T>
-            </View>
-          </View>
-        </Card>
-      </Section>
+      <Card style={{ gap: space.xs }}>
+        <T v="headline">Para onde vai a compra</T>
+        <T v="callout" tone="dim">
+          O Órbita não grava lançamentos: a compra do Apple Pay vai para o Financy com a categoria escolhida. Quando o banco traz a mesma compra
+          (mesmo valor, até 2 dias depois), o Financy aplica essa categoria nela.
+        </T>
+      </Card>
     </Screen>
   );
 }

@@ -130,10 +130,7 @@ export default function Simulador() {
           variant="secondary"
           disabled={net <= 0}
           onPress={() =>
-            router.push({
-              pathname: '/financas/novo',
-              params: { type: 'in', amount: net.toFixed(2), category: 'Freela', description: name },
-            })
+            router.push({ pathname: '/financas/novo', params: { type: 'in', amount: net.toFixed(2), category: 'Freela', description: name } })
           }
         />
       </View>

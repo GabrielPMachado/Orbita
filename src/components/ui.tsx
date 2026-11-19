@@ -349,10 +349,13 @@ export function Row({
   onLongPress,
   chevron,
   strike,
+  meta,
 }: {
   leading?: React.ReactNode;
   title: string;
   subtitle?: string;
+  /** linha extra embaixo (selos de prioridade, origem, prazo…) */
+  meta?: React.ReactNode;
   subtitleTone?: Tone;
   trailing?: React.ReactNode;
   onPress?: () => void;
@@ -377,6 +380,7 @@ export function Row({
             {subtitle}
           </T>
         ) : null}
+        {meta}
       </View>
       {trailing}
       {chevron && <ChevronRight size={18} color={c.textFaint} />}

@@ -46,15 +46,19 @@ export default function Contas() {
 
   return (
     <>
-      <Screen back title="Contas" subtitle="Onde seu dinheiro está" actions={fyBase ? undefined : <GlassButton icon={Plus} label="Nova" onPress={() => open('new')} />}>
-      {fyBase ? (
-        <Card onPress={() => openFinancy()} style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
-          <IconTile icon={Wallet} color="#10B981" />
-          <T v="callout" tone="dim" style={{ flex: 1 }}>
-            As contas e o saldo vêm do Financy. Para mexer nelas, abra o Financy.
-          </T>
-        </Card>
-      ) : null}
+      <Screen
+        back
+        title="Contas"
+        subtitle="Onde seu dinheiro está"
+        actions={fyBase ? undefined : <GlassButton icon={Plus} label="Nova" onPress={() => open('new')} />}>
+        {fyBase ? (
+          <Card onPress={() => openFinancy()} style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+            <IconTile icon={Wallet} color="#10B981" />
+            <T v="callout" tone="dim" style={{ flex: 1 }}>
+              As contas e o saldo vêm do Financy. Para mexer nelas, abra o Financy.
+            </T>
+          </Card>
+        ) : null}
         {accounts.length === 0 ? (
           <Empty
             icon={Landmark}
@@ -100,7 +104,7 @@ export default function Contas() {
       </Screen>
 
       <Sheet visible={!!editing} onClose={() => setEditing(null)} title={editing === 'new' ? 'Nova conta' : 'Editar conta'}>
-        <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Nubank, Carteira" autoFocus={editing === 'new'} />
+        <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Nubank, Carteira" />
         <View style={{ gap: space.sm }}>
           <T v="overline" tone="dim">
             Tipo
@@ -125,7 +129,14 @@ export default function Contas() {
                   tap();
                   setColor(col);
                 }}
-                style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: col, borderWidth: 3, borderColor: color === col ? c.text : 'transparent' }}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  backgroundColor: col,
+                  borderWidth: 3,
+                  borderColor: color === col ? c.text : 'transparent',
+                }}
               />
             ))}
           </View>

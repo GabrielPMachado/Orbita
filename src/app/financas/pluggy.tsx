@@ -76,7 +76,11 @@ export default function PluggySetup() {
     return local ? `Vinculada a ${local}` : 'Sem vínculo — toque para escolher';
   };
 
-  const options = linking ? (linking.kind === 'CREDIT' ? cards.map((x) => ({ id: x.id, name: x.name, color: x.color })) : localAccounts.map((x) => ({ id: x.id, name: x.name, color: x.color }))) : [];
+  const options = linking
+    ? linking.kind === 'CREDIT'
+      ? cards.map((x) => ({ id: x.id, name: x.name, color: x.color }))
+      : localAccounts.map((x) => ({ id: x.id, name: x.name, color: x.color }))
+    : [];
   const chosen = linking ? (linking.kind === 'CREDIT' ? linking.localCardId : linking.localAccountId) : undefined;
   const choose = (id?: string) => {
     if (!linking) return;
@@ -112,7 +116,13 @@ export default function PluggySetup() {
           ))}
           <View style={{ flexDirection: 'row', gap: space.sm }}>
             <Button label="Meu Pluggy" icon={ExternalLink} variant="secondary" onPress={() => open('https://meu.pluggy.ai')} style={{ flex: 1 }} />
-            <Button label="Dashboard" icon={ExternalLink} variant="secondary" onPress={() => open('https://dashboard.pluggy.ai')} style={{ flex: 1 }} />
+            <Button
+              label="Dashboard"
+              icon={ExternalLink}
+              variant="secondary"
+              onPress={() => open('https://dashboard.pluggy.ai')}
+              style={{ flex: 1 }}
+            />
           </View>
         </Card>
       )}
@@ -141,8 +151,23 @@ export default function PluggySetup() {
       ) : (
         <Section title="Credenciais">
           <View style={{ gap: space.sm }}>
-            <Field label="Client ID" value={clientId} onChangeText={setClientId} autoCapitalize="none" autoCorrect={false} placeholder="xxxxxxxx-xxxx-…" />
-            <Field label="Client Secret" value={secret} onChangeText={setSecret} autoCapitalize="none" autoCorrect={false} secureTextEntry placeholder="••••••••" />
+            <Field
+              label="Client ID"
+              value={clientId}
+              onChangeText={setClientId}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="xxxxxxxx-xxxx-…"
+            />
+            <Field
+              label="Client Secret"
+              value={secret}
+              onChangeText={setSecret}
+              autoCapitalize="none"
+              autoCorrect={false}
+              secureTextEntry
+              placeholder="••••••••"
+            />
             <Field
               label="Item IDs (um por linha)"
               value={items}
@@ -215,10 +240,15 @@ export default function PluggySetup() {
               icon={Unplug}
               variant="danger"
               onPress={() =>
-                confirmDelete('Desconectar o Meu Pluggy?', 'As chaves saem do Keychain. Lançamentos já conferidos continuam com o selo.', () => {
-                  forgetPluggy();
-                  setEditing(true);
-                }, 'Desconectar')
+                confirmDelete(
+                  'Desconectar o Meu Pluggy?',
+                  'As chaves saem do Keychain. Lançamentos já conferidos continuam com o selo.',
+                  () => {
+                    forgetPluggy();
+                    setEditing(true);
+                  },
+                  'Desconectar',
+                )
               }
             />
           </Advanced>
@@ -240,7 +270,12 @@ export default function PluggySetup() {
                 onPress={() => choose(o.id)}
               />
             ))}
-            <Row title="Nenhuma" subtitle="Confere só por valor e data" trailing={<Checkbox checked={!chosen} onPress={() => choose(undefined)} />} onPress={() => choose(undefined)} />
+            <Row
+              title="Nenhuma"
+              subtitle="Confere só por valor e data"
+              trailing={<Checkbox checked={!chosen} onPress={() => choose(undefined)} />}
+              onPress={() => choose(undefined)}
+            />
           </List>
           {!options.length && (
             <T v="caption" tone="faint">

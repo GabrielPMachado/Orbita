@@ -167,7 +167,7 @@ function ExerciseSheet({
 
   return (
     <Sheet visible={!!editing} onClose={onClose} title={editing === 'new' ? 'Novo exercício' : 'Exercício'}>
-      <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Supino reto" autoFocus={editing === 'new'} />
+      <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Supino reto" />
       <Card style={{ gap: space.md }}>
         <Stepper label="Séries" value={sets} min={1} max={10} onChange={setSets} />
         <Stepper label="Carga" value={weight} min={0} max={500} step={2.5} onChange={setWeight} format={(v) => (v ? `${String(v).replace('.', ',')} kg` : '—')} />

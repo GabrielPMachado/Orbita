@@ -152,7 +152,7 @@ export default function Habitos() {
       <Confetti run={burst} />
 
       <Sheet visible={open} onClose={() => setOpen(false)} title="Novo hábito">
-        <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Beber 2 litros de água" autoFocus />
+        <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Beber 2 litros de água" />
         <View style={{ gap: space.sm }}>
           <T v="overline" tone="dim">
             Ícone

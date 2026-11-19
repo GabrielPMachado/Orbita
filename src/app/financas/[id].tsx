@@ -1,8 +1,8 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { BadgeCheck, CalendarDays, CreditCard, Landmark, Layers, Repeat, Smartphone, Trash } from 'lucide-react-native';
-import { Alert, Switch, View } from 'react-native';
-import { PhotoStrip } from '@/components/Photos';
-import { Card, Field, GlassButton, IconTile, List, Row, Screen, Section, T } from '@/components/ui';
+import { useLocalSearchParams } from 'expo-router';
+import { BadgeCheck, CalendarDays, CreditCard, ExternalLink, Landmark, Layers, Repeat, Smartphone } from 'lucide-react-native';
+import { openFinancy } from '@/lib/financy';
+import { View } from 'react-native';
+import { Card, GlassButton, IconTile, List, Row, Screen, Section, T } from '@/components/ui';
 import { brl, friendlyDate } from '@/lib/date';
 import { category, invoiceMonth, monthName } from '@/lib/finance';
 import { useFinance } from '@/store/finance';
@@ -15,24 +15,12 @@ export default function Lancamento() {
   const account = useFinance((s) => s.accounts.find((a) => a.id === tx?.accountId));
   const card = useFinance((s) => s.cards.find((k) => k.id === tx?.cardId));
   const groupCount = useFinance((s) => (tx?.group ? s.txs.filter((t) => t.group === tx.group && t.date >= tx.date).length : 0));
-  const { updateTx, removeTx } = useFinance.getState();
 
   if (!tx) return null;
   const cat = category(tx.category, tx.type);
 
-  const remove = () => {
-    const buttons: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = [{ text: 'Cancelar', style: 'cancel' }];
-    if (tx.group && groupCount > 1) {
-      buttons.push({ text: 'Só este', onPress: () => (removeTx(tx.id, 'one'), router.back()) });
-      buttons.push({ text: `Este e os próximos (${groupCount})`, style: 'destructive', onPress: () => (removeTx(tx.id, 'next'), router.back()) });
-    } else {
-      buttons.push({ text: 'Excluir', style: 'destructive', onPress: () => (removeTx(tx.id), router.back()) });
-    }
-    Alert.alert('Excluir lançamento?', tx.description || tx.category, buttons);
-  };
-
   return (
-    <Screen back actions={<GlassButton icon={Trash} color={c.danger} accessibilityLabel="Excluir" onPress={remove} />}>
+    <Screen back actions={<GlassButton icon={ExternalLink} label="Financy" onPress={() => openFinancy()} />}>
       <View style={{ alignItems: 'center', gap: space.md, paddingVertical: space.md }}>
         <IconTile icon={cat.icon} color={cat.color} size={64} />
         <View style={{ alignItems: 'center', gap: 4 }}>
@@ -49,7 +37,11 @@ export default function Lancamento() {
 
       <List>
         <Row leading={<IconTile icon={cat.icon} color={cat.color} />} title={tx.category} subtitle="Categoria" />
-        <Row leading={<IconTile icon={CalendarDays} color={c.textDim} />} title={friendlyDate(tx.date)} subtitle={tx.date.split('-').reverse().join('/')} />
+        <Row
+          leading={<IconTile icon={CalendarDays} color={c.textDim} />}
+          title={friendlyDate(tx.date)}
+          subtitle={tx.date.split('-').reverse().join('/')}
+        />
         {account && <Row leading={<IconTile icon={Landmark} color={account.color} />} title={account.name} subtitle="Conta" />}
         {card && (
           <Row
@@ -65,9 +57,13 @@ export default function Lancamento() {
             subtitle={`Total da compra ${brl(tx.amount * tx.installment.total)}`}
           />
         )}
-        {tx.source === 'applepay' && <Row leading={<IconTile icon={Smartphone} color={c.accent} />} title="Registrado pelo Apple Pay" subtitle="Automação do Atalhos" />}
+        {tx.source === 'applepay' && (
+          <Row leading={<IconTile icon={Smartphone} color={c.accent} />} title="Registrado pelo Apple Pay" subtitle="Automação do Atalhos" />
+        )}
         {tx.verified && <Row leading={<IconTile icon={BadgeCheck} color={c.success} />} title="Conferido com o banco" subtitle="Open Finance" />}
-        {tx.fixed && <Row leading={<IconTile icon={Repeat} color={c.textDim} />} title="Lançamento fixo mensal" subtitle={`${groupCount} a partir deste`} />}
+        {tx.fixed && (
+          <Row leading={<IconTile icon={Repeat} color={c.textDim} />} title="Lançamento fixo mensal" subtitle={`${groupCount} a partir deste`} />
+        )}
       </List>
 
       {tx.cardId ? (
@@ -78,36 +74,28 @@ export default function Lancamento() {
           </T>
         </Card>
       ) : (
-      <Card style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
-        <View style={{ flex: 1 }}>
-          <T v="headline">{tx.type === 'in' ? 'Recebido' : 'Pago'}</T>
+        <Card style={{ gap: 2 }}>
+          <T v="headline">{tx.paid ? (tx.type === 'in' ? 'Recebido' : 'Pago') : tx.type === 'in' ? 'A receber' : 'A pagar'}</T>
           <T v="caption" tone="dim">
             {tx.paid ? 'Já entrou no saldo atual' : 'Ainda pendente — não entra no saldo atual'}
           </T>
-        </View>
-        <Switch
-          value={tx.paid}
-          onValueChange={(paid) => updateTx(tx.id, { paid })}
-          trackColor={{ true: c.success, false: c.surface3 }}
-          thumbColor="#FFFFFF"
-          ios_backgroundColor={c.surface3}
-        />
-      </Card>
+        </Card>
       )}
 
-      <Section title="Comprovantes e fotos">
-        <PhotoStrip photos={tx.attachments} onChange={(attachments) => updateTx(tx.id, { attachments })} addLabel="Anexar" />
-      </Section>
+      {tx.notes ? (
+        <Section title="Observações">
+          <T v="callout" tone="dim">
+            {tx.notes}
+          </T>
+        </Section>
+      ) : null}
 
-      <Section title="Observações">
-        <Field
-          value={tx.notes ?? ''}
-          onChangeText={(notes) => updateTx(tx.id, { notes })}
-          placeholder="Adicionar observação"
-          multiline
-          style={{ minHeight: 80, textAlignVertical: 'top' }}
-        />
-      </Section>
+      <Card onPress={() => openFinancy()} style={{ gap: 2 }}>
+        <T v="headline">Editar no Financy</T>
+        <T v="caption" tone="dim">
+          As finanças vêm do Financy; mudanças feitas lá aparecem aqui sozinhas.
+        </T>
+      </Card>
     </Screen>
   );
 }

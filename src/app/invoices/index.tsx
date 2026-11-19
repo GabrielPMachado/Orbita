@@ -1,3 +1,4 @@
+import { openFinancy } from '@/lib/financy';
 import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams } from 'expo-router';
 import { Check, Copy, MessageCircle, Plus, ReceiptText, Send, Trash, X } from 'lucide-react-native';
@@ -10,7 +11,6 @@ import { addDays, brl, friendlyDate, toKey, today } from '@/lib/date';
 import { parseMoney, thisMonth } from '@/lib/finance';
 import { parseInput } from '@/lib/parse';
 import { uid } from '@/lib/storage';
-import { useFinance } from '@/store/finance';
 import { invoiceTotal, useClients, useInvoices, type Invoice, type InvoiceItem } from '@/store/modules';
 import { space, useColors } from '@/theme';
 
@@ -96,9 +96,20 @@ export default function Invoices() {
               return (
                 <Row
                   key={i.id}
-                  leading={client ? <Avatar name={client.name} color={client.color} size={36} /> : <IconTile icon={ReceiptText} color={STATUS_LABEL[st].color} />}
+                  leading={
+                    client ? (
+                      <Avatar name={client.name} color={client.color} size={36} />
+                    ) : (
+                      <IconTile icon={ReceiptText} color={STATUS_LABEL[st].color} />
+                    )
+                  }
                   title={`#${i.number} · ${i.title}`}
-                  subtitle={[client?.name, st === 'paga' ? `paga ${friendlyDate(i.paidAt ?? i.dueDate).toLowerCase()}` : `vence ${friendlyDate(i.dueDate).toLowerCase()}`].filter(Boolean).join(' · ')}
+                  subtitle={[
+                    client?.name,
+                    st === 'paga' ? `paga ${friendlyDate(i.paidAt ?? i.dueDate).toLowerCase()}` : `vence ${friendlyDate(i.dueDate).toLowerCase()}`,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
                   onPress={() => setEditing(i)}
                   trailing={
                     <View style={{ alignItems: 'flex-end', gap: 4 }}>
@@ -123,7 +134,6 @@ function InvoiceSheet({ editing, presetClient, onClose }: { editing: Invoice | '
   const c = useColors();
   const { items: invoices, add, update, remove } = useInvoices();
   const clients = useClients((s) => s.items);
-  const addTx = useFinance((s) => s.addTx);
   const [title, setTitle] = useState('');
   const [clientId, setClientId] = useState<string | undefined>();
   const [items, setItems] = useState<InvoiceItem[]>([]);
@@ -181,18 +191,24 @@ function InvoiceSheet({ editing, presetClient, onClose }: { editing: Invoice | '
     const inv = save();
     if (!inv) return;
     const day = today();
-    addTx({
-      type: 'in',
-      amount: invoiceTotal(inv),
-      category: 'Freela',
-      description: `#${inv.number} · ${inv.title}${client ? ` · ${client.name}` : ''}`,
-      date: day,
-      accountId: useFinance.getState().accounts[0]?.id,
-    });
-    const txId = useFinance.getState().txs[0]?.id;
-    update(inv.id, { status: 'paga', paidAt: day, txId });
+    update(inv.id, { status: 'paga', paidAt: day });
     onClose();
-    Alert.alert('Cobrança paga', `${brl(invoiceTotal(inv))} lançado em Finanças como entrada.`);
+    // a entrada é lançada no Financy (o Órbita só lê as finanças de lá)
+    Alert.alert('Cobrança paga', `Lançar ${brl(invoiceTotal(inv))} como entrada no Financy?`, [
+      { text: 'Agora não', style: 'cancel' },
+      {
+        text: 'Abrir no Financy',
+        onPress: () =>
+          openFinancy({
+            action: 'novo',
+            tipo: 'income',
+            valor: invoiceTotal(inv),
+            categoria: 'Freela',
+            descricao: `#${inv.number} · ${inv.title}${client ? ` · ${client.name}` : ''}`,
+            data: day,
+          }),
+      },
+    ]);
   };
 
   const copy = async () => {
@@ -221,7 +237,13 @@ function InvoiceSheet({ editing, presetClient, onClose }: { editing: Invoice | '
           </T>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
             {clients.map((x) => (
-              <Chip key={x.id} label={x.name} color={x.color} active={clientId === x.id} onPress={() => setClientId(clientId === x.id ? undefined : x.id)} />
+              <Chip
+                key={x.id}
+                label={x.name}
+                color={x.color}
+                active={clientId === x.id}
+                onPress={() => setClientId(clientId === x.id ? undefined : x.id)}
+              />
             ))}
           </View>
         </View>
@@ -255,8 +277,20 @@ function InvoiceSheet({ editing, presetClient, onClose }: { editing: Invoice | '
         <Field value={desc} onChangeText={setDesc} placeholder="Descrição do item" />
         <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center' }}>
           <Field value={qty} onChangeText={setQty} placeholder="Qtd" keyboardType="decimal-pad" style={{ flex: 0.6 }} />
-          <Field value={price} onChangeText={setPrice} placeholder="Valor (R$)" keyboardType="decimal-pad" style={{ flex: 1 }} onSubmitEditing={addItem} />
-          <GlassButton icon={Plus} accessibilityLabel="Adicionar item" onPress={addItem} color={desc.trim() && parseMoney(price) ? c.accent : c.textFaint} />
+          <Field
+            value={price}
+            onChangeText={setPrice}
+            placeholder="Valor (R$)"
+            keyboardType="decimal-pad"
+            style={{ flex: 1 }}
+            onSubmitEditing={addItem}
+          />
+          <GlassButton
+            icon={Plus}
+            accessibilityLabel="Adicionar item"
+            onPress={addItem}
+            color={desc.trim() && parseMoney(price) ? c.accent : c.textFaint}
+          />
         </View>
       </View>
 
@@ -292,7 +326,9 @@ function InvoiceSheet({ editing, presetClient, onClose }: { editing: Invoice | '
       </Card>
 
       {!isPaid && <Button label="Marcar como paga" icon={Check} onPress={markPaid} disabled={!items.length} />}
-      {client?.phone && !isPaid ? <Button label="Enviar no WhatsApp" icon={MessageCircle} variant="secondary" onPress={sendWhats} disabled={!items.length} /> : null}
+      {client?.phone && !isPaid ? (
+        <Button label="Enviar no WhatsApp" icon={MessageCircle} variant="secondary" onPress={sendWhats} disabled={!items.length} />
+      ) : null}
       <Button label="Copiar mensagem de cobrança" icon={Copy} variant="secondary" onPress={copy} disabled={!items.length} />
       {!isPaid && (
         <Button
@@ -311,7 +347,6 @@ function InvoiceSheet({ editing, presetClient, onClose }: { editing: Invoice | '
           label="Reabrir cobrança"
           variant="secondary"
           onPress={() => {
-            if (current.txId) useFinance.getState().removeTx(current.txId);
             update(current.id, { status: 'enviada', paidAt: undefined, txId: undefined });
             onClose();
           }}

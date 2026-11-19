@@ -54,7 +54,7 @@ export function ProjectSheet({
 
   return (
     <Sheet visible={!!editing} onClose={onClose} title={editing === 'new' ? 'Novo projeto' : 'Editar projeto'}>
-      <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: App do Bar do Dindo" autoFocus={editing === 'new'} />
+      <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: App do Bar do Dindo" />
       <Field label="Descrição" value={description} onChangeText={setDescription} placeholder="Opcional" multiline style={{ minHeight: 64, textAlignVertical: 'top' }} />
       {clients.length > 0 && (
         <View style={{ gap: space.sm }}>

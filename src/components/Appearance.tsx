@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   swatch: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   appIcons: { flexDirection: 'row', justifyContent: 'space-between' },
-  iconColors: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: space.xs },
+  iconColors: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingHorizontal: space.xs },
   followRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   appIconRing: { padding: 3, borderRadius: 20, borderWidth: 2.5 },
   appIcon: { width: 54, height: 54, borderRadius: 13 },
