@@ -6,6 +6,7 @@ import type { FileDownloadEvent, ShouldStartLoadRequest } from 'react-native-web
 import { OrbitaDocs } from '../../modules/orbita-docs';
 import { lerTexto } from '@/lib/boleto';
 import { analisar, ESTACIO_URLS, HOOK_JS, LINKS_JS, novaCaptura, PAGE_JS, pdfJs, type Captura } from '@/lib/estacio';
+import { PORTAL } from '@/lib/estacioApi';
 import type { Resultado } from '@/lib/estacioImport';
 import { keepFile } from '@/lib/media';
 import { uid } from '@/lib/storage';
@@ -93,10 +94,62 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finish]);
 
+  /* ---------- roteiro do portal atual (estudante.estacio.br + sala de avaliações) ---------- */
+  type Passo = { label?: string; run: () => void; wait: number };
+  const roteiro = useRef<Passo[]>([]);
+  const feitos = useRef(0);
+  const passo = useCallback(() => {
+    clearTimeout(timer.current);
+    if (phase.current !== 'sweeping') return;
+    if (Date.now() - started.current > MAX_TIME * 2) return finish();
+    const p = roteiro.current.shift();
+    if (!p) return finish();
+    feitos.current++;
+    onSweep?.({ phase: 'sweeping', visited: feitos.current, total: feitos.current + roteiro.current.length, label: p.label });
+    try {
+      p.run();
+    } catch {}
+    timer.current = setTimeout(passo, p.wait);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finish, onSweep]);
+  const js = (code: string) => () => web.current?.injectJavaScript(code);
+
+  /** Depois de contar as disciplinas: abre cada uma e lê AV, AVS e as notas. */
+  const montarDisciplinas = (n: number) => {
+    const passos: Passo[] = [];
+    for (let i = 0; i < Math.min(n, 12); i++) {
+      passos.push(
+        { label: 'Avaliações', run: () => setUrl(`${PORTAL.avaliacoes}?d=${i}`), wait: 7000 },
+        { label: `Disciplina ${i + 1} de ${n}`, run: js(PORTAL.abrir(i)), wait: 9000 },
+        { label: `Disciplina ${i + 1}: Prova AVS`, run: js(PORTAL.aba('Prova AVS')), wait: 4000 },
+        { label: `Disciplina ${i + 1}: notas`, run: js(PORTAL.aba('Minhas notas')), wait: 4500 },
+      );
+    }
+    passos.push({ label: 'Início', run: () => setUrl(PORTAL.inicio), wait: 6000 });
+    roteiro.current.push(...passos);
+  };
+
+  const startPortal = () => {
+    phase.current = 'sweeping';
+    started.current = Date.now();
+    feitos.current = 0;
+    roteiro.current = [
+      { label: 'Início', run: () => setUrl(PORTAL.inicio), wait: 7000 },
+      { label: 'Lista de avaliações', run: js(PORTAL.irAvaliacoes), wait: 4500 },
+      { label: 'Contando disciplinas', run: js(PORTAL.contar), wait: 2500 },
+    ];
+    passo();
+  };
+
   const startSweep = useCallback(() => {
     if (cap.current.login) {
       phase.current = 'login';
       emit({});
+      return;
+    }
+    // portal novo da Estácio: roteiro sob medida
+    if ([...cap.current.pages.keys()].some((u) => /estudante\.estacio\.br/.test(u)) || /estudante\.estacio\.br/.test(url)) {
+      startPortal();
       return;
     }
     phase.current = 'sweeping';
@@ -147,6 +200,8 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
           tables: (m.tables as string[][][]) ?? [],
         });
         changed();
+      } else if (m.type === 'count' && typeof m.n === 'number') {
+        montarDisciplinas(m.n);
       } else if (m.type === 'links' && Array.isArray(m.items)) {
         for (const it of m.items as { text: string; href: string }[]) {
           if (!visited.current.has(it.href) && !queue.current.some((q) => q.href === it.href)) queue.current.push(it);
@@ -174,7 +229,9 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
     onLoading?.(false);
     web.current?.injectJavaScript(PAGE_JS);
     setTimeout(() => {
-      if (phase.current === 'sweeping') {
+      if (phase.current === 'sweeping' && (feitos.current > 0 || roteiro.current.length)) {
+        // roteiro do portal: os passos têm tempo próprio
+      } else if (phase.current === 'sweeping') {
         web.current?.injectJavaScript(LINKS_JS);
         clearTimeout(timer.current);
         timer.current = setTimeout(next, PAGE_WAIT);

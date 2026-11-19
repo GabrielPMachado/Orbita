@@ -35,7 +35,7 @@ export function EstacioBackground() {
   }, []);
   useEffect(() => {
     if (!run) return;
-    const stop = setTimeout(() => setRun(false), 4 * 60 * 1000);
+    const stop = setTimeout(() => setRun(false), 7 * 60 * 1000);
     return () => clearTimeout(stop);
   }, [run]);
 

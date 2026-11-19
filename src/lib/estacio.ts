@@ -7,6 +7,7 @@
  * página e em tabelas; boletos pela linha digitável (lib/boleto).
  */
 import { lerTexto, type BoletoInfo } from './boleto';
+import { lerPortal, type MensalidadeAviso } from './estacioApi';
 
 export const ESTACIO_URLS = [
   { label: 'Minha Estácio', url: 'https://estudante.estacio.br/' },
@@ -23,7 +24,7 @@ export const HOOK_JS = `
   var keep = function(url, text){
     if (!text || text.length < 2 || text.length > 400000) return;
     var c = text.trim()[0]; if (c !== '{' && c !== '[') return;
-    send({ type: 'json', url: String(url).slice(0, 300), body: text });
+    send({ type: 'json', url: String(url).slice(0, 300), page: location.href.slice(0, 300), body: text });
   };
   var f = window.fetch;
   if (f) window.fetch = function(){ var a = arguments; return f.apply(this, a).then(function(r){ try { r.clone().text().then(function(t){ keep(r.url || a[0], t); }); } catch(e){} return r; }); };
@@ -193,7 +194,7 @@ function titleCase(s: string) {
 }
 
 export interface Captura {
-  json: { url: string; body: string }[];
+  json: { url: string; body: string; page?: string }[];
   pages: Map<string, { url: string; title: string; text: string; tables: string[][][] }>;
   /** a última página pedia senha (sessão expirada ou ainda não entrou) */
   login?: boolean;
@@ -210,6 +211,8 @@ export interface Evento {
   data: string; // AAAA-MM-DD (início, ou o dia)
   ate?: string; // fim da janela (agendamento, entrega)
   disciplina?: string;
+  /** só se precisar (ex.: AVS) */
+  opcional?: boolean;
 }
 
 const RE_DATA = /\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b|\b(20\d{2})-(\d{2})-(\d{2})/;
@@ -311,7 +314,10 @@ function dedupEventos(l: Evento[]) {
   return [...seen.values()].sort((a, b) => a.data.localeCompare(b.data));
 }
 
-export function analisar(c: Captura, extraTexto: string[] = []): { disciplinas: Disciplina[]; boletos: BoletoInfo[]; eventos: Evento[] } {
+export function analisar(
+  c: Captura,
+  extraTexto: string[] = [],
+): { disciplinas: Disciplina[]; boletos: BoletoInfo[]; eventos: Evento[]; mensalidades: MensalidadeAviso[]; renovacao: boolean } {
   const map = new Map<string, Disciplina>();
   for (const j of c.json) {
     try {
@@ -330,7 +336,23 @@ export function analisar(c: Captura, extraTexto: string[] = []): { disciplinas: 
     } catch {}
   }
   for (const p of c.pages.values()) eventosTexto(p.text, ev);
-  return { disciplinas, boletos, eventos: dedupEventos(ev) };
+  // leitura sob medida do portal atual (mais confiável): vence a genérica
+  const portal = lerPortal(c);
+  const porNome = new Map(disciplinas.map((d) => [norm(d.nome), d]));
+  for (const d of portal.disciplinas) {
+    const prev = porNome.get(norm(d.nome));
+    porNome.set(norm(d.nome), { ...prev, ...d, notas: { ...prev?.notas, ...d.notas }, professor: d.professor ?? prev?.professor });
+  }
+  const todas = [...porNome.values()];
+  const comPortal = portal.eventos.length || portal.disciplinas.length;
+  return {
+    disciplinas: todas,
+    boletos,
+    // com o portal lido direito, a leitura genérica de texto só atrapalha (pega datas soltas)
+    eventos: dedupEventos(comPortal ? [...portal.eventos, ...ev.filter((e) => e.tipo === 'entrega')] : ev),
+    mensalidades: portal.mensalidades,
+    renovacao: portal.renovacao,
+  };
 }
 
 /** Só a forma dos dados (chaves e tipos, sem valores) — para ajustar a leitura sem expor nada seu. */

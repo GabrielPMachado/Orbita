@@ -3,6 +3,11 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.12.1] - 2026-11-19
+
+### Melhorado
+- Leitura da Estácia feita sob medida para o portal atual: disciplinas e professor pela API do portal, e em cada disciplina a Sala de Avaliações (Prova AV, Prova AVS e Minhas notas). Vira tarefa o período de agendamento de cada prova (a AVS só se a nota parcial ainda não chega a 6), vira avaliação a prova marcada, vêm as notas (AV, AVS, simulados, progresso e parcial), o aviso da mensalidade com vencimento e a renovação de matrícula pendente.
+
 ## [0.12.0] - 2026-11-19
 
 ### Adicionado
