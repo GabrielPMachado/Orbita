@@ -1,4 +1,4 @@
-import { EASE_OUT } from './motion';
+import { EASE_OUT } from '@/lib/motionTokens';
 /**
  * Check-in do dia: um modal simples, de uma tela só, na primeira abertura de cada dia
  * (lib/checkin.ts). Humor, sono, energia, foco do dia e o que ficou de ontem. Tudo opcional.

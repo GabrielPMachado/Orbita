@@ -1,4 +1,4 @@
-import { EASE_OUT } from '@/components/motion';
+import { EASE_OUT } from '@/lib/motionTokens';
 /**
  * Check-in do dia: aparece na primeira abertura de cada dia (lib/checkin.ts).
  * Humor → sono → energia e intenção → o que ficou de ontem. Tudo pulável.

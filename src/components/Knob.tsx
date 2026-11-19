@@ -1,4 +1,4 @@
-import { SMOOTH } from './motion';
+import { SMOOTH } from '@/lib/motionTokens';
 /**
  * Roda de intensidade (0–11): botão giratório com marcações em volta e uma estrela no
  * fim. A cor escolhida pinta o anel, o ponto e o fundo do cartão, que vai esquentando

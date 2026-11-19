@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { FONTS, space, useColors } from '@/theme';
 import { Glass } from './Glass';
-import { Bounce, SPRING } from './motion';
+import { Bounce } from './motion';
+import { SPRING } from '@/lib/motionTokens';
 import { T, tap } from './ui';
 
 const TABS: Record<string, { label: string; icon: LucideIcon }> = {

@@ -1,4 +1,4 @@
-import { EASE_OUT } from './motion';
+import { EASE_OUT } from '@/lib/motionTokens';
 import { Briefcase, CalendarDays, Clock3, Flag, Hash, Inbox, Sparkles } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';

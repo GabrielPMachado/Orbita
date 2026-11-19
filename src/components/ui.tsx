@@ -1,4 +1,4 @@
-import { EASE_OUT, SMOOTH } from './motion';
+import { EASE_OUT, SMOOTH } from '@/lib/motionTokens';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { Check, ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-react-native';
@@ -44,7 +44,8 @@ import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Rect, Stop } fr
 import { FONTS, radius, readableOn, space, type, useColors, type TypeVariant } from '@/theme';
 import { useSettings } from '@/store/settings';
 import { Ambient, Glass } from './Glass';
-import { PressScale, SPRING } from './motion';
+import { PressScale } from './motion';
+import { SPRING } from '@/lib/motionTokens';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const LIST_LAYOUT = LinearTransition.duration(260).easing(EASE_OUT);

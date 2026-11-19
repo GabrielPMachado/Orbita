@@ -1,4 +1,4 @@
-import { EASE_OUT } from './motion';
+import { EASE_OUT } from '@/lib/motionTokens';
 /**
  * Aparência (Configurações): cor do app (prontas + suas), a roda de intensidade
  * e o estilo/cor dos ícones.

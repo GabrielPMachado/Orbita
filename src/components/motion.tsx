@@ -29,13 +29,8 @@ import { radius, space, useColors } from '@/theme';
 import { Glass } from './Glass';
 import { T } from './ui';
 
-/**
- * Movimento do Órbita: deslizar suave, sem quicar. As molas são criticamente amortecidas
- * (não passam do ponto) e as entradas usam ease-out curto com um leve fade.
- */
-export const SPRING = { damping: 30, stiffness: 320, mass: 0.9, overshootClamping: true };
-export const EASE_OUT = Easing.bezier(0.22, 1, 0.36, 1);
-export const SMOOTH = { duration: 240, easing: EASE_OUT };
+export { EASE_OUT, SMOOTH, SPRING } from '@/lib/motionTokens';
+import { EASE_OUT, SPRING } from '@/lib/motionTokens';
 
 /* ---------- Pressionar com mola ---------- */
 const APressable = Animated.createAnimatedComponent(Pressable);
