@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import '@/lib/notifications';
@@ -27,13 +28,21 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 
 /** Toque numa notificação com `data.url` (ex.: orbita://boletos) abre a tela certa. */
 function useNotificationLinks() {
-  const last = Notifications.useLastNotificationResponse();
   useEffect(() => {
-    const url = last?.notification.request.content.data?.url;
-    if (typeof url !== 'string' || !url.startsWith('orbita://')) return;
-    const path = '/' + url.replace('orbita://', '');
-    setTimeout(() => router.push(path as never), 300);
-  }, [last]);
+    if (Platform.OS === 'web') return;
+    const go = (url: unknown) => {
+      if (typeof url !== 'string' || !url.startsWith('orbita://')) return;
+      setTimeout(() => router.push(('/' + url.replace('orbita://', '')) as never), 300);
+    };
+    let sub: { remove: () => void } | undefined;
+    try {
+      Notifications.getLastNotificationResponseAsync()
+        .then((r) => go(r?.notification.request.content.data?.url))
+        .catch(() => {});
+      sub = Notifications.addNotificationResponseReceivedListener((r) => go(r.notification.request.content.data?.url));
+    } catch {}
+    return () => sub?.remove();
+  }, []);
 }
 
 export default function RootLayout() {

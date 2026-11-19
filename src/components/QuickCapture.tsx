@@ -19,7 +19,8 @@ export function QuickCapture({ visible, onClose }: { visible: boolean; onClose: 
   const [text, setText] = useState('');
   const [prio, setPrio] = useState<Priority | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
-  const projects = useProjects((s) => s.items.filter((p) => !p.archived));
+  const allProjects = useProjects((s) => s.items);
+  const projects = useMemo(() => allProjects.filter((p) => !p.archived), [allProjects]);
   const parsed = useMemo(() => parseInput(text), [text]);
   const priority = prio ?? parsed.priority;
 

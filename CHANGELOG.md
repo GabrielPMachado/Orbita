@@ -3,6 +3,12 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.11.1] - 2026-11-19
+
+### Corrigido
+- O app fechava ao abrir: a lista de projetos da nova tarefa era recriada a cada desenho e travava a tela num laço. Agora é calculada uma vez por mudança.
+- Abrir pelo aviso de um boleto não depende mais de uma função que não existe na prévia web.
+
 ## [0.11.0] - 2026-11-19
 
 ### Mudado

@@ -20,12 +20,14 @@ const STEPS = [
   { title: 'Pronto', body: 'Ao pagar com o iPhone, o iOS pergunta só a categoria. O resto é salvo sozinho, sem abrir o app.' },
 ];
 
+const NO_LOG: never[] = [];
+
 export default function Automatico() {
   const c = useColors();
   const txs = useFinance((s) => s.txs);
   const recent = txs.filter((t) => t.source === 'applepay').slice(0, 10);
   const cards = useFinance((s) => s.cards);
-  const log = useFinance((s) => s.intentLog ?? []);
+  const log = useFinance((s) => s.intentLog) ?? NO_LOG;
   const [checking, setChecking] = useState(false);
   const check = async () => {
     setChecking(true);
