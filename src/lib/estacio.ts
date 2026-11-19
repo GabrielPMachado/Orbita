@@ -7,7 +7,7 @@
  * página e em tabelas; boletos pela linha digitável (lib/boleto).
  */
 import { lerTexto, type BoletoInfo } from './boleto';
-import { lerPortal, type MensalidadeAviso } from './estacioApi';
+import { lerPortal, type AvalEstacio, type MensalidadeAviso } from './estacioApi';
 
 export const ESTACIO_URLS = [
   { label: 'Minha Estácio', url: 'https://estudante.estacio.br/' },
@@ -46,7 +46,10 @@ export const PAGE_JS = `
       return [].slice.call(t.rows).slice(0, 200).map(function(r){ return [].slice.call(r.cells).map(function(c){ return (c.innerText || '').trim().slice(0, 200); }); });
     });
     var pw = [].slice.call(document.querySelectorAll('input[type=password]')).some(function(i){ var r = i.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
-    send({ type: 'page', url: location.href, title: document.title, text: (document.body && document.body.innerText || '').slice(0, 200000), tables: tables, login: pw });
+    var txt = (document.body && document.body.innerText || '');
+    var ls = txt.split(/\n+/).map(function(l){ return l.trim(); }).filter(Boolean);
+    var view = ls[0] === 'Voltar' ? ls[1] : '';
+    send({ type: 'page', url: location.href, view: view, title: document.title, text: txt.slice(0, 200000), tables: tables, login: pw });
   };
   grab();
   if (!window.__orbitaTick) window.__orbitaTick = setInterval(grab, 3000);
@@ -323,7 +326,14 @@ function dedupEventos(l: Evento[]) {
 export function analisar(
   c: Captura,
   extraTexto: string[] = [],
-): { disciplinas: Disciplina[]; boletos: BoletoInfo[]; eventos: Evento[]; mensalidades: MensalidadeAviso[]; renovacao: boolean } {
+): {
+  disciplinas: Disciplina[];
+  boletos: BoletoInfo[];
+  eventos: Evento[];
+  avaliacoes: AvalEstacio[];
+  mensalidades: MensalidadeAviso[];
+  renovacao: boolean;
+} {
   const map = new Map<string, Disciplina>();
   for (const j of c.json) {
     try {
@@ -350,12 +360,13 @@ export function analisar(
     porNome.set(norm(d.nome), { ...prev, ...d, notas: { ...prev?.notas, ...d.notas }, professor: d.professor ?? prev?.professor });
   }
   const todas = [...porNome.values()];
-  const comPortal = portal.eventos.length || portal.disciplinas.length;
+  const comPortal = portal.eventos.length || portal.disciplinas.length || portal.avaliacoes.length;
   return {
     disciplinas: todas,
     boletos,
     // com o portal lido direito, a leitura genérica de texto só atrapalha (pega datas soltas)
     eventos: dedupEventos(comPortal ? [...portal.eventos, ...ev.filter((e) => e.tipo === 'entrega')] : ev),
+    avaliacoes: portal.avaliacoes,
     mensalidades: portal.mensalidades,
     renovacao: portal.renovacao,
   };

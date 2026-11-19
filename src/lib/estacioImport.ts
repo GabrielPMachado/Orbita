@@ -8,7 +8,7 @@
 import { agendarAvisos } from './boletoImport';
 import type { BoletoInfo } from './boleto';
 import type { Disciplina, Evento } from './estacio';
-import type { MensalidadeAviso } from './estacioApi';
+import type { AvalEstacio, MensalidadeAviso } from './estacioApi';
 import { useBoletos } from '@/store/boletos';
 import { useExams, useSubjects } from '@/store/modules';
 import { useTasks } from '@/store/tasks';
@@ -21,6 +21,7 @@ export type Resultado = {
   disciplinas: Disciplina[];
   boletos: BoletoInfo[];
   eventos: Evento[];
+  avaliacoes?: AvalEstacio[];
   mensalidades?: MensalidadeAviso[];
   renovacao?: boolean;
   arquivos?: { texto: string; arquivo?: string }[];
@@ -81,8 +82,10 @@ export function importarEstacio(r: Resultado) {
     const n = d?.notas ?? {};
     return n.Parcial ?? (n.AV !== undefined ? (n.AV ?? 0) + (n.Progresso ?? 0) + (n.Sim1 ?? 0) + (n.Sim2 ?? 0) : undefined);
   };
+  const temAvaliacoes = (r.avaliacoes ?? []).length > 0;
   for (let e of r.eventos) {
     if (/^Período da/i.test(e.titulo)) continue; // só informativo
+    if (temAvaliacoes && /\b(AVS?|Simulado)\b/.test(e.titulo)) continue; // já tratada acima, em detalhe
     if (e.opcional) {
       const p = parcial(e.disciplina);
       if (p !== undefined && p >= 6) continue; // já passou: AVS não precisa
@@ -139,6 +142,63 @@ export function importarEstacio(r: Resultado) {
       if (tasks.tasks.some((t) => t.source === 'estacio' && norm(t.title.replace(/\s*\(nota [^)]*\)/, '')) === chave)) continue;
       tasks.add({ title: titulo, due: fim, tags: ['faculdade'], priority: e.opcional ? 'media' : 'alta', source: 'estacio' });
       prazos++;
+    }
+  }
+
+  // avaliações da Sala de Avaliações: cada uma vira (ou atualiza) uma avaliação na matéria
+  const hoje = new Date().toISOString().slice(0, 10);
+  for (const a of r.avaliacoes ?? []) {
+    const subjectId = subjectFor(a.disciplina, now, a.codigoDisciplina);
+    const materia = useSubjects.getState().items.find((x) => x.id === subjectId)?.name ?? a.disciplina;
+    const exams = useExams.getState();
+    const ex = exams.items.find((x) => x.subjectId === subjectId && x.estacio?.code === a.code);
+    const data = a.data ?? a.ate ?? a.de ?? hoje;
+    const meta = { code: a.code, status: a.status, modo: a.modo, local: a.local, hora: a.hora, de: a.de, ate: a.ate, max: a.max, syncedAt: now };
+    if (ex) {
+      // você mexeu: só atualiza o que é do portal (status, local, janela); o resto fica como você deixou
+      exams.update(
+        ex.id,
+        ex.editedAt ? { estacio: meta, grade: ex.grade ?? a.nota } : { title: a.titulo, date: data, grade: a.nota ?? ex.grade, estacio: meta },
+      );
+    } else {
+      // apaga a versão antiga (só com título) da mesma prova, se houver
+      const velha = exams.items.find((x) => x.subjectId === subjectId && !x.estacio && new RegExp(`^${a.titulo}\\b`).test(x.title));
+      if (velha && !velha.editedAt) exams.remove(velha.id);
+      exams.add({ subjectId, title: a.titulo, kind: 'prova', date: data, grade: a.nota, estacio: meta });
+      avaliacoes++;
+    }
+
+    // ainda dá para agendar/fazer: vira tarefa com prazo no fim da janela
+    if (a.status === 'pendente' && a.ate && a.ate >= hoje) {
+      if (a.code === 'AVS') {
+        const p = parcial(a.disciplina);
+        if (p !== undefined && p >= 6) continue; // já passou: substitutiva não precisa
+      }
+      const verbo = a.modo === 'polo' ? 'Agendar' : 'Fazer';
+      const titulo = `${verbo} ${a.titulo}${a.code === 'AVS' ? ' (substitutiva)' : ''} · ${materia} · até ${br(a.ate)}`;
+      const tasks = useTasks.getState();
+      const chave = norm(titulo.replace(/ · até .*$/, ''));
+      const ja = tasks.tasks.find((t) => t.source === 'estacio' && norm(t.title).startsWith(chave));
+      if (!ja) {
+        tasks.add({
+          title: titulo,
+          due: a.ate,
+          tags: ['faculdade'],
+          priority: a.code.startsWith('SM') || a.code === 'AVS' ? 'media' : 'alta',
+          source: 'estacio',
+        });
+        prazos++;
+      }
+    }
+    // já feita/agendada: a tarefa de agendar sai sozinha
+    if (a.status === 'feita' || a.status === 'agendada') {
+      const tasks = useTasks.getState();
+      const chave = norm(`${a.modo === 'polo' ? 'Agendar' : 'Fazer'} ${a.titulo}`);
+      for (const t of tasks.tasks) {
+        if (t.source === 'estacio' && t.status !== 'done' && norm(t.title).startsWith(chave) && norm(t.title).includes(norm(materia))) {
+          tasks.setStatus(t.id, 'done');
+        }
+      }
     }
   }
 

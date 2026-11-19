@@ -50,12 +50,13 @@ export default function Estudos() {
         key={e.id}
         leading={<IconTile icon={e.kind === 'prova' ? GraduationCap : BookOpen} color={s?.color} />}
         title={e.title || KIND[e.kind]}
-        subtitle={`${s?.name ?? 'Sem matéria'} · ${KIND[e.kind]} · ${friendlyDate(e.date)}`}
+        subtitle={[s?.name ?? 'Sem matéria', examStatus(e), e.estacio?.local?.split(' · ')[0]].filter(Boolean).join(' · ')}
         onPress={() => setExamSheet(e)}
         trailing={
           e.grade != null ? (
-            <T v="headline" tabular color={e.grade >= 6 ? c.success : c.danger}>
+            <T v="headline" tabular color={e.grade / (e.estacio?.max ?? 10) >= 0.6 ? c.success : c.danger}>
               {String(e.grade).replace('.', ',')}
+              {e.estacio?.max ? <T v="caption" tone="dim">{`/${String(e.estacio.max).replace('.', ',')}`}</T> : null}
             </T>
           ) : d >= 0 ? (
             <Badge label={d === 0 ? 'Hoje' : d === 1 ? 'Amanhã' : `${d} dias`} color={d <= 3 ? c.danger : d <= 7 ? c.warning : c.textDim} />
@@ -247,6 +248,7 @@ function ExamSheet({ editing, onClose }: { editing: Exam | 'new' | null; onClose
   const [date, setDate] = useState(today());
   const [grade, setGrade] = useState('');
   const [weight, setWeight] = useState(1);
+  const [notes, setNotes] = useState('');
   const [key, setKey] = useState<string | null>(null);
   const k = editing === 'new' ? 'new' : (editing?.id ?? null);
   if (k !== key) {
@@ -259,7 +261,9 @@ function ExamSheet({ editing, onClose }: { editing: Exam | 'new' | null; onClose
     setDateText('');
     setGrade(e?.grade != null ? String(e.grade).replace('.', ',') : '');
     setWeight(e?.weight ?? 1);
+    setNotes(e?.notes ?? '');
   }
+  const est = editing && editing !== 'new' ? editing.estacio : undefined;
   const g = grade.trim() ? Number(grade.replace(',', '.')) : undefined;
 
   return (
@@ -284,6 +288,28 @@ function ExamSheet({ editing, onClose }: { editing: Exam | 'new' | null; onClose
           { value: 'entrega', label: 'Entrega' },
         ]}
       />
+      {est ? (
+        <Card style={{ gap: 4 }}>
+          <T v="headline">{examStatus(editing as Exam)}</T>
+          {est.local ? (
+            <T v="callout" tone="dim">
+              {est.local}
+            </T>
+          ) : null}
+          <T v="caption" tone="dim">
+            {[
+              est.modo === 'polo' ? 'No polo' : est.modo === 'online' ? 'Online' : null,
+              est.de && est.ate ? `Janela ${br(est.de)} a ${br(est.ate)}` : null,
+              est.max ? `vale ${String(est.max).replace('.', ',')}` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </T>
+          <T v="caption" tone="faint">
+            Da Estácio · o que você mudar aqui fica, mesmo quando o portal for lido de novo
+          </T>
+        </Card>
+      ) : null}
       <Field label="Título" value={title} onChangeText={setTitle} placeholder="Ex.: AV1, Lista 3…" />
       <Field
         label={`Data · ${friendlyDate(date)}`}
@@ -296,8 +322,16 @@ function ExamSheet({ editing, onClose }: { editing: Exam | 'new' | null; onClose
         placeholder="05/12, sexta, em 2 semanas…"
       />
       <View style={{ flexDirection: 'row', gap: space.sm }}>
-        <Field label="Nota" value={grade} onChangeText={setGrade} placeholder="—" keyboardType="decimal-pad" style={{ flex: 1 }} />
+        <Field
+          label={est?.max ? `Nota (de ${String(est.max).replace('.', ',')})` : 'Nota'}
+          value={grade}
+          onChangeText={setGrade}
+          placeholder="—"
+          keyboardType="decimal-pad"
+          style={{ flex: 1 }}
+        />
       </View>
+      <Field label="Anotações" value={notes} onChangeText={setNotes} placeholder="Conteúdo, o que estudar, sala…" multiline />
       <Card>
         <Stepper
           label="Peso na média"
@@ -313,7 +347,25 @@ function ExamSheet({ editing, onClose }: { editing: Exam | 'new' | null; onClose
         label="Salvar"
         disabled={!subjectId}
         onPress={() => {
-          const data = { subjectId, kind, title: title.trim(), date, grade: g != null && !isNaN(g) ? g : undefined, weight };
+          const data = {
+            subjectId,
+            kind,
+            title: title.trim(),
+            date,
+            grade: g != null && !isNaN(g) ? g : undefined,
+            weight,
+            notes: notes.trim() || undefined,
+          };
+          // só conta como "mexido" se algo mudou de verdade (aí a leitura da Estácio não sobrescreve)
+          const prev = editing !== 'new' ? editing : undefined;
+          const mudou =
+            !prev ||
+            prev.title !== data.title ||
+            prev.date !== data.date ||
+            prev.grade !== data.grade ||
+            (prev.notes ?? undefined) !== data.notes ||
+            prev.subjectId !== data.subjectId;
+          Object.assign(data, mudou ? { editedAt: Date.now() } : {});
           if (editing === 'new') add(data);
           else if (editing) update(editing.id, data);
           onClose();
@@ -359,6 +411,17 @@ function LogSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
       />
     </Sheet>
   );
+}
+
+const br = (k?: string) => (k ? `${k.slice(8, 10)}/${k.slice(5, 7)}` : '');
+/** "Feita 09/11", "Agendada 05/12 17:00", "Agendar até 03/12", "Prazo encerrado" */
+export function examStatus(e: Exam) {
+  const x = e.estacio;
+  if (!x) return `${KIND[e.kind]} · ${friendlyDate(e.date)}`;
+  if (x.status === 'feita') return `Feita ${br(e.date)}`;
+  if (x.status === 'agendada') return `Agendada ${br(e.date)}${x.hora ? ` ${x.hora}` : ''}`;
+  if (x.status === 'fechada') return 'Prazo encerrado';
+  return `${x.modo === 'polo' ? 'Agendar' : 'Fazer'} até ${br(x.ate ?? e.date)}`;
 }
 
 function friendlySync(t: number) {

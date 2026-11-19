@@ -124,7 +124,9 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
       passos.push(
         { label: 'Avaliações', run: () => setUrl(`${PORTAL.avaliacoes}?d=${i}`), wait: 7000, disc: -1 },
         { label: `Disciplina ${i + 1} de ${n}`, run: js(PORTAL.abrir(i)), wait: 9000, disc: i },
-        { label: `Disciplina ${i + 1}: Prova AVS`, run: js(PORTAL.aba('Prova AVS')), wait: 4000 },
+        { label: `Disciplina ${i + 1}: Prova AV`, run: js(PORTAL.aba('Prova AV')), wait: 4000 },
+        { label: `Disciplina ${i + 1}: Prova AVS`, run: js(PORTAL.aba('Prova AVS')), wait: 4500 },
+        { label: `Disciplina ${i + 1}: simulados`, run: js(PORTAL.aba('Simulados')), wait: 4500 },
         { label: `Disciplina ${i + 1}: notas`, run: js(PORTAL.aba('Minhas notas')), wait: 4500 },
       );
     }
@@ -202,7 +204,7 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
         changed();
       } else if (m.type === 'page') {
         cp.login = !!m.login;
-        cp.pages.set(String(m.url), {
+        cp.pages.set(String(m.url) + (m.view ? `#${String(m.view)}` : ''), {
           url: String(m.url),
           title: String(m.title ?? ''),
           text: String(m.text ?? ''),

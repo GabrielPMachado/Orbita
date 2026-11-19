@@ -44,11 +44,91 @@ export interface MensalidadeAviso {
   vencimento: string; // AAAA-MM-DD
 }
 
+/** Uma avaliação da Sala de Avaliações (Prova AV/AVS, Simulado 1/2), como aparece no portal. */
+export interface AvalEstacio {
+  codigoDisciplina: string;
+  disciplina: string;
+  code: string; // AV, AVS, SM1, SM2
+  titulo: string; // "Prova AV", "Simulado 1"
+  nota?: number;
+  max?: number;
+  modo?: 'polo' | 'online';
+  status: 'feita' | 'agendada' | 'pendente' | 'fechada';
+  data?: string; // feita/agendada: o dia
+  hora?: string;
+  de?: string; // janela para agendar/fazer
+  ate?: string;
+  local?: string;
+}
+
 export interface LeituraEstacio {
   disciplinas: Disciplina[];
   eventos: Evento[];
+  avaliacoes: AvalEstacio[];
   mensalidades: MensalidadeAviso[];
   renovacao: boolean;
+}
+
+const TITULO_CODE: Record<string, string> = { 'Prova AV': 'AV', 'Prova AVS': 'AVS', 'Simulado 1': 'SM1', 'Simulado 2': 'SM2' };
+const CODE_TITULO: Record<string, string> = { AV: 'Prova AV', AVS: 'Prova AVS', SM1: 'Simulado 1', SM2: 'Simulado 2' };
+/** "POLO CENTRO - PORTO ALEGRE - RS (LABORATÓRIO 1 (térreo))" → "Polo Centro, Porto Alegre/RS · Laboratório 1 (térreo)" */
+function fmtLocal(raw: string) {
+  const cap = (w: string) =>
+    /^[A-Z]{2}$/.test(w) ? w : /^(de|da|do|das|dos|e)$/i.test(w) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  const m = /^(.*?)\s*\((.*)\)\s*$/.exec(raw.trim());
+  const base = (m ? m[1] : raw).split(/\s+-\s+/).map((p) => p.split(/\s+/).map(cap).join(' '));
+  const uf = base.length > 1 && /^[A-Z]{2}$/.test(base[base.length - 1]) ? base.pop() : undefined;
+  const lugar = uf ? `${base.slice(0, -1).join(', ')}${base.length > 1 ? ', ' : ''}${base[base.length - 1]}/${uf}` : base.join(', ');
+  const sala = m ? m[2].replace(/^([^(]+)/, (x) => x.trim().split(/\s+/).map(cap).join(' ') + (/\s$/.test(x) ? ' ' : '')) : '';
+  return sala ? `${lugar} · ${sala}` : lugar;
+}
+const isoBR = (d: string) => `${d.slice(6, 10)}-${d.slice(3, 5)}-${d.slice(0, 2)}`;
+
+/**
+ * Cartões da tela de uma avaliação, como o portal escreve:
+ *   Prova AV · Nota: 3,2 / 8,0 · No Polo · Realizada em 09/11/2026 · 09/11/2026 às 17:00 · POLO CENTRO - … · Acessar gabarito
+ *   Prova AVS · Nota: -- / 8,0 · No Polo · Não agendada · 24/09/2026 (00:00) até 03/12/2026 (23:59) · POLO … · Agendar
+ *   Simulado 1 · Nota: 1,0 / 1,0 · Online · Realizada em 19/11/2026 · 15/09/2026 (00:00) até 19/11/2026 (23:59)
+ */
+export function cartoesDoTexto(text: string): Omit<AvalEstacio, 'codigoDisciplina' | 'disciplina'>[] {
+  const ls = text
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const out: Omit<AvalEstacio, 'codigoDisciplina' | 'disciplina'>[] = [];
+  for (let i = 0; i < ls.length; i++) {
+    const code = TITULO_CODE[ls[i]];
+    if (!code || ls[i + 1] !== 'Nota:') continue;
+    // o cartão vai até o próximo título de avaliação
+    let j = i + 2;
+    while (j < ls.length && !(TITULO_CODE[ls[j]] && ls[j + 1] === 'Nota:')) j++;
+    const bloco = ls.slice(i + 2, j);
+    const nota = num(bloco[0]);
+    const max = /^\/\s*(\d{1,2}),(\d)/.exec(bloco[1] ?? '');
+    const corpo = bloco.join('\n');
+    const feita = /Realizada em (\d{2}\/\d{2}\/\d{4})/.exec(corpo);
+    const marcada = /(\d{2}\/\d{2}\/\d{4}) às (\d{2}:\d{2})/.exec(corpo);
+    const janela = /(\d{2}\/\d{2}\/\d{4}) \(\d{2}:\d{2}\) até (\d{2}\/\d{2}\/\d{4})/.exec(corpo);
+    const local = bloco.find((l) => /^POLO\b|\bPOLO\b.* - [A-Z]{2}\b/i.test(l));
+    const naoAgendada = /Não agendada/i.test(corpo);
+    const encerrada = /Não realizada|Expirad|Encerrad|Perdid/i.test(corpo);
+    const status: AvalEstacio['status'] = feita ? 'feita' : marcada && !naoAgendada ? 'agendada' : encerrada ? 'fechada' : 'pendente';
+    out.push({
+      code,
+      titulo: ls[i],
+      nota,
+      max: max ? Number(`${max[1]}.${max[2]}`) : undefined,
+      modo: /No Polo/i.test(corpo) ? 'polo' : /Online/i.test(corpo) ? 'online' : undefined,
+      status,
+      data: feita ? isoBR(feita[1]) : marcada ? isoBR(marcada[1]) : undefined,
+      hora: marcada?.[2],
+      de: janela ? isoBR(janela[1]) : undefined,
+      ate: janela ? isoBR(janela[2]) : undefined,
+      local: local ? fmtLocal(local) : undefined,
+    });
+    i = j - 1;
+  }
+  return out;
 }
 
 /** Notas da página "Minhas notas" (texto da tela). */
@@ -76,6 +156,7 @@ export function lerPortal(c: Captura): LeituraEstacio {
   const nomes = new Map<string, string>(); // código → nome
   const eventos: Evento[] = [];
   const mensalidades: MensalidadeAviso[] = [];
+  const avals = new Map<string, AvalEstacio>(); // `${disciplina}|${code}`
   let renovacao = false;
 
   // primeiro as listas (nomes e ordem das disciplinas), depois o resto
@@ -175,41 +256,44 @@ export function lerPortal(c: Captura): LeituraEstacio {
             evaluations?: Record<string, unknown>[];
           }
         | undefined;
-      if (!d?.code) continue;
-      const disc = cod ? (nomes.get(cod) ?? cod) : undefined;
-      const prova = d.code === 'AVS' ? 'AVS' : d.code === 'AV' ? 'AV' : d.code;
-      const agendada = (d.evaluations ?? []).length > 0;
-      if (agendada) {
-        // data marcada: qualquer campo de data dentro da avaliação agendada
-        for (const ev of d.evaluations ?? []) {
-          const datas = Object.entries(ev)
-            .filter(([k, v]) => typeof v === 'string' && /date|data|start|inicio/i.test(k) && /\d{4}-\d{2}-\d{2}/.test(v as string))
-            .map(([, v]) => v as string);
-          const quando = day(datas[0]);
-          if (quando) eventos.push({ titulo: `Prova ${prova}`, tipo: 'prova', data: quando, disciplina: disc, codigo: cod });
-        }
-      } else if (d.isScheduleAvailable && d.scheduleEndDate) {
-        eventos.push({
-          titulo: `Agendamento da ${prova}`,
-          tipo: 'agendamento',
-          data: day(d.scheduleStartDate) ?? day(d.scheduleEndDate)!,
-          ate: day(d.scheduleEndDate),
-          disciplina: disc,
-          codigo: cod,
-          // a AVS só é necessária se a nota não bastar
-          opcional: prova === 'AVS',
-        });
-      }
-      if (d.startDate && d.endDate && !agendada) {
-        eventos.push({
-          titulo: `Período da Prova ${prova}`,
-          tipo: 'prazo',
-          data: day(d.startDate)!,
-          ate: day(d.endDate),
-          disciplina: disc,
-          codigo: cod,
-        });
-      }
+      if (!d?.code || !cod || !CODE_TITULO[d.code]) continue;
+      const ev0 = (d.evaluations ?? [])[0] as { startedAt?: string; endedAt?: string; score?: number; status?: number } | undefined;
+      const feita = !!ev0?.endedAt || (d.hasEvaluation && ev0?.score != null);
+      const de = day(d.scheduleStartDate || d.startDate);
+      const ate = day(d.scheduleEndDate || d.endDate);
+      const hoje = new Date().toISOString().slice(0, 10);
+      const prev = avals.get(`${cod}|${d.code}`);
+      avals.set(`${cod}|${d.code}`, {
+        ...prev,
+        codigoDisciplina: cod,
+        disciplina: nomes.get(cod) ?? cod,
+        code: d.code,
+        titulo: CODE_TITULO[d.code],
+        nota: ev0?.score ?? prev?.nota,
+        max: (d as { maxScoreEvaluation?: number }).maxScoreEvaluation ?? prev?.max,
+        status: feita ? 'feita' : (d.evaluations ?? []).length ? 'agendada' : ate && ate < hoje ? 'fechada' : 'pendente',
+        data: feita ? day(ev0?.endedAt ?? ev0?.startedAt) : prev?.data,
+        de: de ?? prev?.de,
+        ate: ate ?? prev?.ate,
+        modo: (d as { isExamCampus?: boolean }).isExamCampus ? 'polo' : (prev?.modo ?? 'online'),
+      });
+    }
+  }
+
+  // texto de cada tela (Prova AV, Prova AVS, Simulados) completa local, hora e status
+  for (const p of c.pages.values()) {
+    const cod = /\/avaliacoes\/([A-Z]{2,4}\d{3,5})/.exec(p.url)?.[1] ?? /[?&]discipline=([A-Z]{2,4}\d{3,5})/.exec(p.url)?.[1];
+    if (!cod) continue;
+    for (const k of cartoesDoTexto(p.text)) {
+      const prev = avals.get(`${cod}|${k.code}`);
+      avals.set(`${cod}|${k.code}`, {
+        ...prev,
+        ...Object.fromEntries(Object.entries(k).filter(([, v]) => v !== undefined)),
+        codigoDisciplina: cod,
+        disciplina: nomes.get(cod) ?? prev?.disciplina ?? cod,
+        // a tela é mais precisa que o cartão para status, data e hora
+        status: k.status,
+      } as AvalEstacio);
     }
   }
 
@@ -223,7 +307,9 @@ export function lerPortal(c: Captura): LeituraEstacio {
     discs.set(cod, { ...base, notas: { ...base.notas, ...n } });
   }
 
-  return { disciplinas: [...discs.values()], eventos, mensalidades, renovacao };
+  // nome da disciplina pode ter chegado depois
+  const avaliacoes = [...avals.values()].map((a) => ({ ...a, disciplina: nomes.get(a.codigoDisciplina) ?? a.disciplina }));
+  return { disciplinas: [...discs.values()], eventos, avaliacoes, mensalidades, renovacao };
 }
 
 /** Roteiro da varredura: o que abrir e o que tocar, nessa ordem. */
@@ -237,7 +323,15 @@ export const PORTAL = {
   /** abre a i-ésima disciplina na sala de avaliações */
   abrir: (i: number) =>
     `(function(){ var b = [].slice.call(document.querySelectorAll('button')).filter(function(b){ return /Acessar Avalia/.test(b.innerText); })[${i}]; if (b) b.click(); true; })();`,
-  /** dentro da disciplina: toca numa aba (só leitura: Prova AV, Prova AVS, Minhas notas) */
+  /** dentro da disciplina: toca numa aba (só leitura: Prova AV, Prova AVS, Simulados, Minhas notas) */
   aba: (nome: string) =>
-    `(function(){ var vs = [].slice.call(document.querySelectorAll('div,span,a')).filter(function(e){ return /voltar/i.test(e.innerText||'') && e.innerText.trim().length < 10; }); var b = [].slice.call(document.querySelectorAll('button')).find(function(b){ return (b.innerText||'').trim() === ${JSON.stringify(nome)}; }); if (!b && vs[0]) { vs[0].click(); setTimeout(function(){ var b2 = [].slice.call(document.querySelectorAll('button')).find(function(b){ return (b.innerText||'').trim() === ${JSON.stringify(nome)}; }); if (b2) b2.click(); }, 1200); } else if (b) b.click(); true; })();`,
+    `(function(){
+      var achar = function(){ return [].slice.call(document.querySelectorAll('button')).find(function(b){ return (b.innerText||'').trim().split('\\n')[0].trim() === ${JSON.stringify(nome)}; }); };
+      var b = achar();
+      if (b) { b.click(); return true; }
+      // está dentro de outra aba: volta para a lista e toca
+      var v = [].slice.call(document.querySelectorAll('button')).find(function(b){ return (b.innerText||'').trim() === 'Voltar'; });
+      if (v) { v.click(); setTimeout(function(){ var b2 = achar(); if (b2) b2.click(); }, 1500); }
+      true;
+    })();`,
 };

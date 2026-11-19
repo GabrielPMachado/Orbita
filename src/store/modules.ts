@@ -165,6 +165,25 @@ export interface Exam extends Item {
   date: DateKey;
   grade?: number;
   weight?: number;
+  notes?: string;
+  /** você mexeu: a leitura da Estácio não sobrescreve título, data, nota nem anotações */
+  editedAt?: number;
+  /** como está no portal da Estácio */
+  estacio?: EstacioExam;
+}
+export interface EstacioExam {
+  /** AV, AVS, SM1, SM2 */
+  code: string;
+  /** feita · agendada · pendente (dá para agendar/fazer) · fechada (perdeu o prazo) */
+  status: 'feita' | 'agendada' | 'pendente' | 'fechada';
+  modo?: 'polo' | 'online';
+  local?: string;
+  hora?: string;
+  /** janela para agendar / fazer */
+  de?: DateKey;
+  ate?: DateKey;
+  max?: number;
+  syncedAt: number;
 }
 export interface StudySession extends Item {
   subjectId?: string;
@@ -311,11 +330,7 @@ export const useFocus = create<FocusState>()(
       autoNext: false,
       bursts: 0,
       setMode: (mode) => set({ mode }),
-      setDraft: (d) =>
-        set((s) => ({
-          label: d.label ?? s.label,
-          subjectId: d.subjectId === null ? undefined : (d.subjectId ?? s.subjectId),
-        })),
+      setDraft: (d) => set((s) => ({ label: d.label ?? s.label, subjectId: d.subjectId === null ? undefined : (d.subjectId ?? s.subjectId) })),
       setAutoNext: (autoNext) => set({ autoNext }),
       bump: () => set((s) => ({ bursts: s.bursts + 1 })),
       setDuration: (m, min) => set((s) => ({ durations: { ...s.durations, [m]: min } })),

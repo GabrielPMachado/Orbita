@@ -3,6 +3,13 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.13.0] - 2026-11-19
+
+### Adicionado
+- Estácio entra em cada avaliação de cada disciplina (Prova AV, Prova AVS, Simulado 1 e 2) e traz para a matéria em Estudos: nota sobre o valor (ex.: 3,2/8), se foi feita, agendada ou ainda precisa agendar, data e hora, local (polo e sala), modo (polo ou online) e a janela para agendar/fazer.
+- Avaliações da Estácio são editáveis: título, data, nota e anotações que você mudar ficam, mesmo quando o portal for lido de novo.
+- O que ainda dá para agendar ou fazer vira tarefa com prazo no fim da janela ("Agendar Prova AV · …", "Fazer Simulado 2 · …"); quando a prova é feita ou agendada, a tarefa se conclui sozinha.
+
 ## [0.12.2] - 2026-11-19
 
 ### Corrigido
