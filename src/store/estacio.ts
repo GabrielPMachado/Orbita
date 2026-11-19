@@ -12,17 +12,27 @@ interface EstacioState {
   auto: boolean;
   lastSweep: number;
   lastSummary?: string;
+  /** última varredura da nuvem já vista (04:00, GitHub Actions) */
+  cloudAt: number;
+  /** a última varredura da nuvem falhou: por quê */
+  cloudErro?: string;
   /** pedido de varredura em segundo plano (montada na raiz) */
   running: boolean;
   set: (p: Partial<Omit<EstacioState, 'set'>>) => void;
 }
 export const useEstacio = create<EstacioState>()(
-  persist(
-    (set) => ({ connected: false, needsLogin: false, auto: true, lastSweep: 0, running: false, set: (p) => set(p) }),
-    {
-      name: 'orbita-estacio',
-      storage,
-      partialize: (s) => ({ connected: s.connected, needsLogin: s.needsLogin, auto: s.auto, lastSweep: s.lastSweep, lastSummary: s.lastSummary }) as unknown as EstacioState,
-    },
-  ),
+  persist((set) => ({ connected: false, needsLogin: false, auto: true, lastSweep: 0, cloudAt: 0, running: false, set: (p) => set(p) }), {
+    name: 'orbita-estacio',
+    storage,
+    partialize: (s) =>
+      ({
+        connected: s.connected,
+        needsLogin: s.needsLogin,
+        auto: s.auto,
+        lastSweep: s.lastSweep,
+        lastSummary: s.lastSummary,
+        cloudAt: s.cloudAt,
+        cloudErro: s.cloudErro,
+      }) as unknown as EstacioState,
+  }),
 );

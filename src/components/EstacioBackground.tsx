@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AppState, Platform, View } from 'react-native';
+import { pullEstacioCloud } from '@/lib/estacioCloud';
 import { importarEstacio } from '@/lib/estacioImport';
 import { useEstacio } from '@/store/estacio';
 import { toast } from '@/store/toast';
@@ -8,17 +9,20 @@ import { EstacioWeb } from './EstacioWeb';
 const EVERY = 20 * 3600 * 1000;
 
 /**
- * Uma vez por dia, com o app aberto, lê o portal da Estácio escondido (a sessão é a mesma da
+ * Ao abrir, importa a varredura da nuvem (04:00). Se ela não rodou, uma vez por dia, com o app aberto, lê o portal da Estácio escondido (a sessão é a mesma da
  * tela da Estácio). Se a sessão expirou, só marca que precisa entrar de novo.
  */
 export function EstacioBackground() {
   const [run, setRun] = useState(false);
   useEffect(() => {
-    if (Platform.OS !== 'ios') return;
     let t: ReturnType<typeof setTimeout> | undefined;
-    const check = () => {
+    const check = async () => {
+      // primeiro o que a nuvem leu às 04:00; só varre aqui se ela não trouxe nada recente
+      const msg = await pullEstacioCloud().catch(() => undefined);
+      if (msg && !/nada novo/.test(msg)) toast({ message: msg });
       const s = useEstacio.getState();
-      if (s.connected && s.auto && !s.needsLogin && Date.now() - s.lastSweep > EVERY && AppState.currentState === 'active') setRun(true);
+      if (Platform.OS === 'ios' && s.connected && s.auto && !s.needsLogin && Date.now() - s.lastSweep > EVERY && AppState.currentState === 'active')
+        setRun(true);
     };
     const later = () => {
       clearTimeout(t);

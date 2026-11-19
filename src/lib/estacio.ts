@@ -8,6 +8,7 @@
  */
 import { lerTexto, type BoletoInfo } from './boleto';
 import { lerPortal, type AvalEstacio, type MensalidadeAviso } from './estacioApi';
+import { lerFinanceiro, type Cobranca, type FinRow } from './estacioFinanceiro';
 
 export const ESTACIO_URLS = [
   { label: 'Minha Estácio', url: 'https://estudante.estacio.br/' },
@@ -24,7 +25,7 @@ export const HOOK_JS = `
   var keep = function(url, text){
     if (!text || text.length < 2 || text.length > 400000) return;
     var c = text.trim()[0]; if (c !== '{' && c !== '[') return;
-    var disc = (location.pathname.match(/avaliacoes\/([A-Z]{2,4}\d{3,5})/) || [])[1];
+    var disc = (location.pathname.match(/avaliacoes\\/([A-Z]{2,4}\\d{3,5})/) || [])[1];
     try { disc = disc || new URLSearchParams(location.search).get('discipline') || sessionStorage.getItem('DisciplineId') || undefined; } catch(e){}
     send({ type: 'json', url: String(url).slice(0, 300), page: location.href.slice(0, 300), disc: disc, body: text });
   };
@@ -47,7 +48,7 @@ export const PAGE_JS = `
     });
     var pw = [].slice.call(document.querySelectorAll('input[type=password]')).some(function(i){ var r = i.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
     var txt = (document.body && document.body.innerText || '');
-    var ls = txt.split(/\n+/).map(function(l){ return l.trim(); }).filter(Boolean);
+    var ls = txt.split(/\\n+/).map(function(l){ return l.trim(); }).filter(Boolean);
     var view = ls[0] === 'Voltar' ? ls[1] : '';
     send({ type: 'page', url: location.href, view: view, title: document.title, text: txt.slice(0, 200000), tables: tables, login: pw });
   };
@@ -203,6 +204,8 @@ export interface Captura {
   pages: Map<string, { url: string; title: string; text: string; tables: string[][][] }>;
   /** a última página pedia senha (sessão expirada ou ainda não entrou) */
   login?: boolean;
+  /** linhas do financeiro do SIA (abertas e pagas) */
+  fin?: FinRow[];
   pdfs: { url: string; b64: string }[];
 }
 export const novaCaptura = (): Captura => ({ json: [], pages: new Map(), pdfs: [] });
@@ -331,6 +334,7 @@ export function analisar(
   boletos: BoletoInfo[];
   eventos: Evento[];
   avaliacoes: AvalEstacio[];
+  cobrancas: Cobranca[];
   mensalidades: MensalidadeAviso[];
   renovacao: boolean;
 } {
@@ -367,6 +371,7 @@ export function analisar(
     // com o portal lido direito, a leitura genérica de texto só atrapalha (pega datas soltas)
     eventos: dedupEventos(comPortal ? [...portal.eventos, ...ev.filter((e) => e.tipo === 'entrega')] : ev),
     avaliacoes: portal.avaliacoes,
+    cobrancas: c.fin?.length ? lerFinanceiro(c.fin) : [],
     mensalidades: portal.mensalidades,
     renovacao: portal.renovacao,
   };

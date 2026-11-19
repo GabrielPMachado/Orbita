@@ -106,11 +106,15 @@ export default function Estudos() {
           <View style={{ flex: 1 }}>
             <T v="headline">Estácio</T>
             <T v="caption" tone="dim">
-              {est.needsLogin
-                ? 'A sessão expirou · toque para entrar de novo'
-                : lastSync
-                  ? `${est.auto ? 'Atualiza sozinho todo dia' : 'Atualizado'} · ${friendlySync(lastSync)}`
-                  : 'Puxar disciplinas, provas, prazos, notas e boletos'}
+              {est.cloudErro && est.cloudAt >= est.lastSweep
+                ? `Nuvem das 04h: ${est.cloudErro}`
+                : est.cloudAt && !est.needsLogin
+                  ? `Lido na nuvem às 04h · ${friendlySync(lastSync)}`
+                  : est.needsLogin
+                    ? 'A sessão expirou · toque para entrar de novo'
+                    : lastSync
+                      ? `${est.auto ? 'Atualiza sozinho todo dia' : 'Atualizado'} · ${friendlySync(lastSync)}`
+                      : 'Puxar disciplinas, provas, prazos, notas e boletos'}
             </T>
           </View>
         </Card>

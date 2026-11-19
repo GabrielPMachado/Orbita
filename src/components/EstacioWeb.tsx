@@ -7,6 +7,7 @@ import { OrbitaDocs } from '../../modules/orbita-docs';
 import { lerTexto } from '@/lib/boleto';
 import { analisar, ESTACIO_URLS, HOOK_JS, LINKS_JS, novaCaptura, PAGE_JS, pdfJs, type Captura } from '@/lib/estacio';
 import { PORTAL } from '@/lib/estacioApi';
+import { FIN_JS, SIA_FINANCEIRO, type FinRow } from '@/lib/estacioFinanceiro';
 import type { Resultado } from '@/lib/estacioImport';
 import { keepFile } from '@/lib/media';
 import { uid } from '@/lib/storage';
@@ -130,7 +131,12 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
         { label: `Disciplina ${i + 1}: notas`, run: js(PORTAL.aba('Minhas notas')), wait: 4500 },
       );
     }
-    passos.push({ label: 'Início', run: () => setUrl(PORTAL.inicio), wait: 6000 });
+    // financeiro (SIA): mensalidades abertas e pagas — o login é o mesmo (Microsoft)
+    passos.push(
+      { label: 'Financeiro', run: () => setUrl(SIA_FINANCEIRO), wait: 15000 },
+      { label: 'Financeiro: boletos', run: js(FIN_JS), wait: 2500 },
+      { label: 'Início', run: () => setUrl(PORTAL.inicio), wait: 6000 },
+    );
     roteiro.current.push(...passos);
   };
 
@@ -210,6 +216,9 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
           text: String(m.text ?? ''),
           tables: (m.tables as string[][][]) ?? [],
         });
+        changed();
+      } else if (m.type === 'sia-fin' && Array.isArray(m.rows)) {
+        cp.fin = m.rows as FinRow[];
         changed();
       } else if (m.type === 'count' && typeof m.n === 'number') {
         montarDisciplinas(m.n);

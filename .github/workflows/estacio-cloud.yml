@@ -1,0 +1,64 @@
+# Varredura diária da Estácio na nuvem: todo dia às 04:00 de Brasília, com o celular desligado.
+# Grava o resultado no Firestore do Financy (users/{uid}/orbita/estacio-cloud); o Órbita importa ao abrir.
+#
+# Segredos (Settings › Secrets and variables › Actions):
+#   ESTACIO_LOGIN  matrícula@alunos.estacio.br
+#   ESTACIO_SENHA  senha da Estácio
+#   FINANCY_KEY    a chave do Financy (Financy › Ajustes › Órbita › copiar chave)
+#
+# O repositório é público: o script não imprime nenhum dado lido, só etapas e contagens.
+name: Estácio (nuvem)
+
+on:
+  schedule:
+    - cron: '0 7 * * *' # 07:00 UTC = 04:00 em Brasília
+  workflow_dispatch:
+
+concurrency:
+  group: estacio-cloud
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  varrer:
+    name: Ler o portal
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Ferramentas (só Playwright e esbuild)
+        working-directory: ${{ runner.temp }}
+        run: |
+          mkdir runner && cd runner
+          npm init -y > /dev/null
+          npm i --no-audit --no-fund playwright@1.65.1 esbuild@0.25
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-1.65.1
+
+      - name: Chromium
+        working-directory: ${{ runner.temp }}/runner
+        run: npx playwright install --with-deps chromium
+
+      - name: Montar o script
+        run: >
+          ${{ runner.temp }}/runner/node_modules/.bin/esbuild scripts/estacio-cloud/run.ts
+          --bundle --platform=node --format=esm --external:playwright --log-level=warning
+          --outfile=${{ runner.temp }}/runner/run.mjs
+
+      - name: Varrer
+        working-directory: ${{ runner.temp }}/runner
+        env:
+          ESTACIO_LOGIN: ${{ secrets.ESTACIO_LOGIN }}
+          ESTACIO_SENHA: ${{ secrets.ESTACIO_SENHA }}
+          FINANCY_KEY: ${{ secrets.FINANCY_KEY }}
+        run: node run.mjs

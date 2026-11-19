@@ -4,6 +4,9 @@ import type { DateKey } from '@/lib/date';
 export type BoletoOrigem = 'manual' | 'colar' | 'foto' | 'pdf' | 'estacio';
 export interface Boleto extends Item {
   descricao: string;
+  /** nosso número / nº da cobrança na origem (Estácio): evita duplicar */
+  ref?: string;
+  competencia?: string;
   valor?: number;
   vencimento?: DateKey;
   /** linha digitável formatada */

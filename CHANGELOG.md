@@ -3,6 +3,17 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.14.0] - 2026-11-19
+
+### Adicionado
+- Varredura da Estácio na nuvem: todo dia às 04:00 (horário de Brasília) um job no GitHub lê o portal, mesmo com o celular desligado. O Órbita importa o resultado quando abre e mostra em Estudos se a leitura da nuvem deu certo ou por que falhou.
+- Boletos da Estácio pelo financeiro do SIA: mensalidades em aberto entram em Boletos com linha digitável, código de barras, valor e vencimento; as pagas entram como pagas, com a data do pagamento.
+
+### Corrigido
+- A atualização da Estácio dizia "nada novo" mesmo lendo todas as páginas: um escape errado no script injetado no portal impedia a leitura das respostas. Agora o CI confere a sintaxe de todo script injetado.
+- Provas sem disciplina iam para uma matéria genérica "Estácio". Agora cada prova fica na sua matéria; o que estava na matéria genérica (e você não editou) sai, e ela some se ficar vazia.
+- Quando o portal não devolve nada, o app avisa que não conseguiu ler, em vez de dizer "nada novo".
+
 ## [0.13.1] - 2026-11-19
 
 ### Mudado

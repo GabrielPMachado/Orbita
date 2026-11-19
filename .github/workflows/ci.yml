@@ -34,5 +34,8 @@ jobs:
       - name: Checagem de tipos
         run: npx tsc --noEmit
 
+      - name: Scripts injetados nas páginas (sintaxe)
+        run: npm run check:injected
+
       - name: Build web (expo export)
         run: npx expo export --platform web --output-dir dist-ci

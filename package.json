@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.3.0",
+    "esbuild": "^0.25.12",
     "patch-package": "^8.0.1",
     "typescript": "~6.0.3"
   },
@@ -57,7 +58,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "check:injected": "esbuild scripts/check-injected.ts --bundle --platform=node --log-level=error --outfile=.check-injected.js && node .check-injected.js"
   },
   "private": true
 }
