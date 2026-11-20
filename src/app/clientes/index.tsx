@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Plus, Search, Users } from 'lucide-react-native';
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput } from 'react-native';
 import { ClientSheet } from '@/components/ClientSheet';
 import { Glass } from '@/components/Glass';
 import { Empty, GlassButton, List, Row, Screen, T } from '@/components/ui';

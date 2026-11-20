@@ -1,11 +1,10 @@
-import { EASE_OUT, SMOOTH } from '@/lib/motionTokens';
+import { EASE_OUT, SMOOTH , SPRING } from '@/lib/motionTokens';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { Check, ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Modal,
-  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -45,7 +44,6 @@ import { FONTS, radius, readableOn, space, type, useColors, type TypeVariant } f
 import { useSettings } from '@/store/settings';
 import { Ambient, Glass } from './Glass';
 import { PressScale } from './motion';
-import { SPRING } from '@/lib/motionTokens';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const LIST_LAYOUT = LinearTransition.duration(260).easing(EASE_OUT);

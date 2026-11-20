@@ -7,7 +7,6 @@ import {
   Download,
   EyeOff,
   Landmark,
-  RefreshCw,
   Settings2,
   ThumbsUp,
   Undo2,

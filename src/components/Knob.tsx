@@ -8,7 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { useEffect, useId, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { withTiming, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { withTiming, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import Svg, { Circle, Defs, G, Line, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 export const KNOB_MAX = 11;

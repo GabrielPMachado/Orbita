@@ -14,6 +14,7 @@ import { useFinancyLink } from '@/store/financyLink';
 import { resolveAccent } from '@/theme';
 import type { SaldoProps } from '@/widgets/SaldoWidget';
 import type { FocoProps } from '@/widgets/FocoActivity';
+import { avisar } from '@/lib/avisar';
 
 type WidgetLike = { updateSnapshot: (p: SaldoProps) => void };
 type ActivityLike = { update: (p: FocoProps) => Promise<void>; end: (policy?: 'default' | 'immediate') => Promise<void> };
@@ -50,7 +51,9 @@ export function reloadWidgets() {
   setTimeout(() => {
     try {
       m?.reloadAllWidgets?.();
-    } catch {}
+    } catch (e) {
+      avisar('recarregar os widgets', e);
+    }
   }, 1200);
 }
 
@@ -96,7 +99,9 @@ export function refreshBalanceWidget() {
   timer = setTimeout(() => {
     try {
       w.updateSnapshot(saldoProps());
-    } catch {}
+    } catch (e) {
+      avisar('atualizar o widget de saldo', e);
+    }
   }, 800);
 }
 

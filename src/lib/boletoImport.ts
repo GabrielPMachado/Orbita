@@ -13,6 +13,7 @@ import { cancel, ensurePermission } from './notifications';
 import * as Notifications from 'expo-notifications';
 import { brl } from './date';
 import type { Boleto } from '@/store/boletos';
+import { avisar } from '@/lib/avisar';
 
 export type Lido = { infos: BoletoInfo[]; texto?: string; arquivo?: string; origem: Boleto['origem'] };
 
@@ -72,7 +73,9 @@ export async function dePdf(): Promise<Lido | null> {
   let arquivo: string | undefined;
   try {
     arquivo = keepFile(uri, 'pdf');
-  } catch {}
+  } catch (e) {
+    avisar('guardar o PDF do boleto', e);
+  }
   return { infos: lerTexto(r.text, r.codes), texto: r.text, arquivo, origem: 'pdf' };
 }
 

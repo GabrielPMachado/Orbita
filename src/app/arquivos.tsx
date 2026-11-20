@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Archive, ArchiveRestore, BookOpen, Briefcase, CheckCheck, Images, Library, Repeat2, Target, Trash } from 'lucide-react-native';
+import { Archive, ArchiveRestore, BookOpen, Briefcase, CheckCheck, Images, Library, Target, Trash } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { confirmDelete } from '@/components/extra';
