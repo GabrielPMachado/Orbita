@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { storage } from '@/lib/storage';
 
+export type PassoLog = { name: string; ok: boolean; info?: string };
+
 /** Estado da ligação com o portal da Estácio (a sessão em si fica nos cookies da WebView). */
 interface EstacioState {
   /** já entrou pelo menos uma vez: dá para varrer sozinho */
@@ -12,6 +14,8 @@ interface EstacioState {
   auto: boolean;
   lastSweep: number;
   lastSummary?: string;
+  /** passos da última leitura (onde clicou, se achou o que procurava) */
+  lastSteps?: PassoLog[];
   /** última varredura da nuvem já vista (04:00, GitHub Actions) */
   cloudAt: number;
   /** a última varredura da nuvem falhou: por quê */
@@ -31,6 +35,7 @@ export const useEstacio = create<EstacioState>()(
         auto: s.auto,
         lastSweep: s.lastSweep,
         lastSummary: s.lastSummary,
+        lastSteps: s.lastSteps,
         cloudAt: s.cloudAt,
         cloudErro: s.cloudErro,
       }) as unknown as EstacioState,

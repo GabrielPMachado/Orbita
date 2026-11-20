@@ -7,7 +7,7 @@ import { EstacioWeb } from '@/components/EstacioWeb';
 import { Button, Field, IconTile, List, Row, Screen, Section, T } from '@/components/ui';
 import { PORTAL } from '@/lib/estacioApi';
 import { saveTmdbKey } from '@/lib/tmdb';
-import { useEstacio } from '@/store/estacio';
+import { useEstacio, type PassoLog } from '@/store/estacio';
 import { toast } from '@/store/toast';
 import { space, useColors } from '@/theme';
 
@@ -41,7 +41,7 @@ function EstacioProbe({ onResult }: { onResult: (ok: boolean, msg: string) => vo
     return () => clearTimeout(t);
   }, [finish]);
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', left: -20, top: 0, width: 2, height: 2, opacity: 0 }}>
+    <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: 390, height: 844, opacity: 0, zIndex: -1 }}>
       <EstacioWeb
         initialUrl={PORTAL.inicio}
         onPage={(p) => {
@@ -59,9 +59,29 @@ function EstacioProbe({ onResult }: { onResult: (ok: boolean, msg: string) => vo
   );
 }
 
+/** O que a última leitura conseguiu fazer em cada passo (para achar onde ela erra). */
+function UltimoRoteiro({ steps }: { steps: PassoLog[] }) {
+  const c = useColors();
+  const falhas = steps.filter((p) => !p.ok);
+  return (
+    <View style={{ gap: 4, padding: space.md, borderRadius: 12, backgroundColor: c.surface2 }}>
+      <T v="caption" tone={falhas.length ? 'warning' : 'success'}>
+        Última leitura: {steps.length - falhas.length} de {steps.length} passos certos
+      </T>
+      {(falhas.length ? falhas : steps.slice(-3)).slice(0, 8).map((p, i) => (
+        <T key={i} v="caption" tone="dim">
+          {p.ok ? '✓' : '✗'} {p.name}
+          {p.info ? ` · ${p.info}` : ''}
+        </T>
+      ))}
+    </View>
+  );
+}
+
 export default function Conexoes() {
   const c = useColors();
   const auto = useEstacio((s) => s.auto);
+  const steps = useEstacio((s) => s.lastSteps);
   const setEst = useEstacio((s) => s.set);
   const [open, setOpen] = useState<string | null>(null);
   const [testing, setTesting] = useState<string | null>(null);
@@ -165,6 +185,7 @@ export default function Conexoes() {
             </T>
           </View>
         ) : null}
+        {x.id === 'estacio' && steps?.length ? <UltimoRoteiro steps={steps} /> : null}
         {x.route ? (
           <Pressable onPress={() => router.push(x.route as never)} hitSlop={8}>
             <T v="caption" tone="accent">

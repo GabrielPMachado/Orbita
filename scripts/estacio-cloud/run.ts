@@ -40,7 +40,7 @@ async function firebase(refresh: string) {
   return { token: j.id_token, uid: j.user_id };
 }
 
-async function gravar(fb: { token: string; uid: string }, doc: { ok: boolean; erro?: string; resultado?: string; etapas: number }) {
+async function gravar(fb: { token: string; uid: string }, doc: { ok: boolean; erro?: string; resultado?: string; passos?: string; etapas: number }) {
   const fields: Record<string, unknown> = {
     at: { timestampValue: new Date().toISOString() },
     ok: { booleanValue: doc.ok },
@@ -48,6 +48,7 @@ async function gravar(fb: { token: string; uid: string }, doc: { ok: boolean; er
   };
   if (doc.erro) fields.erro = { stringValue: doc.erro };
   if (doc.resultado) fields.resultado = { stringValue: doc.resultado };
+  if (doc.passos) fields.passos = { stringValue: doc.passos };
   const url = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/users/${fb.uid}/orbita/estacio-cloud`;
   const res = await fetch(url, {
     method: 'PATCH',
@@ -123,6 +124,7 @@ async function varrer(login: string, senha: string) {
   let atual: number | undefined;
   let contagem: number | undefined;
   let etapas = 0;
+  const passos: { name: string; ok: boolean; info: string }[] = [];
 
   const browser = await chromium.launch({ headless: true });
   const { defaultBrowserType: _, ...iphone } = devices['iPhone 13'];
@@ -155,6 +157,12 @@ async function varrer(login: string, senha: string) {
       });
     } else if (m.type === 'sia-fin' && Array.isArray(m.rows)) cap.fin = m.rows as FinRow[];
     else if (m.type === 'count' && typeof m.n === 'number') contagem = m.n;
+    else if (m.type === 'step' && typeof m.name === 'string') {
+      // só nome do passo, ok/falhou e contagens: nada de dados (o log é público)
+      const passo = { name: m.name, ok: !!m.ok, info: typeof m.info === 'string' ? m.info.slice(0, 80) : '' };
+      passos.push(passo);
+      log(`  ${passo.ok ? 'ok' : 'FALHOU'} ${passo.name}${passo.info ? ` (${passo.info})` : ''}`);
+    }
   });
   await ctx.addInitScript(`window.ReactNativeWebView = { postMessage: function(d){ try { window.__orbitaPost(d); } catch(e){} } };\n${HOOK_JS}`);
 
@@ -214,7 +222,7 @@ async function varrer(login: string, senha: string) {
   );
   if (!r.disciplinas.length && !(r.avaliacoes ?? []).length && !(r.cobrancas ?? []).length)
     throw new Erro('Entrei no portal mas não consegui ler nada. O layout pode ter mudado.');
-  return { r, etapas };
+  return { r, etapas, passos };
 }
 
 /* ---------- principal ---------- */
@@ -222,8 +230,8 @@ async function varrer(login: string, senha: string) {
 async function main() {
   const fb = await firebase(env('FINANCY_KEY'));
   try {
-    const { r, etapas } = await varrer(env('ESTACIO_LOGIN'), env('ESTACIO_SENHA'));
-    await gravar(fb, { ok: true, etapas, resultado: JSON.stringify(r) });
+    const { r, etapas, passos } = await varrer(env('ESTACIO_LOGIN'), env('ESTACIO_SENHA'));
+    await gravar(fb, { ok: true, etapas, resultado: JSON.stringify(r), passos: JSON.stringify(passos.slice(-120)) });
     log('Gravado. O Órbita importa quando abrir.');
   } catch (e) {
     const msg = e instanceof Erro ? e.message : 'Erro inesperado na varredura.';

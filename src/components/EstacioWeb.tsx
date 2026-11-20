@@ -1,3 +1,4 @@
+import type { PassoLog } from '@/store/estacio';
 import { File, Paths } from 'expo-file-system';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react';
 import { type StyleProp, type ViewStyle } from 'react-native';
@@ -43,7 +44,7 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
     autoSweep?: boolean;
     onChange?: (r: Resultado) => void;
     onSweep?: (s: SweepState) => void;
-    onDone?: (r: Resultado, s: { loggedOut: boolean }) => void;
+    onDone?: (r: Resultado, s: { loggedOut: boolean; passos: PassoLog[] }) => void;
     onLoading?: (l: boolean) => void;
     /** cada página lida: endereço, se pede senha e quanto texto tinha */
     onPage?: (p: { url: string; login: boolean; chars: number; api: boolean }) => void;
@@ -59,6 +60,8 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
   /** última página carregada e se a API do portal já respondeu (prova de sessão válida) */
   const lastUrl = useRef('');
   const apiOk = useRef(false);
+  /** o que cada passo do roteiro conseguiu fazer */
+  const passos = useRef<PassoLog[]>([]);
   const naLogin = () => cap.current.login || isLoginUrl(lastUrl.current);
   const pdfs = useRef<{ texto: string; arquivo?: string }[]>([]);
   const [url, setUrl] = useState(initialUrl ?? ESTACIO_URLS[0].url);
@@ -93,7 +96,7 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
       // só volta a "esperar o login" se viu a tela de login (senão ficaria varrendo em círculo)
       phase.current = telaDeLogin ? 'login' : 'done';
       emit({});
-      onDone?.(r, { loggedOut: out });
+      onDone?.(r, { loggedOut: out, passos: passos.current.slice(-120) });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [onDone, result],
@@ -164,6 +167,7 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
     phase.current = 'sweeping';
     started.current = Date.now();
     feitos.current = 0;
+    passos.current = [];
     roteiro.current = [
       { label: 'Início', run: () => setUrl(PORTAL.inicio), wait: 7000 },
       { label: 'Lista de avaliações', run: js(PORTAL.irAvaliacoes), wait: 4500 },
@@ -243,6 +247,8 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
       } else if (m.type === 'sia-fin' && Array.isArray(m.rows)) {
         cp.fin = m.rows as FinRow[];
         changed();
+      } else if (m.type === 'step' && typeof m.name === 'string') {
+        passos.current.push({ name: m.name, ok: !!m.ok, info: typeof m.info === 'string' ? m.info.slice(0, 80) : undefined });
       } else if (m.type === 'count' && typeof m.n === 'number') {
         montarDisciplinas(m.n);
       } else if (m.type === 'links' && Array.isArray(m.items)) {

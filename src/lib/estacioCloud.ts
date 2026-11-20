@@ -4,7 +4,7 @@
  */
 import { fsRequest, type FsValue } from './financy';
 import { importarEstacio, type Resultado } from './estacioImport';
-import { useEstacio } from '@/store/estacio';
+import { useEstacio, type PassoLog } from '@/store/estacio';
 import { useFinancyLink } from '@/store/financyLink';
 
 type Campos = Record<string, FsValue & { timestampValue?: string }>;
@@ -30,6 +30,12 @@ export async function pullEstacioCloud(): Promise<string | undefined> {
     return;
   }
   const msg = importarEstacio(r);
-  st.set({ cloudAt: at, cloudErro: undefined, lastSweep: Math.max(st.lastSweep, at), lastSummary: msg });
+  let passos: PassoLog[] | undefined;
+  try {
+    passos = f.passos?.stringValue ? (JSON.parse(f.passos.stringValue) as PassoLog[]) : undefined;
+  } catch {
+    passos = undefined;
+  }
+  st.set({ cloudAt: at, cloudErro: undefined, ...(passos ? { lastSteps: passos } : {}), lastSweep: Math.max(st.lastSweep, at), lastSummary: msg });
   return msg;
 }

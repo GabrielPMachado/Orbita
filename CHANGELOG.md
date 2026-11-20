@@ -3,6 +3,15 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.17.2] - 2026-11-20
+
+### Corrigido
+- A leitura da Estácio clicava nos lugares errados: os cliques eram feitos depois de um tempo fixo, mesmo que a página ainda não tivesse carregado, e o "Voltar" podia ser tocado fora da sala de avaliações. Agora cada passo espera o botão aparecer (até 10 s), só age no site certo e usa o "Voltar" só dentro da sala.
+- A leitura escondida rodava numa tela de 2×2 pixels, e o portal montava outro layout; agora usa o tamanho de um iPhone (invisível).
+
+### Adicionado
+- Contas e conexões › Estácio mostra o resultado da última leitura passo a passo (quantos deram certo e quais falharam, com o motivo). A leitura na nuvem manda os mesmos passos, e o log do GitHub mostra só nomes de passos e contagens.
+
 ## [0.17.1] - 2026-11-20
 
 ### Corrigido

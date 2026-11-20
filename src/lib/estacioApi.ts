@@ -313,25 +313,53 @@ export function lerPortal(c: Captura): LeituraEstacio {
 }
 
 /** Roteiro da varredura: o que abrir e o que tocar, nessa ordem. */
+/**
+ * Scripts que navegam no portal. Cada um espera o elemento aparecer (em vez de clicar às cegas
+ * depois de um tempo fixo), só age no site certo e avisa o app se deu certo: { type: 'step' }.
+ */
+const STEP = `var step = function(name, ok, info){ try { window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'step', name: name, ok: ok, info: info || '' })); } catch(e){} };`;
+const NO_PORTAL = `location.host.indexOf('estudante.estacio.br') >= 0`;
+const NA_SALA = `location.host.indexOf('saladeavaliacoes') >= 0`;
+const ACESSAR = `function(){ return [].slice.call(document.querySelectorAll('button')).filter(function(b){ return /Acessar Avalia/.test(b.innerText || ''); }); }`;
+
 export const PORTAL = {
   inicio: 'https://estudante.estacio.br/inicio',
   avaliacoes: 'https://estudante.estacio.br/avaliacoes',
   /** vai para /avaliacoes sem recarregar (o app busca a lista de disciplinas) */
-  irAvaliacoes: `(function(){ try { history.pushState({}, '', '/avaliacoes'); dispatchEvent(new PopStateEvent('popstate')); } catch(e){} true; })();`,
-  /** quantos botões "Acessar Avaliações" há na tela */
-  contar: `(function(){ var n = [].slice.call(document.querySelectorAll('button')).filter(function(b){ return /Acessar Avalia/.test(b.innerText); }).length; window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'count', n: n })); true; })();`,
-  /** abre a i-ésima disciplina na sala de avaliações */
+  irAvaliacoes: `(function(){ ${STEP} try { history.pushState({}, '', '/avaliacoes'); dispatchEvent(new PopStateEvent('popstate')); step('ir para avaliações', ${NO_PORTAL}, location.host); } catch(e){ step('ir para avaliações', false, 'erro'); } true; })();`,
+  /** quantos botões "Acessar Avaliações" há na tela (espera a lista aparecer, até 10 s) */
+  contar: `(function(){ ${STEP} var acessar = ${ACESSAR}; var t0 = Date.now();
+    var go = function(){ var n = acessar().length;
+      if (n || Date.now() - t0 > 10000) { window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'count', n: n })); step('contar disciplinas', n > 0, n + ' encontradas'); }
+      else setTimeout(go, 500); };
+    go(); true; })();`,
+  /** abre a i-ésima disciplina na sala de avaliações (espera os botões, até 10 s) */
   abrir: (i: number) =>
-    `(function(){ var b = [].slice.call(document.querySelectorAll('button')).filter(function(b){ return /Acessar Avalia/.test(b.innerText); })[${i}]; if (b) b.click(); true; })();`,
-  /** dentro da disciplina: toca numa aba (só leitura: Prova AV, Prova AVS, Simulados, Minhas notas) */
+    `(function(){ ${STEP} var acessar = ${ACESSAR}; var t0 = Date.now();
+    var go = function(){
+      if (!(${NO_PORTAL})) return step('abrir disciplina ${i + 1}', false, 'fora do portal');
+      var bs = acessar();
+      if (bs[${i}]) { bs[${i}].click(); step('abrir disciplina ${i + 1}', true, bs.length + ' na lista'); }
+      else if (Date.now() - t0 < 10000) setTimeout(go, 500);
+      else step('abrir disciplina ${i + 1}', false, 'botão não apareceu (' + bs.length + ' na lista)');
+    };
+    go(); true; })();`,
+  /**
+   * Dentro da disciplina: toca numa aba (só leitura: Prova AV, Prova AVS, Simulados, Minhas notas).
+   * Só age na sala de avaliações; "Voltar" só é usado lá dentro, para sair de outra aba.
+   */
   aba: (nome: string) =>
-    `(function(){
-      var achar = function(){ return [].slice.call(document.querySelectorAll('button')).find(function(b){ return (b.innerText||'').trim().split('\\n')[0].trim() === ${JSON.stringify(nome)}; }); };
+    `(function(){ ${STEP} var nome = ${JSON.stringify(nome)}; var t0 = Date.now(); var voltou = false;
+    var achar = function(){ return [].slice.call(document.querySelectorAll('button')).find(function(b){ return (b.innerText || '').trim().split('\\n')[0].trim() === nome; }); };
+    var voltar = function(){ return [].slice.call(document.querySelectorAll('button')).find(function(b){ return (b.innerText || '').trim() === 'Voltar'; }); };
+    var go = function(){
+      if (!(${NA_SALA})) return step(nome, false, 'fora da sala de avaliações');
       var b = achar();
-      if (b) { b.click(); return true; }
-      // está dentro de outra aba: volta para a lista e toca
-      var v = [].slice.call(document.querySelectorAll('button')).find(function(b){ return (b.innerText||'').trim() === 'Voltar'; });
-      if (v) { v.click(); setTimeout(function(){ var b2 = achar(); if (b2) b2.click(); }, 1500); }
-      true;
-    })();`,
+      if (b) { b.click(); return step(nome, true, voltou ? 'depois de voltar' : ''); }
+      var v = voltar();
+      if (v && !voltou && Date.now() - t0 > 1500) { voltou = true; v.click(); t0 = Date.now(); return setTimeout(go, 800); }
+      if (Date.now() - t0 < 6000) return setTimeout(go, 500);
+      step(nome, false, 'aba não encontrada');
+    };
+    go(); true; })();`,
 };

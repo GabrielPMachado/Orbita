@@ -78,8 +78,9 @@ export default function Estacio() {
         onLoading={setLoading}
         onChange={setRes}
         onSweep={setSweep}
-        onDone={(r, { loggedOut }) => {
+        onDone={(r, { loggedOut, passos }) => {
           setRes(r);
+          useEstacio.getState().set({ lastSteps: passos });
           if (loggedOut) return;
           salvar(r);
         }}

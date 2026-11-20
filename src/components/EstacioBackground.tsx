@@ -58,7 +58,7 @@ export function EstacioBackground() {
 
   if (!run) return null;
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', left: -20, top: 0, width: 2, height: 2, opacity: 0 }}>
+    <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: 390, height: 844, opacity: 0, zIndex: -1 }}>
       <EstacioWeb
         autoSweep
         onSweep={(s) => {
@@ -67,8 +67,9 @@ export function EstacioBackground() {
             setRun(false);
           }
         }}
-        onDone={(r, { loggedOut }) => {
+        onDone={(r, { loggedOut, passos }) => {
           setRun(false);
+          useEstacio.getState().set({ lastSteps: passos });
           if (loggedOut) return useEstacio.getState().set({ needsLogin: true });
           const msg = importarEstacio(r);
           const leu = r.disciplinas.length || (r.avaliacoes ?? []).length || (r.cobrancas ?? []).length;
