@@ -35,6 +35,8 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
     onSweep,
     onDone,
     onLoading,
+    onPage,
+    initialUrl,
   }: {
     style?: StyleProp<ViewStyle>;
     autoSweep?: boolean;
@@ -42,13 +44,19 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
     onSweep?: (s: SweepState) => void;
     onDone?: (r: Resultado, s: { loggedOut: boolean }) => void;
     onLoading?: (l: boolean) => void;
+    /** cada página lida: endereço, se pede senha e quanto texto tinha */
+    onPage?: (p: { url: string; login: boolean; chars: number }) => void;
+    /** página para abrir primeiro (padrão: o portal) */
+    initialUrl?: string;
   },
   ref: Ref<EstacioWebHandle>,
 ) {
   const web = useRef<WebView>(null);
+  const onPageRef = useRef(onPage);
+  onPageRef.current = onPage;
   const cap = useRef(novaCaptura());
   const pdfs = useRef<{ texto: string; arquivo?: string }[]>([]);
-  const [url, setUrl] = useState(ESTACIO_URLS[0].url);
+  const [url, setUrl] = useState(initialUrl ?? ESTACIO_URLS[0].url);
 
   // varredura
   const queue = useRef<{ text: string; href: string }[]>([]);
@@ -210,6 +218,7 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
         changed();
       } else if (m.type === 'page') {
         cp.login = !!m.login;
+        onPageRef.current?.({ url: String(m.url), login: !!m.login, chars: String(m.text ?? '').length });
         cp.pages.set(String(m.url) + (m.view ? `#${String(m.view)}` : ''), {
           url: String(m.url),
           title: String(m.title ?? ''),

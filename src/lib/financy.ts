@@ -9,6 +9,7 @@
  *  - Enviar: cada compra do Apple Pay vai para users/{uid}/comprasApplePay com a categoria;
  *    o Financy aplica essa categoria quando a compra chega pelo Open Finance (sem duplicar).
  */
+import Constants from 'expo-constants';
 import { useEffect } from 'react';
 import { AppState, Linking, Platform } from 'react-native';
 import { deleteSecret, getSecret, setSecret } from './secrets';
@@ -27,7 +28,10 @@ const REFERER = { Referer: `${FINANCY_URL}/` };
 
 /* ---------- Abrir o Financy ---------- */
 
-type Action = { action: 'resumo' } | { action: 'conectar-orbita' } | { action: 'novo'; tipo?: 'expense' | 'income'; valor?: number; descricao?: string; categoria?: string; data?: string };
+type Action =
+  | { action: 'resumo' }
+  | { action: 'conectar-orbita' }
+  | { action: 'novo'; tipo?: 'expense' | 'income'; valor?: number; descricao?: string; categoria?: string; data?: string };
 
 function query(a: Action) {
   if (a.action === 'resumo' || a.action === 'conectar-orbita') return '';
@@ -70,7 +74,13 @@ async function auth(refreshToken?: string) {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...REFERER },
     body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(token.trim())}`,
   });
-  const j = (await res.json().catch(() => ({}))) as { id_token?: string; user_id?: string; expires_in?: string; refresh_token?: string; error?: { message?: string } };
+  const j = (await res.json().catch(() => ({}))) as {
+    id_token?: string;
+    user_id?: string;
+    expires_in?: string;
+    refresh_token?: string;
+    error?: { message?: string };
+  };
   if (!res.ok || !j.id_token || !j.user_id) {
     const m = j.error?.message ?? '';
     throw new FinancyError(
@@ -94,8 +104,14 @@ export async function fsRequest(path: string, init: RequestInit = {}) {
   return res;
 }
 
-export type FsValue = { stringValue?: string; doubleValue?: number; integerValue?: string; booleanValue?: boolean; arrayValue?: { values?: FsValue[] } };
-const num = (v?: FsValue) => (v?.doubleValue ?? (v?.integerValue != null ? Number(v.integerValue) : undefined)) ?? 0;
+export type FsValue = {
+  stringValue?: string;
+  doubleValue?: number;
+  integerValue?: string;
+  booleanValue?: boolean;
+  arrayValue?: { values?: FsValue[] };
+};
+const num = (v?: FsValue) => v?.doubleValue ?? (v?.integerValue != null ? Number(v.integerValue) : undefined) ?? 0;
 
 async function readSummary(): Promise<FinancySummary> {
   const s = await auth();
@@ -146,6 +162,26 @@ export async function refreshFinancy(force = false) {
     st.setError(e instanceof Error ? e.message : 'Falha ao ler o Financy');
     throw e;
   }
+}
+
+/** Avisa o Financy que o Órbita está conectado (Financy › Contas e conexões › Testar). */
+export async function pingFinancy(version?: string) {
+  const fields: Record<string, FsValue & { timestampValue?: string }> = {
+    visto: { timestampValue: new Date().toISOString() },
+    app: { stringValue: 'orbita' },
+  };
+  if (version) fields.versao = { stringValue: version };
+  const res = await fsRequest('orbita/status', { method: 'PATCH', body: JSON.stringify({ fields }) });
+  if (!res.ok) throw new FinancyError(`O Financy recusou a gravação (erro ${res.status}).`);
+}
+
+/** Testa a conexão: renova o acesso, lê o resumo e deixa o sinal de vida. */
+export async function testFinancy(version?: string) {
+  session = null;
+  const summary = await refreshFinancy(true);
+  if (!summary) throw new FinancyError('O Financy não está conectado.');
+  await pingFinancy(version);
+  return summary;
 }
 
 /* ---------- Compras do Apple Pay → Financy ---------- */
@@ -215,7 +251,9 @@ export async function pushAppearance() {
     atualizadoEm: { stringValue: new Date(now).toISOString() },
   };
   useFinancyLink.getState().setLookAt(now);
-  const mask = Object.keys(fields).map((k) => `updateMask.fieldPaths=${k}`).join('&');
+  const mask = Object.keys(fields)
+    .map((k) => `updateMask.fieldPaths=${k}`)
+    .join('&');
   const res = await fetch(`${DOCS}/users/${s.uid}/aparencia/compartilhada?${mask}`, {
     method: 'PATCH',
     headers: { Authorization: `Bearer ${s.idToken}`, 'Content-Type': 'application/json', ...REFERER },
@@ -238,10 +276,16 @@ export async function pullAppearance() {
   applyingRemote = true;
   try {
     const cores = (f.cores?.arrayValue?.values ?? []).map((v) => v.stringValue).filter((x): x is string => !!x && /^#[0-9a-f]{6}$/i.test(x));
-    const presetHit = cor ? Object.entries({ carmim: '#F2415A', ambar: '#F5A524', azul: '#4C8DFF', menta: '#3DD6B0', lima: '#A3E635', verde: '#10B981' }).find(([, h]) => h.toLowerCase() === cor.toLowerCase())?.[0] : undefined;
+    const presetHit = cor
+      ? Object.entries({ carmim: '#F2415A', ambar: '#F5A524', azul: '#4C8DFF', menta: '#3DD6B0', lima: '#A3E635', verde: '#10B981' }).find(
+          ([, h]) => h.toLowerCase() === cor.toLowerCase(),
+        )?.[0]
+      : undefined;
     useSettings.setState({
       accent: presetHit ?? (cor && /^#[0-9a-f]{6}$/i.test(cor) ? cor.toUpperCase() : st.accent),
-      customColors: [...new Set([...(st.customColors ?? []), ...cores.map((c) => c.toUpperCase()), ...(!presetHit && cor ? [cor.toUpperCase()] : [])])].slice(-12),
+      customColors: [
+        ...new Set([...(st.customColors ?? []), ...cores.map((c) => c.toUpperCase()), ...(!presetHit && cor ? [cor.toUpperCase()] : [])]),
+      ].slice(-12),
       intensity: f.intensidade ? Math.max(0, Math.min(11, num(f.intensidade))) : st.intensity,
       iconStyle: (['suave', 'solido', 'contorno', 'simples'] as const).find((x) => x === f.estiloIcones?.stringValue) ?? st.iconStyle,
       iconTone: (['colorido', 'destaque', 'neutro'] as const).find((x) => x === f.tomIcones?.stringValue) ?? st.iconTone,
@@ -258,6 +302,7 @@ export function useFinancySync() {
     const run = () => {
       if (!useFinancyLink.getState().connected) return;
       refreshFinancy().catch(() => {});
+      pingFinancy(Constants.expoConfig?.version).catch(() => {});
       flushHints().catch(() => {});
       pullAppearance().catch(() => {});
     };
@@ -267,7 +312,14 @@ export function useFinancySync() {
     let deb: ReturnType<typeof setTimeout> | undefined;
     const unsubLook = useSettings.subscribe((n, p) => {
       if (applyingRemote) return;
-      if (n.accent === p.accent && n.intensity === p.intensity && n.iconStyle === p.iconStyle && n.iconTone === p.iconTone && n.customColors === p.customColors) return;
+      if (
+        n.accent === p.accent &&
+        n.intensity === p.intensity &&
+        n.iconStyle === p.iconStyle &&
+        n.iconTone === p.iconTone &&
+        n.customColors === p.customColors
+      )
+        return;
       clearTimeout(deb);
       deb = setTimeout(() => pushAppearance().catch(() => {}), 1200);
     });

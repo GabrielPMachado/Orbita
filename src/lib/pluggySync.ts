@@ -75,6 +75,13 @@ async function fetchAccounts(apiKey: string, itemIds: string[]) {
   return out;
 }
 
+/** Testa as credenciais salvas: autentica e lista as contas. Devolve quantas contas responderam. */
+export async function testPluggy() {
+  const apiKey = await authenticate(await credentials());
+  const accounts = await fetchAccounts(apiKey, usePluggy.getState().itemIds);
+  return accounts.length;
+}
+
 /** Salva as credenciais no Keychain, testa e lista as contas. Lança erro legível se falhar. */
 export async function connectPluggy(clientId: string, clientSecret: string, itemIds: string[]) {
   const apiKey = await authenticate({ clientId: clientId.trim(), clientSecret: clientSecret.trim() });
@@ -112,10 +119,7 @@ export function review(txs = useFinance.getState().txs, st = usePluggy.getState(
   // o banco pode levar uns dias para mostrar a compra; não acusa o que é muito recente
   const settled = shift(-2);
   const localOnly = r.localOnly.filter(
-    (t) =>
-      t.date <= settled &&
-      !st.localOk.includes(t.id) &&
-      ((t.accountId && linkedAcc.has(t.accountId)) || (t.cardId && linkedCard.has(t.cardId))),
+    (t) => t.date <= settled && !st.localOk.includes(t.id) && ((t.accountId && linkedAcc.has(t.accountId)) || (t.cardId && linkedCard.has(t.cardId))),
   );
   const verified = txs.filter((t) => t.verified && t.date >= st.period!.from && t.date <= st.period!.to).sort((a, b) => b.date.localeCompare(a.date));
   return { matched: r.matched.length, bankOnly: r.bankOnly.sort((a, b) => b.date.localeCompare(a.date)), localOnly, verified };
@@ -137,18 +141,20 @@ export function applyMatches() {
 
 /** Importa uma transação que só existe no banco, com a categoria escolhida. */
 export function importBankTx(b: BankTx, category: string, description?: string) {
-  useFinance.getState().addTx({
-    type: b.type,
-    amount: b.amount,
-    category,
-    description: (description ?? b.description).trim() || b.description,
-    date: b.date,
-    accountId: b.localCardId ? undefined : b.localAccountId,
-    cardId: b.localCardId,
-    source: 'pluggy',
-    externalId: b.id,
-    verified: true,
-  });
+  useFinance
+    .getState()
+    .addTx({
+      type: b.type,
+      amount: b.amount,
+      category,
+      description: (description ?? b.description).trim() || b.description,
+      date: b.date,
+      accountId: b.localCardId ? undefined : b.localAccountId,
+      cardId: b.localCardId,
+      source: 'pluggy',
+      externalId: b.id,
+      verified: true,
+    });
 }
 
 /** Desfaz o selo (ex.: casou com a compra errada). */
@@ -235,7 +241,10 @@ const RULES: [RegExp, string][] = [
   [/ifood|rappi|restaurante|lanchon|padaria|burger|pizza|cafe|mcdonald|bk |subway|outback|starbucks/, 'Alimentação'],
   [/mercado|supermerc|zaffari|carrefour|atacad|assai|bourbon|nacional|big |hortifruti/, 'Mercado'],
   [/uber|99 ?app|99 ?pop|cabify|posto|shell|ipiranga|petrobras|br mania|estaciona|sem parar|veloe|metro|trensurb/, 'Transporte'],
-  [/netflix|spotify|disney|prime video|amazon prime|youtube|hbo|max\b|apple\.com|icloud|google one|deezer|globoplay|chatgpt|openai|claude|anthropic/, 'Assinaturas'],
+  [
+    /netflix|spotify|disney|prime video|amazon prime|youtube|hbo|max\b|apple\.com|icloud|google one|deezer|globoplay|chatgpt|openai|claude|anthropic/,
+    'Assinaturas',
+  ],
   [/farmac|drogar|panvel|raia|pacheco|sao joao|clinica|laborat|unimed|hospital/, 'Saúde'],
   [/aluguel|condominio|imobili/, 'Moradia'],
   [/ceee|rge|equatorial|corsan|dmae|sabesp|claro|vivo|tim\b|oi\b|net\b|internet|energia|agua|luz/, 'Contas'],
@@ -253,6 +262,7 @@ export function guessCategory(b: BankTx, txs = useFinance.getState().txs): strin
   const first = n.split(' ')[0];
   const prev = txs.find((t) => t.type === b.type && first.length >= 3 && normalizeName(t.description).split(' ')[0] === first);
   if (prev) return prev.category;
-  if (b.type === 'in') return /salario|folha|pagamento/.test(n) ? 'Salário' : /pix/.test(n) ? 'Pix recebido' : /estorno|reembolso/.test(n) ? 'Reembolso' : 'Outros';
+  if (b.type === 'in')
+    return /salario|folha|pagamento/.test(n) ? 'Salário' : /pix/.test(n) ? 'Pix recebido' : /estorno|reembolso/.test(n) ? 'Reembolso' : 'Outros';
   return RULES.find(([re]) => re.test(n))?.[1] ?? 'Outros';
 }

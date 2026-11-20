@@ -3,6 +3,12 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.16.0] - 2026-11-20
+
+### Adicionado
+- Contas e conexões: tocar numa conexão abre os botões para entrar/conectar e para testar a conexão de verdade, com o resultado logo abaixo. A Estácio abre o portal escondido e diz se a sessão ainda vale; o Financy lê o saldo; o Pluggy lista as contas; o TMDB confere a chave; a nuvem mostra a última leitura; notificações mandam uma de teste.
+- O Órbita avisa o Financy quando abre, e o Financy mostra quando ele foi visto pela última vez.
+
 ## [0.15.0] - 2026-11-20
 
 ### Adicionado

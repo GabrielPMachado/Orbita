@@ -67,6 +67,10 @@ export async function saveTmdbKey(raw: string) {
   await setSecret(K_TOKEN, k);
   useTmdbKey.setState({ ready: true, has: true });
 }
+/** Testa a chave salva com uma chamada leve. */
+export async function testTmdb() {
+  await get('/configuration');
+}
 export async function removeTmdbKey() {
   token = null;
   await deleteSecret(K_TOKEN);
@@ -121,20 +125,20 @@ export async function searchTitles(query: string): Promise<TmdbHit[]> {
   const q = query.trim();
   if (q.length < 2) return [];
   const j = await get<{ results: RawHit[] }>('/search/multi', { query: q, language: 'pt-BR', region: 'BR', include_adult: 'false' });
-  return j.results.filter((r) => r.media_type === 'movie' || r.media_type === 'tv').slice(0, 12).map((r) => hit(r));
+  return j.results
+    .filter((r) => r.media_type === 'movie' || r.media_type === 'tv')
+    .slice(0, 12)
+    .map((r) => hit(r));
 }
 
 type RawProv = { provider_id: number; provider_name: string; logo_path?: string };
-function providersFrom(raw?: { results?: Record<string, { link?: string; flatrate?: RawProv[]; free?: RawProv[]; ads?: RawProv[]; rent?: RawProv[]; buy?: RawProv[] }> }): Providers {
+function providersFrom(raw?: {
+  results?: Record<string, { link?: string; flatrate?: RawProv[]; free?: RawProv[]; ads?: RawProv[]; rent?: RawProv[]; buy?: RawProv[] }>;
+}): Providers {
   const br = raw?.results?.BR;
   const map = (l?: RawProv[]) => (l ?? []).map((p) => ({ id: p.provider_id, name: p.provider_name, logo: p.logo_path }));
   const uniq = (l: Provider[]) => l.filter((p, i) => l.findIndex((x) => x.id === p.id) === i);
-  return {
-    stream: uniq([...map(br?.flatrate), ...map(br?.free), ...map(br?.ads)]),
-    rent: map(br?.rent),
-    buy: map(br?.buy),
-    link: br?.link,
-  };
+  return { stream: uniq([...map(br?.flatrate), ...map(br?.free), ...map(br?.ads)]), rent: map(br?.rent), buy: map(br?.buy), link: br?.link };
 }
 
 export async function titleDetails(id: number, kind: 'filme' | 'serie'): Promise<TmdbDetails> {

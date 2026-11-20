@@ -4,9 +4,14 @@ import { router } from 'expo-router';
 import { Bell, Clapperboard, CloudMoon, GraduationCap, Landmark, LayoutGrid, Wallet, type LucideIcon } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, AppState, Linking } from 'react-native';
+import Constants from 'expo-constants';
+import { pullEstacioCloud } from '@/lib/estacioCloud';
+import { requestFinancyLink, testFinancy } from '@/lib/financy';
 import { ensurePermission } from '@/lib/notifications';
-import { widgetsShareData } from '@/lib/nativeWidgets';
-import { loadTmdbKey, removeTmdbKey, useTmdbKey } from '@/lib/tmdb';
+import { reloadWidgets, widgetsShareData } from '@/lib/nativeWidgets';
+import { testPluggy } from '@/lib/pluggySync';
+import { loadTmdbKey, removeTmdbKey, testTmdb, useTmdbKey } from '@/lib/tmdb';
+import { brl } from '@/lib/date';
 import { useEstacio } from '@/store/estacio';
 import { useFinancyLink } from '@/store/financyLink';
 import { usePluggy } from '@/store/pluggy';
@@ -23,7 +28,12 @@ export type Conn = {
   color: string;
   status: ConnStatus;
   detail: string;
-  onPress?: () => void;
+  /** entrar / conectar / permitir */
+  login?: { label: string; run: () => void | Promise<unknown> };
+  /** testa de verdade: devolve o que deu certo ou lança o erro legível */
+  test?: () => Promise<string>;
+  /** tela com os detalhes */
+  route?: string;
 };
 
 const REPO = 'https://github.com/GabrielPMachado/Orbita';
@@ -32,6 +42,25 @@ const quando = (t: number) => {
   const d = dias(t);
   return d <= 0 ? 'hoje' : d === 1 ? 'ontem' : `há ${d} dias`;
 };
+
+const hora = (t: number) => new Date(t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+async function testCloud() {
+  await pullEstacioCloud();
+  const st = useEstacio.getState();
+  if (!st.cloudAt) throw new Error('A nuvem ainda não gravou nenhuma leitura. Crie os segredos e rode uma vez.');
+  if (st.cloudErro) throw new Error(st.cloudErro);
+  return `Última leitura ${quando(st.cloudAt)} às ${hora(st.cloudAt)}`;
+}
+
+async function testNotif() {
+  if (!(await ensurePermission())) throw new Error('Notificações bloqueadas nos Ajustes do iPhone.');
+  await Notifications.scheduleNotificationAsync({
+    content: { title: 'Órbita', body: 'Teste de notificação: tudo certo.', sound: true },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3 },
+  });
+  return 'Enviada: deve chegar em 3 segundos';
+}
 
 /** Permissão de notificações, relida quando o app volta (o usuário pode ter mudado nos Ajustes). */
 function useNotifPermission() {
@@ -62,7 +91,7 @@ function cloudHelp(erro?: string) {
 }
 
 /** Todas as contas, logins e conexões do app, com o estado de cada uma. */
-export function useConnections(): Conn[] {
+export function useConnections(opts: { probeEstacio?: () => Promise<string> } = {}): Conn[] {
   const est = useEstacio();
   const financyOn = useFinancyLink((s) => s.connected);
   const pluggyOn = usePluggy((s) => s.configured);
@@ -85,9 +114,11 @@ export function useConnections(): Conn[] {
       detail: !est.connected
         ? 'Entrar para puxar matérias, provas, notas e boletos'
         : est.needsLogin
-          ? 'A sessão expirou · toque para entrar de novo'
+          ? 'A sessão expirou · entre de novo'
           : `Conectado · atualizado ${est.lastSweep ? quando(est.lastSweep) : 'ainda não'}`,
-      onPress: () => router.push('/estacio'),
+      login: { label: est.connected ? 'Entrar de novo' : 'Entrar', run: () => router.push('/estacio') },
+      test: opts.probeEstacio,
+      route: '/estacio',
     },
     {
       id: 'estacio-nuvem',
@@ -97,13 +128,14 @@ export function useConnections(): Conn[] {
       color: '#7C3AED',
       status: !est.cloudAt ? 'off' : cloudFalhou || cloudParada ? 'warn' : 'ok',
       detail: !est.cloudAt
-        ? 'Não configurada · toque para ver como ligar'
+        ? 'Não configurada'
         : cloudFalhou
           ? (est.cloudErro ?? 'Falhou')
           : cloudParada
             ? `Não roda desde ${quando(est.cloudAt)}`
             : `Funcionando · última leitura ${quando(est.cloudAt)}`,
-      onPress: () => cloudHelp(cloudFalhou ? est.cloudErro : undefined),
+      login: { label: 'Configurar', run: () => cloudHelp(cloudFalhou ? est.cloudErro : undefined) },
+      test: testCloud,
     },
     {
       id: 'financy',
@@ -113,7 +145,14 @@ export function useConnections(): Conn[] {
       color: '#10B981',
       status: financyOn ? 'ok' : 'off',
       detail: financyOn ? 'Conectado · saldo, categorias e backup na nuvem' : 'Conectar o seu app de finanças',
-      onPress: () => router.push('/financas/financy'),
+      login: { label: financyOn ? 'Reconectar' : 'Conectar', run: () => requestFinancyLink() },
+      test: financyOn
+        ? async () => {
+            const r = await testFinancy(Constants.expoConfig?.version);
+            return `Saldo lido: ${brl(r.saldo)}`;
+          }
+        : undefined,
+      route: '/financas/financy',
     },
     {
       id: 'pluggy',
@@ -123,7 +162,13 @@ export function useConnections(): Conn[] {
       color: '#F59E0B',
       status: pluggyOn ? 'ok' : 'off',
       detail: pluggyOn ? 'Configurado · conferência com o banco' : 'Conferir lançamentos com o banco, sem senha do banco',
-      onPress: () => router.push('/financas/pluggy'),
+      login: { label: pluggyOn ? 'Trocar credenciais' : 'Configurar', run: () => router.push('/financas/pluggy') },
+      test: pluggyOn
+        ? async () => {
+            const n = await testPluggy();
+            return n ? `Pluggy respondeu: ${n} conta${n > 1 ? 's' : ''}` : 'Credenciais aceitas, mas nenhuma conta ligada';
+          }
+        : undefined,
     },
     {
       id: 'tmdb',
@@ -132,17 +177,23 @@ export function useConnections(): Conn[] {
       icon: Clapperboard,
       color: '#06B6D4',
       status: tmdb ? 'ok' : 'off',
-      detail: tmdb ? 'Chave salva · capa, sinopse e onde assistir' : 'Toque para colar a chave da API',
-      onPress: tmdb
-        ? () =>
-            Alert.alert('TMDB', 'A chave fica no Keychain do iPhone.', [
-              {
-                text: 'Remover chave',
-                style: 'destructive',
-                onPress: () => removeTmdbKey().then(() => toast({ message: 'Chave do TMDB removida' })),
-              },
-              { text: 'Fechar', style: 'cancel' },
-            ])
+      detail: tmdb ? 'Chave salva · capa, sinopse e onde assistir' : 'Cole a chave da API para ligar',
+      // sem chave: a tela mostra o campo para colar
+      login: tmdb
+        ? {
+            label: 'Remover chave',
+            run: () =>
+              Alert.alert('Remover a chave do TMDB?', 'Capas e onde assistir param de atualizar até você colar outra.', [
+                { text: 'Remover', style: 'destructive', onPress: () => removeTmdbKey().then(() => toast({ message: 'Chave do TMDB removida' })) },
+                { text: 'Cancelar', style: 'cancel' },
+              ]),
+          }
+        : undefined,
+      test: tmdb
+        ? async () => {
+            await testTmdb();
+            return 'O TMDB aceitou a chave';
+          }
         : undefined,
     },
     notif
@@ -157,12 +208,13 @@ export function useConnections(): Conn[] {
             notif === 'granted'
               ? 'Permitidas · lembretes, prazos e boletos'
               : notif === 'denied'
-                ? 'Bloqueadas · toque para abrir os Ajustes'
-                : 'Toque para permitir',
-          onPress:
-            notif === 'granted' || notif === 'denied'
-              ? () => Linking.openSettings()
-              : () => ensurePermission().then((ok) => setNotif(ok ? 'granted' : 'denied')),
+                ? 'Bloqueadas nos Ajustes do iPhone'
+                : 'Ainda não permitidas',
+          login:
+            notif === 'undetermined'
+              ? { label: 'Permitir', run: () => ensurePermission().then((ok) => setNotif(ok ? 'granted' : 'denied')) }
+              : { label: 'Abrir Ajustes', run: () => Linking.openSettings() },
+          test: notif === 'denied' ? undefined : testNotif,
         }
       : null,
     widget !== null
@@ -174,7 +226,12 @@ export function useConnections(): Conn[] {
           color: '#64748B',
           status: widget ? 'ok' : 'warn',
           detail: widget ? 'Com acesso aos dados do app' : 'Sem App Group: ligue no Sideloadly e instale de novo',
-          onPress: () => router.push('/configuracoes/widgets'),
+          test: async () => {
+            reloadWidgets();
+            if (!widgetsShareData()) throw new Error('O widget não enxerga os dados: falta o App Group na instalação.');
+            return 'Widgets atualizados agora';
+          },
+          route: '/configuracoes/widgets',
         }
       : null,
   ];
