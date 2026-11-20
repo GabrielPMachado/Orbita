@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { CheckCircle2, KeyRound, LogIn, PlugZap, XCircle } from 'lucide-react-native';
+import { CheckCircle2, KeyRound, XCircle } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Switch, View } from 'react-native';
 import { StatusBadge, useConnections, type Conn } from '@/components/connections';
@@ -132,24 +132,16 @@ export default function Conexoes() {
             </T>
           </>
         ) : (
-          <View style={{ flexDirection: 'row', gap: space.sm }}>
+          <View style={{ gap: space.sm }}>
             {x.login ? (
-              <Button
-                label={x.login.label}
-                icon={LogIn}
-                variant={x.status === 'ok' ? 'secondary' : 'primary'}
-                onPress={() => void x.login!.run()}
-                style={{ flex: 1 }}
-              />
+              <Button label={x.login.label} variant={x.status === 'ok' ? 'secondary' : 'primary'} onPress={() => void x.login!.run()} />
             ) : null}
             {x.test ? (
               <Button
                 label={busy ? 'Testando…' : 'Testar conexão'}
-                icon={PlugZap}
                 variant={x.status === 'ok' ? 'primary' : 'secondary'}
                 onPress={() => testar(x)}
                 disabled={!!testing}
-                style={{ flex: 1 }}
               />
             ) : null}
           </View>

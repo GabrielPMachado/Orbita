@@ -162,7 +162,7 @@ export function useConnections(opts: { probeEstacio?: () => Promise<string> } = 
       color: '#F59E0B',
       status: pluggyOn ? 'ok' : 'off',
       detail: pluggyOn ? 'Configurado · conferência com o banco' : 'Conferir lançamentos com o banco, sem senha do banco',
-      login: { label: pluggyOn ? 'Trocar credenciais' : 'Configurar', run: () => router.push('/financas/pluggy') },
+      login: { label: pluggyOn ? 'Credenciais' : 'Configurar', run: () => router.push('/financas/pluggy') },
       test: pluggyOn
         ? async () => {
             const n = await testPluggy();
