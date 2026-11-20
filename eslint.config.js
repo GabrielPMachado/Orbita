@@ -8,6 +8,11 @@ module.exports = defineConfig([
     ignores: ['dist/*', 'dist-ci/*', 'ios/*', 'android/*', 'modules/*/ios/*'],
   },
   {
+    // roda só no GitHub Actions, que instala o Playwright à parte (ver estacio-cloud.yml)
+    files: ['scripts/estacio-cloud/**'],
+    rules: { 'import/no-unresolved': ['error', { ignore: ['^playwright$'] }] },
+  },
+  {
     // Regras novas do React Compiler (react-hooks 7): o código é de antes delas. Ficam como aviso
     // para serem corrigidas aos poucos, tela por tela, sem travar o CI.
     rules: {
