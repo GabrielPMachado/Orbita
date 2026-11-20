@@ -19,7 +19,7 @@ type Resultado = { ok: boolean; msg: string; at: number };
  */
 function EstacioProbe({ onResult }: { onResult: (ok: boolean, msg: string) => void }) {
   const done = useRef(false);
-  const last = useRef<{ url: string; login: boolean } | null>(null);
+  const last = useRef<{ url: string; login: boolean; api: boolean } | null>(null);
   const finish = useCallback(
     (ok: boolean, msg: string) => {
       if (done.current) return;
@@ -31,8 +31,12 @@ function EstacioProbe({ onResult }: { onResult: (ok: boolean, msg: string) => vo
   useEffect(() => {
     const t = setTimeout(() => {
       const l = last.current;
-      if (l && /estudante\.estacio\.br/.test(l.url) && !l.login) finish(true, 'O portal abriu com a sua sessão');
-      else finish(false, l ? 'O portal não respondeu direito. Tente de novo.' : 'Sem resposta do portal. Confira a internet.');
+      if (l?.api) finish(true, 'Sessão ativa: o portal respondeu com os seus dados');
+      else if (l && /estudante\.estacio\.br/.test(l.url)) {
+        // abriu o portal, mas a API não respondeu: sem sessão de verdade
+        useEstacio.getState().set({ needsLogin: true });
+        finish(false, 'O portal abriu sem os seus dados: entre de novo.');
+      } else finish(false, l ? 'O portal não respondeu direito. Tente de novo.' : 'Sem resposta do portal. Confira a internet.');
     }, 30_000);
     return () => clearTimeout(t);
   }, [finish]);
@@ -42,10 +46,10 @@ function EstacioProbe({ onResult }: { onResult: (ok: boolean, msg: string) => vo
         initialUrl={PORTAL.inicio}
         onPage={(p) => {
           last.current = p;
-          if (p.login || /login\.microsoftonline\.com|login\.live\.com/.test(p.url)) {
+          if (p.login) {
             useEstacio.getState().set({ needsLogin: true });
             finish(false, 'A sessão expirou. Toque em "Entrar de novo".');
-          } else if (/estudante\.estacio\.br/.test(p.url) && p.chars > 150) {
+          } else if (p.api) {
             useEstacio.getState().set({ needsLogin: false, connected: true });
             finish(true, 'Sessão ativa: o portal abriu com os seus dados');
           }

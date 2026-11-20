@@ -3,6 +3,15 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.17.1] - 2026-11-20
+
+### Corrigido
+- Estácio aparecia como "Conectado · atualizado hoje" com a sessão expirada: quando a sessão cai, o portal manda para a página da Microsoft que pede só o e-mail (sem campo de senha), e o app não reconhecia isso como login. Agora a página de login é reconhecida pelo endereço, e "conectado" só vale quando a API do portal responde com os seus dados.
+- A leitura automática só marca "atualizado" quando trouxe dados de verdade; se não trouxe, tenta de novo em 2 horas em vez de fingir que leu.
+- Testar conexão da Estácio só diz "sessão ativa" quando o portal devolve os seus dados (antes bastava abrir qualquer página do portal).
+- Respostas de erro do portal (sessão recusada) não são mais lidas como dados.
+- Se a sessão cai no meio da leitura, ela para e pede para entrar de novo.
+
 ## [0.17.0] - 2026-11-20
 
 ### Removido

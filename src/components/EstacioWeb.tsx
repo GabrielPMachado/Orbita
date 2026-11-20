@@ -5,7 +5,7 @@ import WebView, { type WebViewMessageEvent, type WebViewProps } from 'react-nati
 import type { FileDownloadEvent, ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes';
 import { OrbitaDocs } from '../../modules/orbita-docs';
 import { lerTexto } from '@/lib/boleto';
-import { analisar, ESTACIO_URLS, HOOK_JS, LINKS_JS, novaCaptura, PAGE_JS, pdfJs, type Captura } from '@/lib/estacio';
+import { analisar, ESTACIO_URLS, HOOK_JS, isLoginUrl, isPortalApi, LINKS_JS, novaCaptura, PAGE_JS, pdfJs, type Captura } from '@/lib/estacio';
 import { PORTAL } from '@/lib/estacioApi';
 import { FIN_JS, SIA_FINANCEIRO, type FinRow } from '@/lib/estacioFinanceiro';
 import type { Resultado } from '@/lib/estacioImport';
@@ -46,7 +46,7 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
     onDone?: (r: Resultado, s: { loggedOut: boolean }) => void;
     onLoading?: (l: boolean) => void;
     /** cada página lida: endereço, se pede senha e quanto texto tinha */
-    onPage?: (p: { url: string; login: boolean; chars: number }) => void;
+    onPage?: (p: { url: string; login: boolean; chars: number; api: boolean }) => void;
     /** página para abrir primeiro (padrão: o portal) */
     initialUrl?: string;
   },
@@ -56,6 +56,10 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
   const onPageRef = useRef(onPage);
   onPageRef.current = onPage;
   const cap = useRef(novaCaptura());
+  /** última página carregada e se a API do portal já respondeu (prova de sessão válida) */
+  const lastUrl = useRef('');
+  const apiOk = useRef(false);
+  const naLogin = () => cap.current.login || isLoginUrl(lastUrl.current);
   const pdfs = useRef<{ texto: string; arquivo?: string }[]>([]);
   const [url, setUrl] = useState(initialUrl ?? ESTACIO_URLS[0].url);
 
@@ -81,9 +85,15 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
   const finish = useCallback(
     (loggedOut = false) => {
       clearTimeout(timer.current);
-      phase.current = loggedOut ? 'login' : 'done';
+      const r = result();
+      const vazio = !r.disciplinas.length && !(r.avaliacoes ?? []).length && !(r.cobrancas ?? []).length && !r.boletos.length;
+      // caiu no login, ou o portal nunca respondeu com dados: a sessão não vale
+      const telaDeLogin = loggedOut || naLogin();
+      const out = telaDeLogin || (vazio && !apiOk.current);
+      // só volta a "esperar o login" se viu a tela de login (senão ficaria varrendo em círculo)
+      phase.current = telaDeLogin ? 'login' : 'done';
       emit({});
-      onDone?.(result(), { loggedOut });
+      onDone?.(r, { loggedOut: out });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [onDone, result],
@@ -125,7 +135,6 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
       avisar('passo da varredura da Estácio', e);
     }
     timer.current = setTimeout(passo, p.wait);
-     
   }, [finish, onSweep]);
   const js = (code: string) => () => web.current?.injectJavaScript(code);
 
@@ -164,7 +173,7 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
   };
 
   const startSweep = useCallback(() => {
-    if (cap.current.login) {
+    if (naLogin()) {
       phase.current = 'login';
       emit({});
       return;
@@ -210,6 +219,7 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
       }
       const cp = cap.current;
       if (m.type === 'json' && typeof m.body === 'string') {
+        if (isPortalApi(String(m.url))) apiOk.current = true;
         cp.json.push({
           ordem: atual.current !== undefined && atual.current >= 0 ? atual.current : undefined,
           url: String(m.url),
@@ -221,7 +231,8 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
         changed();
       } else if (m.type === 'page') {
         cp.login = !!m.login;
-        onPageRef.current?.({ url: String(m.url), login: !!m.login, chars: String(m.text ?? '').length });
+        lastUrl.current = String(m.url);
+        onPageRef.current?.({ url: String(m.url), login: naLogin(), chars: String(m.text ?? '').length, api: apiOk.current });
         cp.pages.set(String(m.url) + (m.view ? `#${String(m.view)}` : ''), {
           url: String(m.url),
           title: String(m.title ?? ''),
@@ -259,11 +270,15 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
   );
 
   // terminou de carregar uma página: lê, e na varredura procura mais links e segue
-  const onLoadEnd = () => {
+  const onLoadEnd = (e?: { nativeEvent?: { url?: string } }) => {
     onLoading?.(false);
+    if (e?.nativeEvent?.url) lastUrl.current = e.nativeEvent.url;
     web.current?.injectJavaScript(PAGE_JS);
     setTimeout(() => {
-      if (phase.current === 'sweeping' && (feitos.current > 0 || roteiro.current.length)) {
+      if (phase.current === 'sweeping' && naLogin()) {
+        // a sessão caiu no meio da leitura
+        finish(true);
+      } else if (phase.current === 'sweeping' && (feitos.current > 0 || roteiro.current.length)) {
         // roteiro do portal: os passos têm tempo próprio
       } else if (phase.current === 'sweeping') {
         web.current?.injectJavaScript(LINKS_JS);
@@ -271,12 +286,12 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
         timer.current = setTimeout(next, PAGE_WAIT);
       } else if (wantSweep.current && phase.current === 'idle') {
         // primeira página depois do login: começa sozinho
-        if (cap.current.login) {
+        if (naLogin()) {
           phase.current = 'login';
           emit({});
           if (!onSweep) return;
         } else startSweep();
-      } else if (phase.current === 'login' && !cap.current.login && wantSweep.current) {
+      } else if (phase.current === 'login' && !naLogin() && wantSweep.current) {
         // acabou de entrar
         phase.current = 'idle';
         startSweep();

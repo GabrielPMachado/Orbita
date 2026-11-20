@@ -10,6 +10,13 @@ import { lerTexto, type BoletoInfo } from './boleto';
 import { lerPortal, type AvalEstacio, type MensalidadeAviso } from './estacioApi';
 import { lerFinanceiro, type Cobranca, type FinRow } from './estacioFinanceiro';
 
+/** Páginas de login (Microsoft/Entra). Nelas o e-mail vem antes da senha: não dá para confiar só no campo de senha. */
+export const isLoginUrl = (u: string) =>
+  /login\.microsoftonline\.com|login\.live\.com|login\.microsoft\.com|\/adfs\/|b2clogin\.com|\/oauth2\/v2\.0\/authorize/i.test(u);
+
+/** Resposta da API do portal: só chega com a sessão válida. */
+export const isPortalApi = (u: string) => /apis\.estudante\.estacio\.br\/|api-sirius\.prd\.qlabs\.com\.br\//i.test(u);
+
 export const ESTACIO_URLS = [
   { label: 'Minha Estácio', url: 'https://estudante.estacio.br/' },
   { label: 'SIA', url: 'https://sia.estacio.br/' },
@@ -22,7 +29,8 @@ export const HOOK_JS = `
 (function(){
   if (window.__orbita) return; window.__orbita = true;
   var send = function(o){ try { window.ReactNativeWebView.postMessage(JSON.stringify(o)); } catch(e){} };
-  var keep = function(url, text){
+  var keep = function(url, text, status){
+    if (status && (status < 200 || status >= 300)) return;
     if (!text || text.length < 2 || text.length > 400000) return;
     var c = text.trim()[0]; if (c !== '{' && c !== '[') return;
     var disc = (location.pathname.match(/avaliacoes\\/([A-Z]{2,4}\\d{3,5})/) || [])[1];
@@ -30,10 +38,10 @@ export const HOOK_JS = `
     send({ type: 'json', url: String(url).slice(0, 300), page: location.href.slice(0, 300), disc: disc, body: text });
   };
   var f = window.fetch;
-  if (f) window.fetch = function(){ var a = arguments; return f.apply(this, a).then(function(r){ try { r.clone().text().then(function(t){ keep(r.url || a[0], t); }); } catch(e){} return r; }); };
+  if (f) window.fetch = function(){ var a = arguments; return f.apply(this, a).then(function(r){ try { r.clone().text().then(function(t){ keep(r.url || a[0], t, r.status); }); } catch(e){} return r; }); };
   var o = XMLHttpRequest.prototype.open, s = XMLHttpRequest.prototype.send;
   XMLHttpRequest.prototype.open = function(m, u){ this.__u = u; return o.apply(this, arguments); };
-  XMLHttpRequest.prototype.send = function(){ var x = this; x.addEventListener('load', function(){ try { if (!x.responseType || x.responseType === 'text') keep(x.__u, x.responseText); else if (x.responseType === 'json') keep(x.__u, JSON.stringify(x.response)); } catch(e){} }); return s.apply(this, arguments); };
+  XMLHttpRequest.prototype.send = function(){ var x = this; x.addEventListener('load', function(){ try { if (!x.responseType || x.responseType === 'text') keep(x.__u, x.responseText, x.status); else if (x.responseType === 'json') keep(x.__u, JSON.stringify(x.response), x.status); } catch(e){} }); return s.apply(this, arguments); };
   true;
 })();
 `;

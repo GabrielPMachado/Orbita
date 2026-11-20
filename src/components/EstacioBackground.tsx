@@ -7,6 +7,9 @@ import { toast } from '@/store/toast';
 import { EstacioWeb } from './EstacioWeb';
 
 const EVERY = 20 * 3600 * 1000;
+/** se a leitura não trouxe nada (portal fora, rede ruim), tenta de novo só depois disto */
+const RETRY = 2 * 3600 * 1000;
+let lastTry = 0;
 
 /**
  * Ao abrir, importa a varredura da nuvem (04:00). Se ela não rodou, uma vez por dia, com o app aberto, lê o portal da Estácio escondido (a sessão é a mesma da
@@ -21,8 +24,18 @@ export function EstacioBackground() {
       const msg = await pullEstacioCloud().catch(() => undefined);
       if (msg && !/nada novo/.test(msg)) toast({ message: msg });
       const s = useEstacio.getState();
-      if (Platform.OS === 'ios' && s.connected && s.auto && !s.needsLogin && Date.now() - s.lastSweep > EVERY && AppState.currentState === 'active')
+      if (
+        Platform.OS === 'ios' &&
+        s.connected &&
+        s.auto &&
+        !s.needsLogin &&
+        Date.now() - s.lastSweep > EVERY &&
+        Date.now() - lastTry > RETRY &&
+        AppState.currentState === 'active'
+      ) {
+        lastTry = Date.now();
         setRun(true);
+      }
     };
     const later = () => {
       clearTimeout(t);
@@ -58,7 +71,9 @@ export function EstacioBackground() {
           setRun(false);
           if (loggedOut) return useEstacio.getState().set({ needsLogin: true });
           const msg = importarEstacio(r);
-          useEstacio.getState().set({ lastSweep: Date.now(), lastSummary: msg, needsLogin: false });
+          const leu = r.disciplinas.length || (r.avaliacoes ?? []).length || (r.cobrancas ?? []).length;
+          // só conta como "atualizado" quando o portal devolveu dados de verdade
+          useEstacio.getState().set(leu ? { lastSweep: Date.now(), lastSummary: msg, needsLogin: false } : { lastSummary: msg });
           if (!/nada novo/.test(msg)) toast({ message: msg });
         }}
       />
