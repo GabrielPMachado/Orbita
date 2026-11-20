@@ -1,6 +1,6 @@
 import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
-import { CreditCard, ExternalLink, KeyRound, Landmark, LockKeyhole, RefreshCw, Unplug } from 'lucide-react-native';
+import { CreditCard, ExternalLink, KeyRound, Landmark, LockKeyhole, Unplug } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -52,19 +52,6 @@ export default function PluggySetup() {
       syncPluggy().catch(() => {});
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Não foi possível conectar.');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const sync = async () => {
-    setBusy('sync');
-    try {
-      const r = await syncPluggy();
-      toast({ message: `${r.verified} conferido${r.verified === 1 ? '' : 's'} · ${r.pending} para revisar` });
-      router.push('/financas/conferencia');
-    } catch (e) {
-      toast({ message: e instanceof Error ? e.message : 'Falha ao sincronizar', kind: 'danger' });
     } finally {
       setBusy(null);
     }

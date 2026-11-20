@@ -16,6 +16,7 @@ import { deleteSecret, getSecret, setSecret } from './secrets';
 import { useFinancyLink, type FinancyHint, type FinancySummary } from '@/store/financyLink';
 import { useSettings } from '@/store/settings';
 import { resolveAccent } from '@/theme';
+import { avisar } from '@/lib/avisar';
 
 export const FINANCY_URL = 'https://financy-2d.web.app';
 const API_KEY = 'AIzaSyDepvsTarS6FfS-nGNz51EVOlOR0yK5yOg'; // chave pública do app web (não é segredo)
@@ -50,7 +51,9 @@ export async function openFinancy(a?: Action) {
   const native = a ? `financy://${a.action}${q ? `?${q}` : ''}` : 'financy://';
   try {
     if (Platform.OS !== 'web' && (await Linking.canOpenURL('financy://'))) return await Linking.openURL(native);
-  } catch {}
+  } catch (e) {
+    avisar('abrir o app do Financy', e);
+  }
   const webAction = a ? (a.action === 'novo' ? 'quick-add' : a.action) : '';
   const web = webAction ? `${FINANCY_URL}/?action=${webAction}${q ? `&${q}` : ''}` : FINANCY_URL;
   return Linking.openURL(web).catch(() => {});

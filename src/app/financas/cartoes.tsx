@@ -1,13 +1,11 @@
-import { Wallet } from 'lucide-react-native';
+import { Wallet , CreditCard, Pencil, Plus, Trash } from 'lucide-react-native';
 import { openFinancy } from '@/lib/financy';
-import { CreditCard, Pencil, Plus, Trash } from 'lucide-react-native';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { MonthSwitcher, TxRow } from '@/components/finance';
 import { Button, Card as UICard, Empty, Field, GlassButton, IconTile, List, Progress, Screen, Sheet, T, tap } from '@/components/ui';
-import { brl } from '@/lib/date';
-import { ACCOUNT_COLORS, cardUsed, invoice, invoiceMonth, monthName, parseMoney, thisMonth } from '@/lib/finance';
-import { today } from '@/lib/date';
+import { brl , today } from '@/lib/date';
+import { ACCOUNT_COLORS, cardUsed, invoice, invoiceMonth, parseMoney, thisMonth } from '@/lib/finance';
 import { useFinance, type Card } from '@/store/finance';
 import { radius, space, useColors } from '@/theme';
 

@@ -1,7 +1,7 @@
 import { EASE_OUT } from '@/lib/motionTokens';
 import { router, type Href } from 'expo-router';
 import { ChevronRight, Settings } from 'lucide-react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Glass } from '@/components/Glass';
 import { PressScale } from '@/components/motion';
 import Animated, { FadeInDown } from 'react-native-reanimated';

@@ -34,6 +34,9 @@ jobs:
       - name: Checagem de tipos
         run: npx tsc --noEmit
 
+      - name: Lint (ESLint)
+        run: npx eslint .
+
       - name: Scripts injetados nas páginas (sintaxe)
         run: npm run check:injected
 

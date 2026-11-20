@@ -1,9 +1,9 @@
-import { BedDouble, Droplet, GlassWater, Pill, Plus, Scale, Trash } from 'lucide-react-native';
+import { BedDouble, Droplet, GlassWater, Pill, Scale, Trash } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { LineChart, Stepper, confirmDelete } from '@/components/extra';
 import { Glass } from '@/components/Glass';
-import { Button, Card, Checkbox, Field, GlassButton, IconTile, List, ProgressRing, Row, Screen, Section, Sheet, T, impact } from '@/components/ui';
+import { Button, Card, Checkbox, Field, IconTile, List, ProgressRing, Row, Screen, Section, Sheet, T, impact } from '@/components/ui';
 import { addDays, fromKey, lastNDays, today, toKey, WEEKDAYS_SHORT } from '@/lib/date';
 import { cancel, schedule } from '@/lib/notifications';
 import { parseMoney } from '@/lib/finance';
