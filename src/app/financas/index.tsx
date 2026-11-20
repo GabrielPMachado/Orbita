@@ -1,6 +1,6 @@
 import { Barcode } from 'lucide-react-native';
 import { useBoletos } from '@/store/boletos';
-import { addDays as addDaysBoleto, toKey as toKeyBoleto } from '@/lib/date';
+import { addDays as addDaysBoleto, toKey as toKeyBoleto , brl, friendlyDate, today } from '@/lib/date';
 import { router, type Href } from 'expo-router';
 import {
   ArrowDownLeft,
@@ -23,7 +23,6 @@ import { AnimatedNumber } from '@/components/motion';
 import { Glass } from '@/components/Glass';
 import { MonthSwitcher, TxRow } from '@/components/finance';
 import { Badge, Card, Empty, GlassButton, IconTile, List, Progress, Row, Screen, Section, Segmented, T, tap } from '@/components/ui';
-import { brl, friendlyDate, today } from '@/lib/date';
 import {
   addMonthKey,
   byCategory,

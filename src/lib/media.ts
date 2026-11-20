@@ -2,6 +2,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { ActionSheetIOS, Alert, Platform } from 'react-native';
 import { uid } from './storage';
+import { avisar } from '@/lib/avisar';
 
 /**
  * Fotos ficam numa pasta própria dentro de Documents do app.
@@ -27,7 +28,9 @@ export function deleteMedia(name: string) {
   try {
     const f = new File(Paths.document, DIR, name);
     if (f.exists) f.delete();
-  } catch {}
+  } catch (e) {
+    avisar('apagar a mídia', e);
+  }
 }
 
 async function persist(asset: ImagePicker.ImagePickerAsset): Promise<string> {

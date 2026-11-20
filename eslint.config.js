@@ -5,7 +5,7 @@ const expoConfig = require('eslint-config-expo/flat');
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/*', 'dist-ci/*', 'ios/*', 'android/*', 'modules/*/ios/*'],
+    ignores: ['dist/*', 'dist-ci/*', '.check-injected.js', 'ios/*', 'android/*', 'modules/*/ios/*'],
   },
   {
     // roda só no GitHub Actions, que instala o Playwright à parte (ver estacio-cloud.yml)

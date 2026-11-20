@@ -26,7 +26,7 @@ import { habitIcon, MOODS } from '@/lib/icons';
 import { isScheduled, streak, useHabits } from '@/store/habits';
 import { useMood } from '@/store/misc';
 import { useCheckin } from '@/store/checkin';
-import { openCheckin } from '@/store/ui';
+import { openCheckin , useUI } from '@/store/ui';
 import { openFinancy } from '@/lib/financy';
 import { useFinance } from '@/store/finance';
 import { balanceFor, monthTotals, thisMonth } from '@/lib/finance';
@@ -36,7 +36,6 @@ import { Image } from 'expo-image';
 import { useReminders } from '@/store/reminders';
 import { useSettings } from '@/store/settings';
 import { sortTasks, useTasks } from '@/store/tasks';
-import { useUI } from '@/store/ui';
 import { useFocusSessions, useHealth } from '@/store/modules';
 import { FONTS, radius, space, useColors } from '@/theme';
 
