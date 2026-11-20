@@ -3,6 +3,15 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.15.0] - 2026-11-20
+
+### Adicionado
+- Configurações em seções: Perfil, Contas e conexões, Personalização (Aparência, Widgets, Módulos), Rotina e Dados. Cada item abre a própria tela.
+- Contas e conexões: Estácio, leitura na nuvem das 04h, Financy, Meu Pluggy, TMDB, notificações e widgets num lugar só, com o estado de cada um (conectado, atenção ou desligado) e o que fazer. A chave do TMDB pode ser colada ali mesmo; a da nuvem mostra o último erro e abre os segredos do GitHub.
+
+### Corrigido
+- A versão no rodapé das Configurações agora é a real (vinha fixa em 0.6).
+
 ## [0.14.0] - 2026-11-19
 
 ### Adicionado
