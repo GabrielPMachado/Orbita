@@ -1,5 +1,6 @@
-import { Wallet , Landmark, Plus, Trash } from 'lucide-react-native';
+import { Wallet } from 'lucide-react-native';
 import { openFinancy } from '@/lib/financy';
+import { Landmark, Plus, Trash } from 'lucide-react-native';
 import { useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 import { Button, Card, Chip, Empty, Field, GlassButton, IconTile, List, Row, Screen, Sheet, T, tap } from '@/components/ui';

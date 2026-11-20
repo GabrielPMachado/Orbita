@@ -18,7 +18,10 @@ export function taskOrigin(task: Task, projects: Project[]): { label: string; co
     }
     return { label: 'Projeto arquivado', project: true };
   }
-  return { label: task.source === 'estacio' ? 'Estácio' : task.source === 'revisao' ? 'Revisão' : task.source === 'atalho' ? 'Atalho' : 'Caixa de entrada', project: false };
+  return {
+    label: task.source === 'estacio' ? 'Estácio' : task.source === 'revisao' ? 'Revisão' : task.source === 'atalho' ? 'Atalho' : 'Caixa de entrada',
+    project: false,
+  };
 }
 
 function Pill({ icon: Icon, label, color }: { icon: typeof Flag; label: string; color: string }) {

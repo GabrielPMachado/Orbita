@@ -60,7 +60,12 @@ export default function Revisao() {
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <GlassButton icon={ChevronLeft} accessibilityLabel="Semana anterior" onPress={() => setOffset(offset - 1)} />
         <T v="headline">{label}</T>
-        <GlassButton icon={ChevronRight} accessibilityLabel="Próxima semana" onPress={() => offset < 0 && setOffset(offset + 1)} color={offset < 0 ? undefined : c.textFaint} />
+        <GlassButton
+          icon={ChevronRight}
+          accessibilityLabel="Próxima semana"
+          onPress={() => offset < 0 && setOffset(offset + 1)}
+          color={offset < 0 ? undefined : c.textFaint}
+        />
       </View>
 
       <View style={{ flexDirection: 'row', gap: space.sm }}>
@@ -75,7 +80,9 @@ export default function Revisao() {
             const Mood = m ? MOODS[m - 1].icon : null;
             return (
               <View key={d} style={{ alignItems: 'center', gap: 6, flex: 1 }}>
-                <View style={{ height: 26, justifyContent: 'center' }}>{Mood ? <Mood size={22} color={m! >= 4 ? c.accent : m! <= 2 ? c.info : c.textDim} /> : <T tone="faint">·</T>}</View>
+                <View style={{ height: 26, justifyContent: 'center' }}>
+                  {Mood ? <Mood size={22} color={m! >= 4 ? c.accent : m! <= 2 ? c.info : c.textDim} /> : <T tone="faint">·</T>}
+                </View>
                 <T v="caption" tone={d === today() ? 'default' : 'faint'} style={{ fontSize: 11 }}>
                   {WEEKDAYS_SHORT[fromKey(d).getDay()]}
                 </T>
@@ -91,17 +98,79 @@ export default function Revisao() {
       </Section>
 
       <List>
-        <Row leading={<IconTile icon={CalendarCheck} />} title="Tarefas concluídas" trailing={<T v="headline" tabular>{doneTasks.length}</T>} />
-        <Row leading={<IconTile icon={Repeat2} />} title="Check-ins de hábitos" trailing={<T v="headline" tabular>{hit}</T>} />
-        <Row leading={<IconTile icon={Timer} color="#F2415A" />} title="Tempo de foco" trailing={<T v="headline" tabular>{focusMin >= 60 ? `${(focusMin / 60).toFixed(1).replace('.', ',')} h` : `${focusMin} min`}</T>} />
-        <Row leading={<IconTile icon={Dumbbell} color="#2DD4BF" />} title="Treinos" trailing={<T v="headline" tabular>{gym}</T>} />
-        <Row leading={<IconTile icon={Wallet} color={c.success} />} title="Entradas / saídas" subtitle={`saldo ${brl(earned - spent)}`} trailing={<T v="callout" tabular tone="dim">{brl(earned)} / {brl(spent)}</T>} />
+        <Row
+          leading={<IconTile icon={CalendarCheck} />}
+          title="Tarefas concluídas"
+          trailing={
+            <T v="headline" tabular>
+              {doneTasks.length}
+            </T>
+          }
+        />
+        <Row
+          leading={<IconTile icon={Repeat2} />}
+          title="Check-ins de hábitos"
+          trailing={
+            <T v="headline" tabular>
+              {hit}
+            </T>
+          }
+        />
+        <Row
+          leading={<IconTile icon={Timer} color="#F2415A" />}
+          title="Tempo de foco"
+          trailing={
+            <T v="headline" tabular>
+              {focusMin >= 60 ? `${(focusMin / 60).toFixed(1).replace('.', ',')} h` : `${focusMin} min`}
+            </T>
+          }
+        />
+        <Row
+          leading={<IconTile icon={Dumbbell} color="#2DD4BF" />}
+          title="Treinos"
+          trailing={
+            <T v="headline" tabular>
+              {gym}
+            </T>
+          }
+        />
+        <Row
+          leading={<IconTile icon={Wallet} color={c.success} />}
+          title="Entradas / saídas"
+          subtitle={`saldo ${brl(earned - spent)}`}
+          trailing={
+            <T v="callout" tabular tone="dim">
+              {brl(earned)} / {brl(spent)}
+            </T>
+          }
+        />
       </List>
 
       <Section title="Reflexão">
-        <Field label="O que deu certo?" value={entry?.good ?? ''} onChangeText={(good) => save(start, { good })} placeholder="Conquistas, boas decisões…" multiline style={{ minHeight: 72, textAlignVertical: 'top' }} />
-        <Field label="O que dá para melhorar?" value={entry?.improve ?? ''} onChangeText={(improve) => save(start, { improve })} placeholder="O que travou, o que evitar…" multiline style={{ minHeight: 72, textAlignVertical: 'top' }} />
-        <Field label="Foco da próxima semana" value={entry?.focus ?? ''} onChangeText={(focus) => save(start, { focus })} placeholder="1 a 3 prioridades" multiline style={{ minHeight: 72, textAlignVertical: 'top' }} />
+        <Field
+          label="O que deu certo?"
+          value={entry?.good ?? ''}
+          onChangeText={(good) => save(start, { good })}
+          placeholder="Conquistas, boas decisões…"
+          multiline
+          style={{ minHeight: 72, textAlignVertical: 'top' }}
+        />
+        <Field
+          label="O que dá para melhorar?"
+          value={entry?.improve ?? ''}
+          onChangeText={(improve) => save(start, { improve })}
+          placeholder="O que travou, o que evitar…"
+          multiline
+          style={{ minHeight: 72, textAlignVertical: 'top' }}
+        />
+        <Field
+          label="Foco da próxima semana"
+          value={entry?.focus ?? ''}
+          onChangeText={(focus) => save(start, { focus })}
+          placeholder="1 a 3 prioridades"
+          multiline
+          style={{ minHeight: 72, textAlignVertical: 'top' }}
+        />
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <T v="callout" tone="dim">
             Nota da semana

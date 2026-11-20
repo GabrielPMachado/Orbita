@@ -55,7 +55,9 @@ export default function Noticias() {
 
   const open = (url: string) => {
     tap();
-    WebBrowser.openBrowserAsync(url, { presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET, controlsColor: c.accent }).catch(() => {});
+    WebBrowser.openBrowserAsync(url, { presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET, controlsColor: c.accent }).catch(
+      () => {},
+    );
   };
 
   const [hero, ...rest] = list;
@@ -73,7 +75,11 @@ export default function Noticias() {
             <GlassButton icon={Settings2} accessibilityLabel="Portais" onPress={() => setManage(true)} />
           </>
         }>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -space.lg }} contentContainerStyle={{ gap: space.sm, paddingHorizontal: space.lg }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginHorizontal: -space.lg }}
+          contentContainerStyle={{ gap: space.sm, paddingHorizontal: space.lg }}>
           {topics.map((t) => (
             <Chip key={t} label={t === 'Salvos' ? `Salvos ${saved.length || ''}`.trim() : t} active={topic === t} onPress={() => setTopic(t)} />
           ))}
@@ -134,7 +140,10 @@ export default function Noticias() {
             )}
             <List>
               {rest.map((a) => (
-                <Pressable key={a.link} onPress={() => open(a.link)} style={({ pressed }) => [styles.item, pressed && { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
+                <Pressable
+                  key={a.link}
+                  onPress={() => open(a.link)}
+                  style={({ pressed }) => [styles.item, pressed && { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
                   <View style={{ flex: 1, gap: 4 }}>
                     <T v="caption" tone="dim">
                       {a.source} {a.date ? `· ${timeAgo(a.date)}` : ''}
@@ -190,7 +199,13 @@ function FeedsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
                     <Trash size={16} color={c.textFaint} />
                   </Pressable>
                 )}
-                <Switch value={f.enabled} onValueChange={() => toggleFeed(f.id)} trackColor={{ true: c.accent, false: c.surface3 }} thumbColor="#FFFFFF" ios_backgroundColor={c.surface3} />
+                <Switch
+                  value={f.enabled}
+                  onValueChange={() => toggleFeed(f.id)}
+                  trackColor={{ true: c.accent, false: c.surface3 }}
+                  thumbColor="#FFFFFF"
+                  ios_backgroundColor={c.surface3}
+                />
               </View>
             }
           />

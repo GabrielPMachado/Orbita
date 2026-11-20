@@ -46,7 +46,13 @@ export default function Metas() {
         subtitle={goals.length ? `${done} de ${goals.length} alcançadas` : 'Objetivos com progresso visível'}
         actions={<GlassButton icon={Plus} label="Nova" onPress={() => setOpen(true)} />}>
         {goals.length === 0 && (
-          <Empty icon={Target} title="Nenhuma meta" hint="Ex.: ler 12 livros, juntar R$ 5.000, correr 100 km." action="Criar meta" onAction={() => setOpen(true)} />
+          <Empty
+            icon={Target}
+            title="Nenhuma meta"
+            hint="Ex.: ler 12 livros, juntar R$ 5.000, correr 100 km."
+            action="Criar meta"
+            onAction={() => setOpen(true)}
+          />
         )}
         {goals.map((g) => {
           const pct = g.target ? g.current / g.target : 0;
@@ -93,7 +99,10 @@ export default function Metas() {
               <Progress value={pct} color={complete ? c.success : undefined} />
 
               <View style={styles.actions}>
-                {[{ icon: Minus, d: -step, label: 'Diminuir' }, { icon: Plus, d: step, label: 'Aumentar' }].map(({ icon: Icon, d, label }) => (
+                {[
+                  { icon: Minus, d: -step, label: 'Diminuir' },
+                  { icon: Plus, d: step, label: 'Aumentar' },
+                ].map(({ icon: Icon, d, label }) => (
                   <Pressable
                     key={label}
                     accessibilityLabel={label}

@@ -32,11 +32,6 @@ async function credentials() {
   return { clientId, clientSecret };
 }
 
-export async function hasCredentials() {
-  const [a, b] = await Promise.all([getSecret(K_ID), getSecret(K_SECRET)]);
-  return !!a && !!b;
-}
-
 export async function forgetPluggy() {
   await Promise.all([deleteSecret(K_ID), deleteSecret(K_SECRET)]);
   usePluggy.getState().reset();

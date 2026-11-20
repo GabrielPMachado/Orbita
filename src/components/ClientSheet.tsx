@@ -47,10 +47,24 @@ export function ClientSheet({ editing, onClose, onDeleted }: { editing: Client |
       <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Dindo" autoCapitalize="words" />
       <Field label="Empresa" value={company} onChangeText={setCompany} placeholder="Opcional" />
       <View style={{ flexDirection: 'row', gap: space.sm }}>
-        <Field label="WhatsApp / telefone" value={phone} onChangeText={setPhone} placeholder="(51) 99999-0000" keyboardType="phone-pad" style={{ flex: 1 }} />
+        <Field
+          label="WhatsApp / telefone"
+          value={phone}
+          onChangeText={setPhone}
+          placeholder="(51) 99999-0000"
+          keyboardType="phone-pad"
+          style={{ flex: 1 }}
+        />
       </View>
       <Field label="E-mail" value={email} onChangeText={setEmail} placeholder="Opcional" keyboardType="email-address" autoCapitalize="none" />
-      <Field label="Observações" value={notes} onChangeText={setNotes} placeholder="Como prefere ser cobrado, combinados…" multiline style={{ minHeight: 64, textAlignVertical: 'top' }} />
+      <Field
+        label="Observações"
+        value={notes}
+        onChangeText={setNotes}
+        placeholder="Como prefere ser cobrado, combinados…"
+        multiline
+        style={{ minHeight: 64, textAlignVertical: 'top' }}
+      />
       <View style={{ gap: space.sm }}>
         <T v="overline" tone="dim">
           Cor

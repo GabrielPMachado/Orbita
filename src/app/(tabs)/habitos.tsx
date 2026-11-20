@@ -127,19 +127,19 @@ export default function Habitos() {
                         {WEEKDAYS_SHORT[fromKey(k).getDay()]}
                       </T>
                       <Bounce trigger={done}>
-                      <View
-                        style={[
-                          styles.day,
-                          {
-                            backgroundColor: done ? c.accent : 'transparent',
-                            borderColor: done ? c.accent : isToday ? c.accentLine : c.border,
-                            opacity: sched || done ? 1 : 0.35,
-                          },
-                        ]}>
-                        <T v="caption" tabular color={done ? c.onAccent : c.textDim}>
-                          {fromKey(k).getDate()}
-                        </T>
-                      </View>
+                        <View
+                          style={[
+                            styles.day,
+                            {
+                              backgroundColor: done ? c.accent : 'transparent',
+                              borderColor: done ? c.accent : isToday ? c.accentLine : c.border,
+                              opacity: sched || done ? 1 : 0.35,
+                            },
+                          ]}>
+                          <T v="caption" tabular color={done ? c.onAccent : c.textDim}>
+                            {fromKey(k).getDate()}
+                          </T>
+                        </View>
                       </Bounce>
                     </Pressable>
                   );
@@ -186,7 +186,12 @@ export default function Habitos() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
             <Chip label="Todo dia" active={days.length === 0} onPress={() => setDays([])} />
             {DAY_NAMES.map((d, i) => (
-              <Chip key={i} label={d} active={days.includes(i)} onPress={() => setDays(days.includes(i) ? days.filter((x) => x !== i) : [...days, i].sort())} />
+              <Chip
+                key={i}
+                label={d}
+                active={days.includes(i)}
+                onPress={() => setDays(days.includes(i) ? days.filter((x) => x !== i) : [...days, i].sort())}
+              />
             ))}
           </View>
         </View>

@@ -26,9 +26,7 @@ export const useReminders = create<RemindersState>()(
       add: async (title, at, repeat) => {
         const notificationId = await schedule(title, at, repeat).catch(() => undefined);
         set((s) => ({
-          reminders: [...s.reminders, { id: uid(), title, at: at.getTime(), repeat, done: false, notificationId }].sort(
-            (a, b) => a.at - b.at,
-          ),
+          reminders: [...s.reminders, { id: uid(), title, at: at.getTime(), repeat, done: false, notificationId }].sort((a, b) => a.at - b.at),
         }));
         return !!notificationId;
       },
@@ -42,9 +40,7 @@ export const useReminders = create<RemindersState>()(
         } else {
           notificationId = await schedule(r.title, new Date(r.at), r.repeat).catch(() => undefined);
         }
-        set((s) => ({
-          reminders: s.reminders.map((x) => (x.id === id ? { ...x, done: !x.done, notificationId } : x)),
-        }));
+        set((s) => ({ reminders: s.reminders.map((x) => (x.id === id ? { ...x, done: !x.done, notificationId } : x)) }));
       },
       remove: async (id) => {
         await cancel(get().reminders.find((x) => x.id === id)?.notificationId);

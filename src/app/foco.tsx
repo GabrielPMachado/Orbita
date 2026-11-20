@@ -27,7 +27,19 @@ import Svg, { Circle, Defs, Line, RadialGradient, Rect, Stop } from 'react-nativ
 import { Glass } from '@/components/Glass';
 import { Confetti, PressScale } from '@/components/motion';
 import { GlassButton, impact, T, tap } from '@/components/ui';
-import { useFreshBursts, clock, currentMode, focusPause, focusSkip, focusStart, focusStop, MODE_META, remainingSecs, totalSecs, useNow } from '@/lib/focus';
+import {
+  useFreshBursts,
+  clock,
+  currentMode,
+  focusPause,
+  focusSkip,
+  focusStart,
+  focusStop,
+  MODE_META,
+  remainingSecs,
+  totalSecs,
+  useNow,
+} from '@/lib/focus';
 import { useFocus, useFocusSessions, useSubjects, type FocusMode } from '@/store/modules';
 import { today } from '@/lib/date';
 import { FONTS, radius, space, useColors } from '@/theme';
@@ -59,7 +71,14 @@ function Dial({ progress, color, running, endsInMs }: { progress: number; color:
         const big = i % 5 === 0;
         const r1 = SIZE / 2 - 2;
         const r2 = r1 - (big ? 9 : 5);
-        return { x1: SIZE / 2 + r1 * Math.cos(a), y1: SIZE / 2 + r1 * Math.sin(a), x2: SIZE / 2 + r2 * Math.cos(a), y2: SIZE / 2 + r2 * Math.sin(a), big, i };
+        return {
+          x1: SIZE / 2 + r1 * Math.cos(a),
+          y1: SIZE / 2 + r1 * Math.sin(a),
+          x2: SIZE / 2 + r2 * Math.cos(a),
+          y2: SIZE / 2 + r2 * Math.sin(a),
+          big,
+          i,
+        };
       }),
     [],
   );
@@ -106,7 +125,10 @@ function Breath({ color, active }: { color: string; active: boolean }) {
       return;
     }
     s.value = withRepeat(
-      withSequence(withTiming(1, { duration: 4000, easing: Easing.inOut(Easing.sin) }), withTiming(0, { duration: 4000, easing: Easing.inOut(Easing.sin) })),
+      withSequence(
+        withTiming(1, { duration: 4000, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0, { duration: 4000, easing: Easing.inOut(Easing.sin) }),
+      ),
       -1,
     );
     return () => cancelAnimation(s);
@@ -128,11 +150,26 @@ function Breath({ color, active }: { color: string; active: boolean }) {
   );
 }
 
-function RoundButton({ icon: Icon, onPress, big, color, label }: { icon: typeof Play; onPress: () => void; big?: boolean; color?: string; label: string }) {
+function RoundButton({
+  icon: Icon,
+  onPress,
+  big,
+  color,
+  label,
+}: {
+  icon: typeof Play;
+  onPress: () => void;
+  big?: boolean;
+  color?: string;
+  label: string;
+}) {
   const d = big ? 84 : 58;
   return (
     <PressScale accessibilityRole="button" accessibilityLabel={label} scaleTo={0.88} onPress={onPress}>
-      <Glass interactive tint={color} style={{ width: d, height: d, borderRadius: d / 2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <Glass
+        interactive
+        tint={color}
+        style={{ width: d, height: d, borderRadius: d / 2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         <View>
           <Icon size={big ? 32 : 22} color={big ? '#0B0C0F' : '#F4F5F7'} strokeWidth={2.2} fill={big ? '#0B0C0F' : 'transparent'} />
         </View>
@@ -201,7 +238,11 @@ export default function FocoScreen() {
             </T>
           </View>
           <T v="title" align="center" numberOfLines={2} style={{ maxWidth: 300 }}>
-            {mode === 'foco' ? (active?.label ?? (f.label.trim() || subject?.name || 'Tempo de foco')) : mode === 'longa' ? 'Levanta, alonga, bebe água' : 'Respira com o círculo'}
+            {mode === 'foco'
+              ? (active?.label ?? (f.label.trim() || subject?.name || 'Tempo de foco'))
+              : mode === 'longa'
+                ? 'Levanta, alonga, bebe água'
+                : 'Respira com o círculo'}
           </T>
         </Animated.View>
 
@@ -251,7 +292,13 @@ export default function FocoScreen() {
             focusStop();
           }}
         />
-        <RoundButton icon={f.running ? Pause : Play} big color={meta.color} label={f.running ? 'Pausar' : 'Iniciar'} onPress={() => (f.running ? focusPause() : focusStart(mode))} />
+        <RoundButton
+          icon={f.running ? Pause : Play}
+          big
+          color={meta.color}
+          label={f.running ? 'Pausar' : 'Iniciar'}
+          onPress={() => (f.running ? focusPause() : focusStart(mode))}
+        />
         <RoundButton
           icon={SkipForward}
           label="Pular fase"

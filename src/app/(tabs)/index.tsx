@@ -1,5 +1,18 @@
 import { router } from 'expo-router';
-import { ArrowDownLeft, ArrowUpRight, BellRing, CalendarCheck, ChevronRight, Flame, Plus, GlassWater, Repeat2, Sunrise, Target, Timer } from 'lucide-react-native';
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  BellRing,
+  CalendarCheck,
+  ChevronRight,
+  Flame,
+  Plus,
+  GlassWater,
+  Repeat2,
+  Sunrise,
+  Target,
+  Timer,
+} from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Glass } from '@/components/Glass';
@@ -13,7 +26,7 @@ import { habitIcon, MOODS } from '@/lib/icons';
 import { isScheduled, streak, useHabits } from '@/store/habits';
 import { useMood } from '@/store/misc';
 import { useCheckin } from '@/store/checkin';
-import { openCheckin , useUI } from '@/store/ui';
+import { openCheckin } from '@/store/ui';
 import { openFinancy } from '@/lib/financy';
 import { useFinance } from '@/store/finance';
 import { balanceFor, monthTotals, thisMonth } from '@/lib/finance';
@@ -23,6 +36,7 @@ import { Image } from 'expo-image';
 import { useReminders } from '@/store/reminders';
 import { useSettings } from '@/store/settings';
 import { sortTasks, useTasks } from '@/store/tasks';
+import { useUI } from '@/store/ui';
 import { useFocusSessions, useHealth } from '@/store/modules';
 import { FONTS, radius, space, useColors } from '@/theme';
 
@@ -41,7 +55,10 @@ export default function Hoje() {
     .filter((t) => t.due && t.due <= day && (t.status !== 'done' || t.due === day))
     .sort((a, b) => Number(a.status === 'done') - Number(b.status === 'done') || sortTasks(a, b));
   const tasksDone = agenda.filter((t) => t.status === 'done').length;
-  const inbox = tasks.filter((t) => !t.due && t.status !== 'done').sort(sortTasks).slice(0, 4);
+  const inbox = tasks
+    .filter((t) => !t.due && t.status !== 'done')
+    .sort(sortTasks)
+    .slice(0, 4);
 
   const habits = useHabits((s) => s.habits).filter((h) => !h.archived && isScheduled(h, day));
   const toggleHabit = useHabits((s) => s.toggle);
@@ -108,18 +125,21 @@ export default function Hoje() {
         title={name ? `${greeting()}, ${name.split(' ')[0]}` : greeting()}
         actions={
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-          <GlassButton icon={Plus} accessibilityLabel="Nova tarefa" onPress={() => setCapture(true)} />
-          <Pressable accessibilityLabel="Configurações" onPress={() => router.push('/configuracoes')} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
-            {avatar ? (
-              <Image source={{ uri: mediaUri(avatar) }} style={[styles.avatar, { borderWidth: 1, borderColor: c.border }]} contentFit="cover" />
-            ) : (
-              <Glass interactive floating style={styles.avatar}>
-                <T v="headline" color={c.text}>
-                  {initial}
-                </T>
-              </Glass>
-            )}
-          </Pressable>
+            <GlassButton icon={Plus} accessibilityLabel="Nova tarefa" onPress={() => setCapture(true)} />
+            <Pressable
+              accessibilityLabel="Configurações"
+              onPress={() => router.push('/configuracoes')}
+              style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
+              {avatar ? (
+                <Image source={{ uri: mediaUri(avatar) }} style={[styles.avatar, { borderWidth: 1, borderColor: c.border }]} contentFit="cover" />
+              ) : (
+                <Glass interactive floating style={styles.avatar}>
+                  <T v="headline" color={c.text}>
+                    {initial}
+                  </T>
+                </Glass>
+              )}
+            </Pressable>
           </View>
         }>
         {/* Intenção do check-in (ou convite para fazer) */}
@@ -137,7 +157,10 @@ export default function Hoje() {
             {intent.energy ? (
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 2 }}>
                 {[1, 2, 3, 4, 5].map((l) => (
-                  <View key={l} style={{ width: 4, height: 6 + l * 3, borderRadius: 2, backgroundColor: l <= intent.energy! ? c.warning : c.surface3 }} />
+                  <View
+                    key={l}
+                    style={{ width: 4, height: 6 + l * 3, borderRadius: 2, backgroundColor: l <= intent.energy! ? c.warning : c.surface3 }}
+                  />
                 ))}
               </View>
             ) : null}
@@ -245,7 +268,10 @@ export default function Hoje() {
               </Pressable>
             )}
             {on('produtividade') && (
-              <Pressable onPress={() => router.push('/foco')} onLongPress={() => router.push('/produtividade')} style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.8 : 1 })}>
+              <Pressable
+                onPress={() => router.push('/foco')}
+                onLongPress={() => router.push('/produtividade')}
+                style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.8 : 1 })}>
                 <Glass interactive style={styles.quick}>
                   <View>
                     <Timer size={20} color={c.accent} />
@@ -396,11 +422,5 @@ const styles = StyleSheet.create({
   quick: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.lg, minHeight: 72 },
   moodRow: { flexDirection: 'row', gap: space.sm },
   intent: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  mood: {
-    height: 72,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
+  mood: { height: 72, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', gap: 6 },
 });

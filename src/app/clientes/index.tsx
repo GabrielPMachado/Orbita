@@ -25,7 +25,11 @@ export default function Clientes() {
 
   return (
     <>
-      <Screen back title="Clientes" subtitle={clients.length ? `${clients.length} contatos` : 'Contatos, projetos e cobranças'} actions={<GlassButton icon={Plus} label="Novo" onPress={() => setEditing('new')} />}>
+      <Screen
+        back
+        title="Clientes"
+        subtitle={clients.length ? `${clients.length} contatos` : 'Contatos, projetos e cobranças'}
+        actions={<GlassButton icon={Plus} label="Novo" onPress={() => setEditing('new')} />}>
         {clients.length > 4 && (
           <Glass style={styles.search}>
             <Search size={18} color={c.textFaint} />
@@ -41,7 +45,13 @@ export default function Clientes() {
           </Glass>
         )}
         {clients.length === 0 ? (
-          <Empty icon={Users} title="Nenhum cliente" hint="Cadastre quem você atende para ligar projetos e cobranças a cada um." action="Adicionar cliente" onAction={() => setEditing('new')} />
+          <Empty
+            icon={Users}
+            title="Nenhum cliente"
+            hint="Cadastre quem você atende para ligar projetos e cobranças a cada um."
+            action="Adicionar cliente"
+            onAction={() => setEditing('new')}
+          />
         ) : (
           <List>
             {list.map((x) => {

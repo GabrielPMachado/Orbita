@@ -119,7 +119,10 @@ export default function Saude() {
             <Card>
               <LineChart
                 values={weights.map((w) => w.kg)}
-                labels={[fromKey(weights[0].date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }), fromKey(weights[weights.length - 1].date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })]}
+                labels={[
+                  fromKey(weights[0].date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
+                  fromKey(weights[weights.length - 1].date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
+                ]}
                 color="#2DD4BF"
               />
             </Card>
@@ -183,7 +186,13 @@ export default function Saude() {
       </Screen>
 
       <Sheet visible={weightOpen} onClose={() => setWeightOpen(false)} title="Registrar peso">
-        <Field label="Peso de hoje (kg)" value={weightText} onChangeText={setWeightText} placeholder={lastW ? String(lastW.kg).replace('.', ',') : '72,5'} keyboardType="decimal-pad" />
+        <Field
+          label="Peso de hoje (kg)"
+          value={weightText}
+          onChangeText={setWeightText}
+          placeholder={lastW ? String(lastW.kg).replace('.', ',') : '72,5'}
+          keyboardType="decimal-pad"
+        />
         <Button
           label="Salvar"
           disabled={!parseMoney(weightText)}
@@ -215,7 +224,15 @@ export default function Saude() {
       </Sheet>
 
       <Sheet visible={sleepOpen} onClose={() => setSleepOpen(false)} title="Quanto você dormiu?">
-        <Stepper label="Esta noite" value={h.sleep[day] ?? 7} min={0} max={14} step={0.5} onChange={(v) => h.setSleep(day, v)} format={(v) => `${String(v).replace('.', ',')} h`} />
+        <Stepper
+          label="Esta noite"
+          value={h.sleep[day] ?? 7}
+          min={0}
+          max={14}
+          step={0.5}
+          onChange={(v) => h.setSleep(day, v)}
+          format={(v) => `${String(v).replace('.', ',')} h`}
+        />
         <T v="caption" tone="dim">
           Adultos costumam precisar de 7 a 9 horas.
         </T>
@@ -235,7 +252,7 @@ function MedSheet({ editing, onClose }: { editing: Med | 'new' | null; onClose: 
   const [stock, setStock] = useState('');
   const [lastKey, setLastKey] = useState<string | null>(null);
 
-  const key = editing === 'new' ? 'new' : editing?.id ?? null;
+  const key = editing === 'new' ? 'new' : (editing?.id ?? null);
   if (key !== lastKey) {
     setLastKey(key);
     if (editing && editing !== 'new') {

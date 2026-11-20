@@ -13,13 +13,20 @@ export interface ParsedInput {
 const strip = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 const WD: Record<string, number> = {
-  domingo: 0, dom: 0,
-  segunda: 1, seg: 1,
-  terca: 2, ter: 2,
-  quarta: 3, qua: 3,
-  quinta: 4, qui: 4,
-  sexta: 5, sex: 5,
-  sabado: 6, sab: 6,
+  domingo: 0,
+  dom: 0,
+  segunda: 1,
+  seg: 1,
+  terca: 2,
+  ter: 2,
+  quarta: 3,
+  qua: 3,
+  quinta: 4,
+  qui: 4,
+  sexta: 5,
+  sex: 5,
+  sabado: 6,
+  sab: 6,
 };
 
 /**
@@ -81,9 +88,7 @@ export function parseInput(raw: string, now = new Date()): ParsedInput {
   take(/\sdepois de amanha(?=\s)/, () => addDays(now, 2));
   take(/\samanha(?=\s)/, () => addDays(now, 1));
   take(/\shoje(?=\s)/, () => now);
-  take(/\s(?:em|daqui(?: a)?)\s+(\d+)\s+(dias?|semanas?)(?=\s)/, (m) =>
-    addDays(now, Number(m[1]) * (m[2].startsWith('semana') ? 7 : 1)),
-  );
+  take(/\s(?:em|daqui(?: a)?)\s+(\d+)\s+(dias?|semanas?)(?=\s)/, (m) => addDays(now, Number(m[1]) * (m[2].startsWith('semana') ? 7 : 1)));
   take(/\s(?:dia\s+)?(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?(?=\s)/, (m) => {
     const d = Number(m[1]);
     const mo = Number(m[2]) - 1;
@@ -100,12 +105,15 @@ export function parseInput(raw: string, now = new Date()): ParsedInput {
     if (d < now.getDate()) r = new Date(now.getFullYear(), now.getMonth() + 1, d);
     return r;
   });
-  take(/\s(?:na |no |nesta |neste |proxima |proximo )?(domingo|segunda|terca|quarta|quinta|sexta|sabado|dom|seg|ter|qua|qui|sex|sab)(?:-feira)?(?=\s)/, (m) => {
-    const target = WD[m[1]];
-    let diff = (target - now.getDay() + 7) % 7;
-    if (diff === 0) diff = 7;
-    return addDays(now, diff);
-  });
+  take(
+    /\s(?:na |no |nesta |neste |proxima |proximo )?(domingo|segunda|terca|quarta|quinta|sexta|sabado|dom|seg|ter|qua|qui|sex|sab)(?:-feira)?(?=\s)/,
+    (m) => {
+      const target = WD[m[1]];
+      let diff = (target - now.getDay() + 7) % 7;
+      if (diff === 0) diff = 7;
+      return addDays(now, diff);
+    },
+  );
 
   // horário sem data → hoje (ou amanhã se já passou)
   if (time && !due) {
@@ -114,6 +122,9 @@ export function parseInput(raw: string, now = new Date()): ParsedInput {
     due = toKey(passed ? addDays(now, 1) : now);
   }
 
-  const title = text.replace(/\s+/g, ' ').trim().replace(/\s(e|as|às|na|no|de|para|pra)$/i, '');
+  const title = text
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\s(e|as|às|na|no|de|para|pra)$/i, '');
   return { title: title.charAt(0).toUpperCase() + title.slice(1), due, time, tags, priority };
 }

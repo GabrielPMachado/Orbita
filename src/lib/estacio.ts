@@ -342,9 +342,7 @@ export function analisar(
   for (const j of c.json) {
     try {
       fromJson(JSON.parse(j.body), map);
-    } catch {
-      // resposta capturada que não é JSON (HTML, texto): não é dado da Estácio, ignora
-    }
+    } catch {}
   }
   for (const p of c.pages.values()) fromTables(p.tables, map);
   const texto = [...[...c.pages.values()].map((p) => p.text), ...c.json.map((j) => j.body), ...extraTexto].join('\n');
@@ -355,9 +353,7 @@ export function analisar(
   for (const j of c.json) {
     try {
       eventosJson(JSON.parse(j.body), ev);
-    } catch {
-      // resposta capturada que não é JSON (HTML, texto): não é dado da Estácio, ignora
-    }
+    } catch {}
   }
   for (const p of c.pages.values()) eventosTexto(p.text, ev);
   // leitura sob medida do portal atual (mais confiável): vence a genérica
@@ -398,9 +394,7 @@ export function formato(c: Captura) {
     let s: unknown = '?';
     try {
       s = shape(JSON.parse(j.body));
-    } catch {
-      // resposta capturada que não é JSON (HTML, texto): não é dado da Estácio, ignora
-    }
+    } catch {}
     return { url: j.url.replace(/\?.*/, '').replace(/\d{5,}/g, '#'), forma: s };
   });
   const tabelas = [...c.pages.values()].flatMap((p) =>

@@ -35,11 +35,61 @@ export default function Arquivos() {
   const avatar = useSettings((s) => s.avatar);
 
   const archived = [
-    ...projects.filter((p) => p.archived).map((p) => ({ key: 'p' + p.id, icon: Briefcase, color: p.color, title: p.name, kind: 'Projeto', restore: () => useProjects.getState().update(p.id, { archived: false }), del: () => useProjects.getState().remove(p.id) })),
-    ...notes.filter((n) => n.archived).map((n) => ({ key: 'n' + n.id, icon: Library, color: c.textDim, title: n.title || 'Nota sem título', kind: 'Nota', restore: () => useNotes.getState().update(n.id, { archived: false }), del: () => useNotes.getState().remove(n.id) })),
-    ...habits.filter((h) => h.archived).map((h) => ({ key: 'h' + h.id, icon: habitIcon(h.icon), color: c.accent, title: h.name, kind: 'Hábito', restore: () => useHabits.getState().update(h.id, { archived: false }), del: () => useHabits.getState().remove(h.id) })),
-    ...goals.filter((g) => g.archived).map((g) => ({ key: 'g' + g.id, icon: Target, color: c.success, title: g.title, kind: 'Meta', restore: () => useGoals.getState().update(g.id, { archived: false }), del: () => useGoals.getState().remove(g.id) })),
-    ...subjects.filter((s) => s.archived).map((s) => ({ key: 's' + s.id, icon: BookOpen, color: s.color, title: s.name, kind: 'Matéria', restore: () => useSubjects.getState().update(s.id, { archived: false }), del: () => useSubjects.getState().remove(s.id) })),
+    ...projects
+      .filter((p) => p.archived)
+      .map((p) => ({
+        key: 'p' + p.id,
+        icon: Briefcase,
+        color: p.color,
+        title: p.name,
+        kind: 'Projeto',
+        restore: () => useProjects.getState().update(p.id, { archived: false }),
+        del: () => useProjects.getState().remove(p.id),
+      })),
+    ...notes
+      .filter((n) => n.archived)
+      .map((n) => ({
+        key: 'n' + n.id,
+        icon: Library,
+        color: c.textDim,
+        title: n.title || 'Nota sem título',
+        kind: 'Nota',
+        restore: () => useNotes.getState().update(n.id, { archived: false }),
+        del: () => useNotes.getState().remove(n.id),
+      })),
+    ...habits
+      .filter((h) => h.archived)
+      .map((h) => ({
+        key: 'h' + h.id,
+        icon: habitIcon(h.icon),
+        color: c.accent,
+        title: h.name,
+        kind: 'Hábito',
+        restore: () => useHabits.getState().update(h.id, { archived: false }),
+        del: () => useHabits.getState().remove(h.id),
+      })),
+    ...goals
+      .filter((g) => g.archived)
+      .map((g) => ({
+        key: 'g' + g.id,
+        icon: Target,
+        color: c.success,
+        title: g.title,
+        kind: 'Meta',
+        restore: () => useGoals.getState().update(g.id, { archived: false }),
+        del: () => useGoals.getState().remove(g.id),
+      })),
+    ...subjects
+      .filter((s) => s.archived)
+      .map((s) => ({
+        key: 's' + s.id,
+        icon: BookOpen,
+        color: s.color,
+        title: s.name,
+        kind: 'Matéria',
+        restore: () => useSubjects.getState().update(s.id, { archived: false }),
+        del: () => useSubjects.getState().remove(s.id),
+      })),
   ];
 
   const weekAgo = addDays(new Date(), -7).getTime();
@@ -67,7 +117,11 @@ export default function Arquivos() {
         {tab === 'arquivados' ? (
           <>
             {archived.length === 0 ? (
-              <Empty icon={Archive} title="Nada arquivado" hint="Projetos, notas, hábitos, metas e matérias arquivados ficam guardados aqui, fora do caminho." />
+              <Empty
+                icon={Archive}
+                title="Nada arquivado"
+                hint="Projetos, notas, hábitos, metas e matérias arquivados ficam guardados aqui, fora do caminho."
+              />
             ) : (
               <List>
                 {archived.map((a) => (
@@ -81,7 +135,10 @@ export default function Arquivos() {
                         <Pressable accessibilityLabel="Restaurar" hitSlop={8} onPress={a.restore}>
                           <ArchiveRestore size={18} color={c.accent} />
                         </Pressable>
-                        <Pressable accessibilityLabel="Excluir" hitSlop={8} onPress={() => confirmDelete(`Excluir ${a.kind.toLowerCase()}?`, a.title, a.del)}>
+                        <Pressable
+                          accessibilityLabel="Excluir"
+                          hitSlop={8}
+                          onPress={() => confirmDelete(`Excluir ${a.kind.toLowerCase()}?`, a.title, a.del)}>
                           <Trash size={18} color={c.textFaint} />
                         </Pressable>
                       </View>
@@ -93,7 +150,11 @@ export default function Arquivos() {
 
             <Section title="Tarefas concluídas antigas">
               <List>
-                <Row leading={<IconTile icon={CheckCheck} color={c.success} />} title={`${oldDone.length} tarefas`} subtitle="Concluídas há mais de 7 dias" />
+                <Row
+                  leading={<IconTile icon={CheckCheck} color={c.success} />}
+                  title={`${oldDone.length} tarefas`}
+                  subtitle="Concluídas há mais de 7 dias"
+                />
               </List>
               {oldDone.length > 0 && (
                 <Button
@@ -101,8 +162,10 @@ export default function Arquivos() {
                   icon={Trash}
                   variant="secondary"
                   onPress={() =>
-                    confirmDelete('Limpar tarefas?', `${oldDone.length} tarefas concluídas serão apagadas. As estatísticas de Analytics desses dias também somem.`, () =>
-                      oldDone.forEach((t) => useTasks.getState().remove(t.id)),
+                    confirmDelete(
+                      'Limpar tarefas?',
+                      `${oldDone.length} tarefas concluídas serão apagadas. As estatísticas de Analytics desses dias também somem.`,
+                      () => oldDone.forEach((t) => useTasks.getState().remove(t.id)),
                     )
                   }
                 />

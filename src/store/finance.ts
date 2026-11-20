@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { addMonths } from '@/lib/finance';
-import { deleteMedia } from '@/lib/media';
 import { storage, uid } from '@/lib/storage';
 import { today, type DateKey } from '@/lib/date';
 
@@ -52,8 +51,6 @@ export interface Tx {
   externalId?: string;
   /** Financy como base: coleção do documento lá (despesas/receitas/investimentos) */
   fyCol?: FyCol;
-  /** Financy como base: mudança local ainda não enviada */
-  sync?: 'new' | 'dirty';
 }
 
 export type FyCol = 'despesas' | 'receitas' | 'investimentos';
@@ -86,13 +83,11 @@ interface FinanceState {
   /** cópia do que era do Órbita antes de virar Financy (volta se desligar) */
   localBackup?: { txs: Tx[]; accounts: Account[]; cards: Card[] };
   /** exclusões ainda não enviadas ao Financy */
-  pendingDeletes: { id: string; col: FyCol }[];
   /** categorias do Financy (nome + tipo + cor) */
   fyCategories: { name: string; type: 'in' | 'out'; color?: string }[];
   setBase: (b: FinanceBase) => void;
-  /** troca a lista inteira pelo espelho do Financy (mantém o que ainda não subiu) */
+  /** troca a lista inteira pelo espelho do Financy (mantém fotos, notas e conferência do banco feitas aqui) */
   applyMirror: (m: { txs: Tx[]; cards: Card[]; categories: FinanceState['fyCategories'] }) => void;
-  markSynced: (ids: string[], deletes?: string[]) => void;
   txs: Tx[];
   accounts: Account[];
   cards: Card[];
@@ -106,9 +101,6 @@ interface FinanceState {
   addTx: (t: NewTx) => void;
   markIntentProcessed: (id: string) => void;
   updateTx: (id: string, patch: Partial<Tx>) => void;
-  removeTx: (id: string, scope?: 'one' | 'next') => void;
-  /** remove só da lista e devolve uma função de desfazer; as fotos só somem se não desfizer */
-  softRemoveTx: (id: string) => () => void;
 
   addAccount: (a: Omit<Account, 'id'>) => void;
   updateAccount: (id: string, patch: Partial<Account>) => void;
@@ -127,40 +119,36 @@ export const useFinance = create<FinanceState>()(
   persist(
     (set, get) => ({
       base: 'orbita',
-      pendingDeletes: [],
       fyCategories: [],
       setBase: (b) =>
         set((s) => {
           if (b === s.base) return {};
-          if (b === 'financy') return { base: b, localBackup: { txs: s.txs, accounts: s.accounts, cards: s.cards }, txs: [], accounts: [], cards: [] };
+          if (b === 'financy')
+            return { base: b, localBackup: { txs: s.txs, accounts: s.accounts, cards: s.cards }, txs: [], accounts: [], cards: [] };
           const bk = s.localBackup;
-          return { base: b, txs: bk?.txs ?? [], accounts: bk?.accounts ?? [], cards: bk?.cards ?? [], localBackup: undefined, pendingDeletes: [] };
+          return { base: b, txs: bk?.txs ?? [], accounts: bk?.accounts ?? [], cards: bk?.cards ?? [], localBackup: undefined };
         }),
       applyMirror: ({ txs, cards, categories }) =>
         set((s) => {
           if (s.base !== 'financy') return {};
           const local = new Map(s.txs.map((t) => [t.id, t]));
-          const deleting = new Set(s.pendingDeletes.map((d) => d.id));
-          const merged = txs
-            .filter((t) => !deleting.has(t.id))
-            .map((t) => {
-              const mine = local.get(t.id);
-              if (mine?.sync) return mine; // mudança local ainda não enviada vence
-              // fotos e notas só existem aqui no aparelho
-              return mine ? { ...t, attachments: mine.attachments, notes: mine.notes ?? t.notes } : t;
-            });
+          // fotos, notas e a conferência com o banco só existem aqui no aparelho
+          const merged = txs.map((t) => {
+            const mine = local.get(t.id);
+            return mine
+              ? {
+                  ...t,
+                  attachments: mine.attachments,
+                  notes: mine.notes ?? t.notes,
+                  verified: mine.verified ?? t.verified,
+                  externalId: mine.externalId ?? t.externalId,
+                }
+              : t;
+          });
           const remoteIds = new Set(txs.map((t) => t.id));
-          const unsent = s.txs.filter((t) => t.sync === 'new' && !remoteIds.has(t.id));
-          return { txs: [...unsent, ...merged], cards, fyCategories: categories };
-        }),
-      markSynced: (ids, deletes = []) =>
-        set((s) => {
-          const ok = new Set(ids);
-          const gone = new Set(deletes);
-          return {
-            txs: s.txs.map((t) => (ok.has(t.id) ? { ...t, sync: undefined } : t)),
-            pendingDeletes: s.pendingDeletes.filter((d) => !gone.has(d.id)),
-          };
+          // importadas do banco aqui (não vieram do Financy) continuam
+          const onlyHere = s.txs.filter((t) => !t.fyCol && !remoteIds.has(t.id));
+          return { txs: [...onlyHere, ...merged], cards, fyCategories: categories };
         }),
       txs: [],
       accounts: [],
@@ -236,45 +224,10 @@ export const useFinance = create<FinanceState>()(
             attachments: t.attachments ?? [],
           });
         }
-        const fy = get().base === 'financy';
-        set((s) => ({ txs: [...(fy ? out.map((t) => ({ ...t, sync: 'new' as const })) : out), ...s.txs] }));
+        set((s) => ({ txs: [...out, ...s.txs] }));
       },
 
-      softRemoveTx: (id) => {
-        const tx = get().txs.find((t) => t.id === id);
-        if (!tx) return () => {};
-        const remote = get().base === 'financy' && tx.fyCol && tx.sync !== 'new';
-        set((s) => ({
-          txs: s.txs.filter((t) => t.id !== id),
-          pendingDeletes: remote ? [...s.pendingDeletes, { id, col: tx.fyCol! }] : s.pendingDeletes,
-        }));
-        let undone = false;
-        const purge = setTimeout(() => {
-          if (!undone) tx.attachments.forEach(deleteMedia);
-        }, 6000);
-        return () => {
-          undone = true;
-          clearTimeout(purge);
-          set((s) => ({ txs: [tx, ...s.txs], pendingDeletes: s.pendingDeletes.filter((d) => d.id !== id) }));
-        };
-      },
-
-      updateTx: (id, patch) =>
-        set((s) => ({
-          txs: s.txs.map((t) => (t.id === id ? { ...t, ...patch, sync: s.base === 'financy' ? (t.sync === 'new' ? 'new' : 'dirty') : t.sync } : t)),
-        })),
-
-      removeTx: (id, scope = 'one') => {
-        const tx = get().txs.find((t) => t.id === id);
-        if (!tx) return;
-        const doomed = get().txs.filter((t) =>
-          scope === 'next' && tx.group ? t.group === tx.group && t.date >= tx.date : t.id === id,
-        );
-        doomed.forEach((t) => t.attachments.forEach(deleteMedia));
-        const ids = new Set(doomed.map((t) => t.id));
-        const remote = get().base === 'financy' ? doomed.filter((t) => t.fyCol && t.sync !== 'new').map((t) => ({ id: t.id, col: t.fyCol! })) : [];
-        set((s) => ({ txs: s.txs.filter((t) => !ids.has(t.id)), pendingDeletes: [...s.pendingDeletes, ...remote] }));
-      },
+      updateTx: (id, patch) => set((s) => ({ txs: s.txs.map((t) => (t.id === id ? { ...t, ...patch } : t)) })),
 
       addAccount: (a) => set((s) => ({ accounts: [...s.accounts, { ...a, id: uid() }] })),
       updateAccount: (id, patch) => set((s) => ({ accounts: s.accounts.map((a) => (a.id === id ? { ...a, ...patch } : a)) })),
@@ -287,10 +240,7 @@ export const useFinance = create<FinanceState>()(
       addCard: (c) => set((s) => ({ cards: [...s.cards, { ...c, id: uid() }] })),
       updateCard: (id, patch) => set((s) => ({ cards: s.cards.map((c) => (c.id === id ? { ...c, ...patch } : c)) })),
       removeCard: (id) =>
-        set((s) => ({
-          cards: s.cards.filter((c) => c.id !== id),
-          txs: s.txs.map((t) => (t.cardId === id ? { ...t, cardId: undefined } : t)),
-        })),
+        set((s) => ({ cards: s.cards.filter((c) => c.id !== id), txs: s.txs.map((t) => (t.cardId === id ? { ...t, cardId: undefined } : t)) })),
 
       setBudget: (category, value) =>
         set((s) => {
@@ -316,7 +266,7 @@ export const useFinance = create<FinanceState>()(
             processedIntents: [],
           } as unknown as FinanceState;
         }
-        return { processedIntents: [], intentLog: [], base: 'orbita', pendingDeletes: [], fyCategories: [], ...p } as FinanceState;
+        return { processedIntents: [], intentLog: [], base: 'orbita', fyCategories: [], ...p } as FinanceState;
       },
     },
   ),

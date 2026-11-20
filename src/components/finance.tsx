@@ -1,12 +1,11 @@
 import { router } from 'expo-router';
-import { BadgeCheck, ChevronLeft, ChevronRight, CreditCard, Delete, Paperclip, Smartphone } from 'lucide-react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { BadgeCheck, ChevronLeft, ChevronRight, CreditCard, Paperclip, Smartphone } from 'lucide-react-native';
+import { StyleSheet, View } from 'react-native';
 import { brl, friendlyDate } from '@/lib/date';
 import { addMonthKey, category, monthName, txLabel, type MonthKey } from '@/lib/finance';
 import { useFinance, type Tx } from '@/store/finance';
 import { radius, space, useColors } from '@/theme';
-import { Glass } from './Glass';
-import { Badge, GlassButton, IconTile, Row, T, impact } from './ui';
+import { Badge, GlassButton, IconTile, Row, T } from './ui';
 
 export function MonthSwitcher({ month, onChange }: { month: MonthKey; onChange: (m: MonthKey) => void }) {
   return (
@@ -52,48 +51,6 @@ export function TxRow({ tx, showDate }: { tx: Tx; showDate?: boolean }) {
   );
 }
 
-/** Teclado numérico estilo banco: os dígitos entram pelos centavos. */
-export function MoneyKeypad({ cents, onChange }: { cents: string; onChange: (cents: string) => void }) {
-  const c = useColors();
-  const press = (k: string) => {
-    impact();
-    if (k === 'del') return onChange(cents.slice(0, -1));
-    if (k === 'clear') return onChange('');
-    if (cents.length >= 10) return;
-    const next = (cents + k).replace(/^0+/, '');
-    onChange(next);
-  };
-  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', 'del'];
-  return (
-    <View style={styles.keypad}>
-      {keys.map((k) => (
-        <Pressable
-          key={k}
-          accessibilityLabel={k === 'del' ? 'Apagar' : k}
-          onPress={() => press(k)}
-          onLongPress={k === 'del' ? () => press('clear') : undefined}
-          style={({ pressed }) => [styles.keyWrap, { opacity: pressed ? 0.7 : 1 }]}>
-          <Glass interactive style={styles.key}>
-            {k === 'del' ? (
-              <View>
-                <Delete size={22} color={c.textDim} />
-              </View>
-            ) : (
-              <T v="title">{k}</T>
-            )}
-          </Glass>
-        </Pressable>
-      ))}
-    </View>
-  );
-}
-
-export const centsToNumber = (cents: string) => (Number(cents || '0') || 0) / 100;
-
 const styles = StyleSheet.create({
   monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  navBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth },
-  keypad: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, justifyContent: 'space-between' },
-  keyWrap: { width: '31.5%' },
-  key: { height: 56, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
 });

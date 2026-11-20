@@ -43,7 +43,16 @@ function SaldoWidget(p: SaldoProps, env: WidgetEnvironment) {
   const q =
     p && typeof p.saldo === 'string'
       ? p
-      : { saldo: 'R$ —', saldoCurto: '—', mes: '—', mesPositivo: true, detalhe: '', atualizado: 'Abra o Órbita para atualizar', oculto: false, cor: '#8B5CF6' };
+      : {
+          saldo: 'R$ —',
+          saldoCurto: '—',
+          mes: '—',
+          mesPositivo: true,
+          detalhe: '',
+          atualizado: 'Abra o Órbita para atualizar',
+          oculto: false,
+          cor: '#8B5CF6',
+        };
   const fam = env.widgetFamily;
   const saldo = q.oculto ? 'R$ •••••' : q.saldo;
   const curto = q.oculto ? '•••' : q.saldoCurto;
@@ -93,7 +102,13 @@ function SaldoWidget(p: SaldoProps, env: WidgetEnvironment) {
         <Text modifiers={[font({ size: 20, weight: 'bold', design: 'rounded' }), monospacedDigit(), lineLimit(1), minimumScaleFactor(0.6)]}>
           {saldo}
         </Text>
-        <Text modifiers={[font({ size: 12, weight: 'medium' }), monospacedDigit(), lineLimit(1), foregroundStyle({ type: 'hierarchical', style: 'secondary' })]}>
+        <Text
+          modifiers={[
+            font({ size: 12, weight: 'medium' }),
+            monospacedDigit(),
+            lineLimit(1),
+            foregroundStyle({ type: 'hierarchical', style: 'secondary' }),
+          ]}>
           {`Mês ${mes}`}
         </Text>
       </VStack>

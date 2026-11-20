@@ -1,7 +1,7 @@
 import { EstacioBackground } from '@/components/EstacioBackground';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { router , Stack } from 'expo-router';
+import { router } from 'expo-router';
 import '@/lib/notifications';
 import { Manrope_500Medium } from '@expo-google-fonts/manrope/500Medium';
 import { Manrope_600SemiBold } from '@expo-google-fonts/manrope/600SemiBold';
@@ -9,6 +9,7 @@ import { Manrope_700Bold } from '@expo-google-fonts/manrope/700Bold';
 import { Sora_600SemiBold } from '@expo-google-fonts/sora/600SemiBold';
 import { Sora_700Bold } from '@expo-google-fonts/sora/700Bold';
 import { useFonts } from 'expo-font';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -24,7 +25,6 @@ import { useAppIconFollowsAccent } from '@/lib/appIcon';
 import { useFinancyBaseSync } from '@/lib/financyData';
 import { useAutoBackup } from '@/lib/backup';
 import { useColors } from '@/theme';
-import { avisar } from '@/lib/avisar';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -42,9 +42,7 @@ function useNotificationLinks() {
         .then((r) => go(r?.notification.request.content.data?.url))
         .catch(() => {});
       sub = Notifications.addNotificationResponseReceivedListener((r) => go(r.notification.request.content.data?.url));
-    } catch (e) {
-      avisar('abrir a notificação tocada', e);
-    }
+    } catch {}
     return () => sub?.remove();
   }, []);
 }

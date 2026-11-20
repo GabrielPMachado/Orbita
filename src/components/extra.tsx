@@ -105,7 +105,14 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (c: 
             tap();
             onChange(col);
           }}
-          style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: col, borderWidth: 3, borderColor: value === col ? c.text : 'transparent' }}
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: col,
+            borderWidth: 3,
+            borderColor: value === col ? c.text : 'transparent',
+          }}
         />
       ))}
     </View>
@@ -166,17 +173,33 @@ export function Bars({
       <View onLayout={onLayout} style={{ height }}>
         {w > 0 && (
           <GrowFromBottom grow={grow}>
-          <Svg width={w} height={height}>
-            {data.map((d, i) => {
-              const h = d.value ? Math.max(3, ((height - 2) * d.value) / max) : 0;
-              return (
-                <React.Fragment key={i}>
-                  <Rect x={slot * i + (slot - bw) / 2} y={0} width={bw} height={height} rx={Math.min(6, bw / 2)} fill={c.textFaint} opacity={0.08} />
-                  <Rect x={slot * i + (slot - bw) / 2} y={height - h} width={bw} height={h} rx={Math.min(6, bw / 2)} fill={col} opacity={d.highlight ? 1 : 0.7} />
-                </React.Fragment>
-              );
-            })}
-          </Svg>
+            <Svg width={w} height={height}>
+              {data.map((d, i) => {
+                const h = d.value ? Math.max(3, ((height - 2) * d.value) / max) : 0;
+                return (
+                  <React.Fragment key={i}>
+                    <Rect
+                      x={slot * i + (slot - bw) / 2}
+                      y={0}
+                      width={bw}
+                      height={height}
+                      rx={Math.min(6, bw / 2)}
+                      fill={c.textFaint}
+                      opacity={0.08}
+                    />
+                    <Rect
+                      x={slot * i + (slot - bw) / 2}
+                      y={height - h}
+                      width={bw}
+                      height={h}
+                      rx={Math.min(6, bw / 2)}
+                      fill={col}
+                      opacity={d.highlight ? 1 : 0.7}
+                    />
+                  </React.Fragment>
+                );
+              })}
+            </Svg>
           </GrowFromBottom>
         )}
       </View>
@@ -256,17 +279,17 @@ export function LineChart({
       <View onLayout={onLayout} style={{ height }}>
         {w > 0 && nums.length > 0 && (
           <GrowFromBottom grow={grow}>
-          <Svg width={w} height={height}>
-            <Defs>
-              <LinearGradient id="lc" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor={col} stopOpacity="0.35" />
-                <Stop offset="1" stopColor={col} stopOpacity="0" />
-              </LinearGradient>
-            </Defs>
-            <Path d={area} fill="url(#lc)" />
-            <Path d={line} stroke={col} strokeWidth={2.5} fill="none" strokeLinejoin="round" strokeLinecap="round" />
-            {values.map((v, i) => (v == null ? null : <Circle key={i} cx={x(i)} cy={y(v)} r={i === values.length - 1 ? 4 : 2.5} fill={col} />))}
-          </Svg>
+            <Svg width={w} height={height}>
+              <Defs>
+                <LinearGradient id="lc" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0" stopColor={col} stopOpacity="0.35" />
+                  <Stop offset="1" stopColor={col} stopOpacity="0" />
+                </LinearGradient>
+              </Defs>
+              <Path d={area} fill="url(#lc)" />
+              <Path d={line} stroke={col} strokeWidth={2.5} fill="none" strokeLinejoin="round" strokeLinecap="round" />
+              {values.map((v, i) => (v == null ? null : <Circle key={i} cx={x(i)} cy={y(v)} r={i === values.length - 1 ? 4 : 2.5} fill={col} />))}
+            </Svg>
           </GrowFromBottom>
         )}
         {nums.length === 0 && (

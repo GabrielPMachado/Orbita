@@ -87,15 +87,6 @@ function load(): Mod | null {
 
 export const appIconsAvailable = () => !!load()?.supportsAlternateIcons;
 
-export function currentAppIcon(): { look: IconLook; color: IconColor } {
-  const n = load()?.getAppIconName?.() ?? null;
-  if (!n) return { look: 'grafite', color: 'Carmim' };
-  if (n === 'Mono') return { look: 'mono', color: 'Carmim' };
-  const look = ICON_LOOKS.find((l) => n.startsWith(cap(l.key)))?.key ?? 'grafite';
-  const color = (ICON_COLORS.find((c) => n.endsWith(c.key))?.key ?? 'Carmim') as IconColor;
-  return { look, color };
-}
-
 let last: string | null | undefined;
 export async function setAppIcon(look: IconLook, color: IconColor) {
   const m = load();

@@ -14,7 +14,10 @@ export default function EmBreve() {
   return (
     <Screen back scroll={false}>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.lg, paddingBottom: 96 }}>
-        <Glass interactive tint={c.accent + '26'} style={{ width: 96, height: 96, borderRadius: radius.lg + 8, alignItems: 'center', justifyContent: 'center' }}>
+        <Glass
+          interactive
+          tint={c.accent + '26'}
+          style={{ width: 96, height: 96, borderRadius: radius.lg + 8, alignItems: 'center', justifyContent: 'center' }}>
           <View>
             <Icon size={44} color={c.accent} strokeWidth={1.6} />
           </View>

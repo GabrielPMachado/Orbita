@@ -64,12 +64,7 @@ export const category = (name: string, type?: TxType): Category =>
   (type ? CATEGORIES[type] : ALL).find((c) => c.name === name) ?? { name, icon: CircleEllipsis, color: '#64748B' };
 
 export const ACCOUNT_COLORS = ['#8B5CF6', '#F97316', '#22C55E', '#3B82F6', '#EC4899', '#EAB308', '#06B6D4', '#94A3B8'];
-export const ACCOUNT_KINDS = {
-  corrente: 'Conta corrente',
-  poupanca: 'Poupança',
-  carteira: 'Carteira',
-  investimento: 'Investimento',
-} as const;
+export const ACCOUNT_KINDS = { corrente: 'Conta corrente', poupanca: 'Poupança', carteira: 'Carteira', investimento: 'Investimento' } as const;
 
 /* ---------- Datas por mês ---------- */
 export type MonthKey = string; // "AAAA-MM"
@@ -112,9 +107,7 @@ export function invoice(txs: Tx[], card: Card, month: MonthKey) {
 /** Limite comprometido: tudo que ainda não venceu (fatura atual + futuras). */
 export function cardUsed(txs: Tx[], card: Card) {
   const now = thisMonth();
-  return txs
-    .filter((t) => t.cardId === card.id && t.type === 'out' && invoiceMonth(t.date, card) >= now)
-    .reduce((a, t) => a + t.amount, 0);
+  return txs.filter((t) => t.cardId === card.id && t.type === 'out' && invoiceMonth(t.date, card) >= now).reduce((a, t) => a + t.amount, 0);
 }
 
 /** Mês em que o lançamento pesa no caixa (cartão: no vencimento da fatura). */
@@ -164,7 +157,13 @@ export function byCategory(txs: Tx[], month: MonthKey) {
 }
 
 /* ---------- Valores ---------- */
-export const parseMoney = (s: string) => Number(s.replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.')) || 0;
+export const parseMoney = (s: string) =>
+  Number(
+    s
+      .replace(/[^\d,.-]/g, '')
+      .replace(/\./g, '')
+      .replace(',', '.'),
+  ) || 0;
 
 export function txLabel(t: Tx) {
   const base = t.description || t.category;
@@ -215,7 +214,12 @@ export function balanceFor(base: 'orbita' | 'financy', accounts: Account[], txs:
 /** Categorias para escolher: as do Órbita + as criadas no Financy (quando ele é a base). */
 export function categoryOptions(type: TxType, extra: { name: string; type: TxType; color?: string }[] = []): Category[] {
   const own = CATEGORIES[type];
-  const norm = (v: string) => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const norm = (v: string) =>
+    v
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   const known = new Set(own.map((c) => norm(c.name)));
   const more = extra
     .filter((c) => c.type === type && !known.has(norm(c.name)))

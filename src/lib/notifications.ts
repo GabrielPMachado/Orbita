@@ -1,12 +1,7 @@
 import * as Notifications from 'expo-notifications';
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
+  handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
 });
 
 export async function ensurePermission(): Promise<boolean> {
@@ -24,10 +19,7 @@ export async function schedule(title: string, at: Date, repeat: Repeat): Promise
   const content = { title, body: 'Lembrete do Órbita', sound: true };
   const T = Notifications.SchedulableTriggerInputTypes;
   if (repeat === 'daily') {
-    return Notifications.scheduleNotificationAsync({
-      content,
-      trigger: { type: T.DAILY, hour: at.getHours(), minute: at.getMinutes() },
-    });
+    return Notifications.scheduleNotificationAsync({ content, trigger: { type: T.DAILY, hour: at.getHours(), minute: at.getMinutes() } });
   }
   if (repeat === 'weekly') {
     return Notifications.scheduleNotificationAsync({

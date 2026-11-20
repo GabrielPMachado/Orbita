@@ -4,9 +4,10 @@ import { EASE_OUT } from '@/lib/motionTokens';
  * (lib/checkin.ts). Humor, sono, energia, foco do dia e o que ficou de ontem. Tudo opcional.
  */
 import { router } from 'expo-router';
-import { Modal , Platform, Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
+import { Modal } from 'react-native';
 import { BedDouble, Minus, Plus, X } from 'lucide-react-native';
 import { useMemo, useRef, useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import { useKeyboardInset, useScrollToFocused, type ScrollRef } from '@/lib/keyboard';
 import Animated, { FadeIn, SlideInDown, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

@@ -24,14 +24,11 @@ export interface PluggyCredentials {
 async function call<T>(path: string, init: RequestInit & { apiKey?: string } = {}): Promise<T> {
   const res = await fetch(API + path, {
     ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init.apiKey ? { 'X-API-KEY': init.apiKey } : {}),
-      ...(init.headers ?? {}),
-    },
+    headers: { 'Content-Type': 'application/json', ...(init.apiKey ? { 'X-API-KEY': init.apiKey } : {}), ...(init.headers ?? {}) },
   });
   if (!res.ok) {
-    if (res.status === 401 || res.status === 403) throw new PluggyError('Credenciais recusadas pelo Pluggy. Confira o Client ID e o Client Secret.', res.status);
+    if (res.status === 401 || res.status === 403)
+      throw new PluggyError('Credenciais recusadas pelo Pluggy. Confira o Client ID e o Client Secret.', res.status);
     if (res.status === 404) throw new PluggyError('Conexão não encontrada. Confira o Item ID.', res.status);
     if (res.status === 429) throw new PluggyError('Muitas consultas seguidas. Tente de novo em alguns minutos.', res.status);
     throw new PluggyError(`O Pluggy respondeu com erro ${res.status}.`, res.status);
@@ -103,14 +100,7 @@ export async function listTransactions(
     const r = await call<{ results: PluggyTransaction[]; totalPages: number }>(`/transactions?${q}`, { apiKey });
     for (const t of r.results) {
       const isOut = t.type ? t.type === 'DEBIT' : t.amount < 0;
-      out.push({
-        id: t.id,
-        date: t.date.slice(0, 10),
-        amount: Math.abs(t.amount),
-        type: isOut ? 'out' : 'in',
-        description: t.description,
-        ...link,
-      });
+      out.push({ id: t.id, date: t.date.slice(0, 10), amount: Math.abs(t.amount), type: isOut ? 'out' : 'in', description: t.description, ...link });
     }
     if (page >= (r.totalPages ?? 1)) break;
     page++;

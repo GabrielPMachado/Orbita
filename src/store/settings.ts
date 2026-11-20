@@ -61,10 +61,7 @@ export const useSettings = create<SettingsState>()(
       setName: (name) => set({ name }),
       setAvatar: (avatar) => set({ avatar }),
       setAccent: (accent) => set({ accent }),
-      toggleModule: (id) =>
-        set((s) => ({
-          disabled: s.disabled.includes(id) ? s.disabled.filter((x) => x !== id) : [...s.disabled, id],
-        })),
+      toggleModule: (id) => set((s) => ({ disabled: s.disabled.includes(id) ? s.disabled.filter((x) => x !== id) : [...s.disabled, id] })),
     }),
     { name: 'settings', storage },
   ),

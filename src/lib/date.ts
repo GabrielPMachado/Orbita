@@ -57,7 +57,11 @@ export function lastNDays(n: number): DateKey[] {
 }
 
 export const brl = (v: number) =>
-  'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  'R$ ' +
+  v
+    .toFixed(2)
+    .replace('.', ',')
+    .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
 /** Segunda-feira da semana de uma data. */
 export function weekStart(d = new Date()): DateKey {

@@ -97,12 +97,9 @@ function cardFrom(d: FsDoc): Card {
   };
 }
 
-/** O Órbita não escreve no Financy: só lê. (Mantido para quem ainda chama.) */
-export async function pushChanges() {}
-
 let pulling: Promise<void> | null = null;
 let lastPull = 0;
-/** Traz tudo do Financy (e antes manda o que estiver pendente). */
+/** Traz tudo do Financy. */
 export function pullFinancy(force = false) {
   const st = useFinance.getState();
   if (st.base !== 'financy' || !useFinancyLink.getState().connected) return Promise.resolve();

@@ -40,8 +40,7 @@ export default function Lembretes() {
     setText('');
     setRepeat('none');
     setOpen(false);
-    if (!ok)
-      Alert.alert('Salvo sem notificação', 'Permita notificações para o app nos Ajustes do iPhone ou escolha um horário no futuro.');
+    if (!ok) Alert.alert('Salvo sem notificação', 'Permita notificações para o app nos Ajustes do iPhone ou escolha um horário no futuro.');
   };
 
   const active = reminders.filter((r) => !r.done && (r.repeat !== 'none' || r.at > Date.now()));
@@ -50,7 +49,12 @@ export default function Lembretes() {
   const row = (r: Reminder) => (
     <SwipeRow
       key={r.id}
-      left={{ icon: r.done ? RotateCcw : Check, label: r.done ? 'Reativar' : 'Feito', color: r.done ? '#5B9DFF' : c.success, onAction: () => toggleDone(r.id) }}
+      left={{
+        icon: r.done ? RotateCcw : Check,
+        label: r.done ? 'Reativar' : 'Feito',
+        color: r.done ? '#5B9DFF' : c.success,
+        onAction: () => toggleDone(r.id),
+      }}
       right={{
         icon: Trash,
         label: 'Excluir',
@@ -60,25 +64,35 @@ export default function Lembretes() {
           toast({ message: `Lembrete “${r.title}” excluído`, kind: 'danger' });
         },
       }}>
-    <Row
-      leading={<Checkbox checked={r.done} onPress={() => toggleDone(r.id)} color={c.info} />}
-      title={r.title}
-      subtitle={whenLabel(r.at, r.repeat)}
-      strike={r.done}
-      trailing={
-        <Pressable accessibilityLabel="Excluir lembrete" hitSlop={10} onPress={() => remove(r.id)}>
-          <Trash size={18} color={c.textFaint} />
-        </Pressable>
-      }
-    />
+      <Row
+        leading={<Checkbox checked={r.done} onPress={() => toggleDone(r.id)} color={c.info} />}
+        title={r.title}
+        subtitle={whenLabel(r.at, r.repeat)}
+        strike={r.done}
+        trailing={
+          <Pressable accessibilityLabel="Excluir lembrete" hitSlop={10} onPress={() => remove(r.id)}>
+            <Trash size={18} color={c.textFaint} />
+          </Pressable>
+        }
+      />
     </SwipeRow>
   );
 
   return (
     <>
-      <Screen back title="Lembretes" subtitle="Notificações no horário certo" actions={<GlassButton icon={Plus} label="Novo" onPress={() => setOpen(true)} />}>
+      <Screen
+        back
+        title="Lembretes"
+        subtitle="Notificações no horário certo"
+        actions={<GlassButton icon={Plus} label="Novo" onPress={() => setOpen(true)} />}>
         {reminders.length === 0 && (
-          <Empty icon={BellRing} title="Nenhum lembrete" hint="Escreva “tomar remédio amanhã 8h” e escolha se repete." action="Criar lembrete" onAction={() => setOpen(true)} />
+          <Empty
+            icon={BellRing}
+            title="Nenhum lembrete"
+            hint="Escreva “tomar remédio amanhã 8h” e escolha se repete."
+            action="Criar lembrete"
+            onAction={() => setOpen(true)}
+          />
         )}
         {active.length > 0 && (
           <Section title="Ativos">

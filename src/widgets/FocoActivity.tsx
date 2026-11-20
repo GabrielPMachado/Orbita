@@ -4,16 +4,7 @@
  * app fechado. Mesmas regras do 'widget': só @expo/ui, nada de fora da função.
  */
 import { HStack, Image, ProgressView, Spacer, Text, VStack } from '@expo/ui/swift-ui';
-import {
-  activityBackgroundTint,
-  font,
-  foregroundStyle,
-  frame,
-  lineLimit,
-  monospacedDigit,
-  padding,
-  tint,
-} from '@expo/ui/swift-ui/modifiers';
+import { activityBackgroundTint, font, foregroundStyle, frame, lineLimit, monospacedDigit, padding, tint } from '@expo/ui/swift-ui/modifiers';
 import { createLiveActivity, type LiveActivityEnvironment, type LiveActivityLayout } from 'expo-widgets';
 
 export interface FocoProps {
@@ -46,7 +37,12 @@ function FocoActivity(p: FocoProps, env: LiveActivityEnvironment): LiveActivityL
       <Text
         timerInterval={intervalo}
         countsDown
-        modifiers={[font({ size, weight: 'semibold', design: 'rounded' }), monospacedDigit(), foregroundStyle(p.cor), frame({ maxWidth: size * 3.2 })]}
+        modifiers={[
+          font({ size, weight: 'semibold', design: 'rounded' }),
+          monospacedDigit(),
+          foregroundStyle(p.cor),
+          frame({ maxWidth: size * 3.2 }),
+        ]}
       />
     );
   const barra = p.pausado ? (

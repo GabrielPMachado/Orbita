@@ -74,7 +74,10 @@ export default function NotaEditor() {
           />
         </>
       }>
-      <ScrollView keyboardDismissMode="interactive" contentContainerStyle={{ gap: space.md, paddingBottom: space.xxxl }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardDismissMode="interactive"
+        contentContainerStyle={{ gap: space.md, paddingBottom: space.xxxl }}
+        showsVerticalScrollIndicator={false}>
         <T v="caption" tone="faint">
           Editada {new Date(note.updatedAt).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
         </T>

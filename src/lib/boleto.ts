@@ -238,7 +238,10 @@ export function lerTexto(text: string, codigos: string[] = [], hoje?: number): B
   const benef = /(?:benefici[aá]rio|cedente)\s*:?\s*\n?\s*([A-ZÀ-Ú0-9][^\n\r]{3,60})/i.exec(flat);
   const vencIso = venc ? `${venc[3]}-${venc[2]}-${venc[1]}` : undefined;
   const valorNum = valorTxt ? Number(valorTxt[1].replace(/\./g, '').replace(',', '.')) : undefined;
-  const nome = benef?.[1].replace(/\s{2,}.*/, '').replace(/\s*(CNPJ|CPF).*/i, '').trim();
+  const nome = benef?.[1]
+    .replace(/\s{2,}.*/, '')
+    .replace(/\s*(CNPJ|CPF).*/i, '')
+    .trim();
   return found.map((b) => ({
     ...b,
     vencimento: b.vencimento ?? vencIso,

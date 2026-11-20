@@ -75,7 +75,13 @@ export default function Cliente() {
           {projs.length ? (
             <List>
               {projs.map((p) => (
-                <Row key={p.id} leading={<IconTile icon={Briefcase} color={p.color} />} title={p.name} onPress={() => router.push(`/trabalho/${p.id}`)} chevron />
+                <Row
+                  key={p.id}
+                  leading={<IconTile icon={Briefcase} color={p.color} />}
+                  title={p.name}
+                  onPress={() => router.push(`/trabalho/${p.id}`)}
+                  chevron
+                />
               ))}
             </List>
           ) : (

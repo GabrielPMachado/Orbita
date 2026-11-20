@@ -17,7 +17,6 @@ import { useEffect } from 'react';
 import { Alert, AppState, Platform, Share } from 'react-native';
 import { fsRequest } from './financy';
 import { useFinancyLink } from '@/store/financyLink';
-import { avisar } from '@/lib/avisar';
 
 const PART = 700_000; // caracteres por documento (o Firestore aceita até ~1 MB)
 const META = 'orbita/backup';
@@ -197,9 +196,7 @@ export function useAutoBackup() {
             onPress: () => cloudRestore().catch((e) => Alert.alert('Não deu', e instanceof Error ? e.message : 'Tente de novo.')),
           },
         ]);
-      } catch (e) {
-        avisar('procurar backup na nuvem', e);
-      }
+      } catch {}
     };
     const t = setTimeout(offer, 2500);
     // conectou o Financy depois de abrir (instalação nova): oferece também

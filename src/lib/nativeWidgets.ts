@@ -14,7 +14,6 @@ import { useFinancyLink } from '@/store/financyLink';
 import { resolveAccent } from '@/theme';
 import type { SaldoProps } from '@/widgets/SaldoWidget';
 import type { FocoProps } from '@/widgets/FocoActivity';
-import { avisar } from '@/lib/avisar';
 
 type WidgetLike = { updateSnapshot: (p: SaldoProps) => void };
 type ActivityLike = { update: (p: FocoProps) => Promise<void>; end: (policy?: 'default' | 'immediate') => Promise<void> };
@@ -51,9 +50,7 @@ export function reloadWidgets() {
   setTimeout(() => {
     try {
       m?.reloadAllWidgets?.();
-    } catch (e) {
-      avisar('recarregar os widgets', e);
-    }
+    } catch {}
   }, 1200);
 }
 
@@ -99,9 +96,7 @@ export function refreshBalanceWidget() {
   timer = setTimeout(() => {
     try {
       w.updateSnapshot(saldoProps());
-    } catch (e) {
-      avisar('atualizar o widget de saldo', e);
-    }
+    } catch {}
   }, 800);
 }
 
@@ -130,8 +125,6 @@ export function useBalanceWidgetSync() {
 /* ---------- Live Activity do foco ---------- */
 
 let current: ActivityLike | null = null;
-
-export const liveActivitiesAvailable = () => !!focoActivity();
 
 /** Mostra/atualiza/encerra a Live Activity. `null` encerra. */
 export async function syncFocusActivity(p: FocoProps | null) {

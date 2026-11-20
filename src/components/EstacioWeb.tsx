@@ -11,7 +11,6 @@ import { FIN_JS, SIA_FINANCEIRO, type FinRow } from '@/lib/estacioFinanceiro';
 import type { Resultado } from '@/lib/estacioImport';
 import { keepFile } from '@/lib/media';
 import { uid } from '@/lib/storage';
-import { avisar } from '@/lib/avisar';
 
 // os tipos da WebView 14 não fecham com o React 19; o componente em si é o mesmo
 const WV = WebView as unknown as (p: WebViewProps & { ref?: Ref<WebView> }) => React.ReactElement;
@@ -121,11 +120,9 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
     onSweep?.({ phase: 'sweeping', visited: feitos.current, total: feitos.current + roteiro.current.length, label: p.label });
     try {
       p.run();
-    } catch (e) {
-      avisar('passo da varredura da Estácio', e);
-    }
+    } catch {}
     timer.current = setTimeout(passo, p.wait);
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finish, onSweep]);
   const js = (code: string) => () => web.current?.injectJavaScript(code);
 
@@ -249,9 +246,7 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
             pdfs.current.push({ texto: r.text + '\n' + r.codes.join('\n'), arquivo: keepFile(f.uri, 'pdf') });
             changed();
           }
-        } catch (e) {
-          avisar('ler o PDF baixado da Estácio', e);
-        }
+        } catch {}
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

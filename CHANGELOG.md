@@ -3,6 +3,15 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.17.0] - 2026-11-20
+
+### Removido
+- Código que nenhuma tela usava mais: teclado de valores antigo, agrupador de vidro, rastreio de envio de lançamentos ao Financy (o Órbita só lê de lá), exclusão local de lançamentos, funções de teste e de ícone sem uso, estilos e importações órfãs.
+- A dependência expo-device, o script reset-project e as imagens do modelo do Expo que não eram usadas.
+
+### Corrigido
+- Conferir uma compra com o banco não trava mais aquele lançamento: quando o Financy muda o valor ou a categoria, o Órbita atualiza e mantém o selo de conferido, as fotos e as notas.
+
 ## [0.16.0] - 2026-11-20
 
 ### Adicionado

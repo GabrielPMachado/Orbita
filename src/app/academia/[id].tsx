@@ -36,9 +36,7 @@ export default function Ficha() {
 
   const finish = () => {
     const minutes = Math.max(1, Math.round(elapsed / 60));
-    const volume = plan.exercises
-      .filter((e) => done.includes(e.id))
-      .reduce((a, e) => a + e.weight * e.sets * (parseInt(e.reps, 10) || 0), 0);
+    const volume = plan.exercises.filter((e) => done.includes(e.id)).reduce((a, e) => a + e.weight * e.sets * (parseInt(e.reps, 10) || 0), 0);
     addSession({ planId: plan.id, date: today(), minutes, done, volume });
     setStartedAt(null);
     setDone([]);
@@ -86,7 +84,10 @@ export default function Ficha() {
               key={e.id}
               leading={
                 startedAt ? (
-                  <Checkbox checked={done.includes(e.id)} onPress={() => setDone(done.includes(e.id) ? done.filter((x) => x !== e.id) : [...done, e.id])} />
+                  <Checkbox
+                    checked={done.includes(e.id)}
+                    onPress={() => setDone(done.includes(e.id) ? done.filter((x) => x !== e.id) : [...done, e.id])}
+                  />
                 ) : undefined
               }
               title={e.name}
@@ -96,7 +97,9 @@ export default function Ficha() {
               chevron={!startedAt}
             />
           ))}
-          <Pressable onPress={() => setEditing('new')} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg }, pressed && { opacity: 0.6 }]}>
+          <Pressable
+            onPress={() => setEditing('new')}
+            style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg }, pressed && { opacity: 0.6 }]}>
             <Plus size={18} color={c.accent} />
             <T tone="accent">Adicionar exercício</T>
           </Pressable>
@@ -155,7 +158,7 @@ function ExerciseSheet({
   const [weight, setWeight] = useState(0);
   const [key, setKey] = useState<string | null>(null);
 
-  const k = editing === 'new' ? 'new' : editing?.id ?? null;
+  const k = editing === 'new' ? 'new' : (editing?.id ?? null);
   if (k !== key) {
     setKey(k);
     const e = editing && editing !== 'new' ? editing : undefined;
@@ -170,7 +173,15 @@ function ExerciseSheet({
       <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: Supino reto" />
       <Card style={{ gap: space.md }}>
         <Stepper label="Séries" value={sets} min={1} max={10} onChange={setSets} />
-        <Stepper label="Carga" value={weight} min={0} max={500} step={2.5} onChange={setWeight} format={(v) => (v ? `${String(v).replace('.', ',')} kg` : '—')} />
+        <Stepper
+          label="Carga"
+          value={weight}
+          min={0}
+          max={500}
+          step={2.5}
+          onChange={setWeight}
+          format={(v) => (v ? `${String(v).replace('.', ',')} kg` : '—')}
+        />
       </Card>
       <Field label="Repetições" value={reps} onChangeText={setReps} placeholder="10-12" />
       <Button
@@ -197,7 +208,19 @@ function ExerciseSheet({
   );
 }
 
-function RenameSheet({ open, name, focus, onClose, onSave }: { open: boolean; name: string; focus: string; onClose: () => void; onSave: (n: string, f: string) => void }) {
+function RenameSheet({
+  open,
+  name,
+  focus,
+  onClose,
+  onSave,
+}: {
+  open: boolean;
+  name: string;
+  focus: string;
+  onClose: () => void;
+  onSave: (n: string, f: string) => void;
+}) {
   const [n, setN] = useState(name);
   const [f, setF] = useState(focus);
   const [wasOpen, setWasOpen] = useState(false);

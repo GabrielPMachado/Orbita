@@ -36,25 +36,14 @@ export const useTasks = create<TasksState>()(
   persist(
     (set) => ({
       tasks: [],
-      add: (t) =>
-        set((s) => ({
-          tasks: [{ status: 'todo', ...t, id: uid(), createdAt: Date.now() }, ...s.tasks],
-        })),
+      add: (t) => set((s) => ({ tasks: [{ status: 'todo', ...t, id: uid(), createdAt: Date.now() }, ...s.tasks] })),
       update: (id, patch) => set((s) => ({ tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)) })),
       setStatus: (id, status) =>
-        set((s) => ({
-          tasks: s.tasks.map((t) =>
-            t.id === id ? { ...t, status, doneAt: status === 'done' ? Date.now() : undefined } : t,
-          ),
-        })),
+        set((s) => ({ tasks: s.tasks.map((t) => (t.id === id ? { ...t, status, doneAt: status === 'done' ? Date.now() : undefined } : t)) })),
       toggleDone: (id) =>
         set((s) => ({
           tasks: s.tasks.map((t) =>
-            t.id === id
-              ? t.status === 'done'
-                ? { ...t, status: 'todo', doneAt: undefined }
-                : { ...t, status: 'done', doneAt: Date.now() }
-              : t,
+            t.id === id ? (t.status === 'done' ? { ...t, status: 'todo', doneAt: undefined } : { ...t, status: 'done', doneAt: Date.now() }) : t,
           ),
         })),
       remove: (id) => set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) })),

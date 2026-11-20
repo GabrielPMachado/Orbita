@@ -51,7 +51,17 @@ interface PluggyState {
   reset: () => void;
 }
 
-const empty = { configured: false, itemIds: [], accounts: [], bankTxs: [], period: undefined, lastSync: undefined, lastError: undefined, ignored: [], localOk: [] };
+const empty = {
+  configured: false,
+  itemIds: [],
+  accounts: [],
+  bankTxs: [],
+  period: undefined,
+  lastSync: undefined,
+  lastError: undefined,
+  ignored: [],
+  localOk: [],
+};
 
 export const usePluggy = create<PluggyState>()(
   persist(

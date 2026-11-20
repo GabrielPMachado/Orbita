@@ -10,7 +10,11 @@ import { usePlans, useSessions } from '@/store/modules';
 import { space, useColors } from '@/theme';
 
 const TEMPLATES: { name: string; focus: string; exercises: string[] }[] = [
-  { name: 'Treino A', focus: 'Peito, ombro e tríceps', exercises: ['Supino reto', 'Supino inclinado com halteres', 'Desenvolvimento', 'Elevação lateral', 'Tríceps corda'] },
+  {
+    name: 'Treino A',
+    focus: 'Peito, ombro e tríceps',
+    exercises: ['Supino reto', 'Supino inclinado com halteres', 'Desenvolvimento', 'Elevação lateral', 'Tríceps corda'],
+  },
   { name: 'Treino B', focus: 'Costas e bíceps', exercises: ['Puxada frontal', 'Remada curvada', 'Remada baixa', 'Rosca direta', 'Rosca martelo'] },
   { name: 'Treino C', focus: 'Pernas', exercises: ['Agachamento livre', 'Leg press', 'Cadeira extensora', 'Mesa flexora', 'Panturrilha em pé'] },
 ];
@@ -54,7 +58,11 @@ export default function Academia() {
 
   return (
     <>
-      <Screen back title="Academia" subtitle="Fichas, cargas e histórico" actions={<GlassButton icon={Plus} label="Ficha" onPress={() => setOpen(true)} />}>
+      <Screen
+        back
+        title="Academia"
+        subtitle="Fichas, cargas e histórico"
+        actions={<GlassButton icon={Plus} label="Ficha" onPress={() => setOpen(true)} />}>
         <View style={{ flexDirection: 'row', gap: space.sm }}>
           <Stat label="Nesta semana" value={`${weekCount} treino${weekCount === 1 ? '' : 's'}`} />
           <Stat label="Últimos 30 dias" value={`${Math.round(monthMinutes / 60)} h`} hint={`${monthMinutes} min`} />
@@ -93,7 +101,9 @@ export default function Academia() {
                     key={p.id}
                     leading={<IconTile icon={Dumbbell} />}
                     title={p.name}
-                    subtitle={[p.focus, `${p.exercises.length} exercícios`, last ? `último ${friendlyDate(last.date).toLowerCase()}` : null].filter(Boolean).join('  ·  ')}
+                    subtitle={[p.focus, `${p.exercises.length} exercícios`, last ? `último ${friendlyDate(last.date).toLowerCase()}` : null]
+                      .filter(Boolean)
+                      .join('  ·  ')}
                     onPress={() => router.push(`/academia/${p.id}`)}
                     chevron
                   />

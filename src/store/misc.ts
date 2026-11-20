@@ -10,10 +10,7 @@ interface MoodState {
   set: (day: DateKey, value: number) => void;
 }
 export const useMood = create<MoodState>()(
-  persist((set) => ({ moods: {}, set: (day, value) => set((s) => ({ moods: { ...s.moods, [day]: value } })) }), {
-    name: 'mood',
-    storage,
-  }),
+  persist((set) => ({ moods: {}, set: (day, value) => set((s) => ({ moods: { ...s.moods, [day]: value } })) }), { name: 'mood', storage }),
 );
 
 /* ---------- Metas ---------- */
@@ -39,10 +36,7 @@ export const useGoals = create<GoalsState>()(
     (set) => ({
       goals: [],
       add: (g) => set((s) => ({ goals: [...s.goals, { ...g, current: 0, id: uid(), createdAt: Date.now() }] })),
-      bump: (id, delta) =>
-        set((s) => ({
-          goals: s.goals.map((g) => (g.id === id ? { ...g, current: Math.max(0, g.current + delta) } : g)),
-        })),
+      bump: (id, delta) => set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, current: Math.max(0, g.current + delta) } : g)) })),
       update: (id, patch) => set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, ...patch } : g)) })),
       remove: (id) => set((s) => ({ goals: s.goals.filter((g) => g.id !== id) })),
     }),
@@ -76,8 +70,7 @@ export const useNotes = create<NotesState>()(
         set((s) => ({ notes: [{ id, title: '', body: '', pinned: false, updatedAt: Date.now() }, ...s.notes] }));
         return id;
       },
-      update: (id, patch) =>
-        set((s) => ({ notes: s.notes.map((n) => (n.id === id ? { ...n, ...patch, updatedAt: Date.now() } : n)) })),
+      update: (id, patch) => set((s) => ({ notes: s.notes.map((n) => (n.id === id ? { ...n, ...patch, updatedAt: Date.now() } : n)) })),
       remove: (id) =>
         set((s) => {
           s.notes.find((n) => n.id === id)?.images?.forEach(deleteMedia);

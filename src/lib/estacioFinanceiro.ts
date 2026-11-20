@@ -62,20 +62,17 @@ export interface Cobranca {
   barras?: string;
 }
 
-const TIPOS: Record<string, string> = {
-  DBMENS: 'Mensalidade',
-  DBCANEG: 'Negociação',
-  DBRENOV: 'Renovação',
-  DBNEG: 'Negociação',
-  DBTAXA: 'Taxa',
-};
+const TIPOS: Record<string, string> = { DBMENS: 'Mensalidade', DBCANEG: 'Negociação', DBRENOV: 'Renovação', DBNEG: 'Negociação', DBTAXA: 'Taxa' };
 const money = (s?: string) => (s && /R\$/.test(s) ? Number(s.replace(/[^\d,]/g, '').replace(',', '.')) : undefined);
 const iso = (d?: string) => (d && /^\d{2}\/\d{2}\/\d{4}$/.test(d) ? `${d.slice(6)}-${d.slice(3, 5)}-${d.slice(0, 2)}` : undefined);
 
 export function lerFinanceiro(rows: FinRow[], hoje = new Date().toISOString().slice(0, 10)): Cobranca[] {
   const out = new Map<string, Cobranca>();
   for (const r of rows) {
-    const ls = r.text.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+    const ls = r.text
+      .split(/\n+/)
+      .map((l) => l.trim())
+      .filter(Boolean);
     const after = (label: string) => {
       const i = ls.findIndex((l) => l === label);
       return i >= 0 ? ls[i + 1] : undefined;
@@ -91,17 +88,13 @@ export function lerFinanceiro(rows: FinRow[], hoje = new Date().toISOString().sl
     const vencimento = r.ficha?.DtVencimento?.slice(0, 10) ?? iso(venc);
     const pagoEm = iso(pgto);
     // "Dt. pgto" sem valor pago = cobrança renegociada/cancelada (entrou noutra), não é dívida
-    const situacao: Cobranca['situacao'] = pagoEm
-      ? valorPago
-        ? 'paga'
-        : 'sem-cobranca'
-      : vencimento && vencimento < hoje
-        ? 'vencida'
-        : 'aberta';
+    const situacao: Cobranca['situacao'] = pagoEm ? (valorPago ? 'paga' : 'sem-cobranca') : vencimento && vencimento < hoje ? 'vencida' : 'aberta';
     out.set(ref, {
       ref,
       competencia,
-      tipo: TIPOS[sigla] ?? (r.ficha?.DescricaoCarne ? r.ficha.DescricaoCarne.charAt(0) + r.ficha.DescricaoCarne.slice(1).toLowerCase() : sigla || 'Cobrança'),
+      tipo:
+        TIPOS[sigla] ??
+        (r.ficha?.DescricaoCarne ? r.ficha.DescricaoCarne.charAt(0) + r.ficha.DescricaoCarne.slice(1).toLowerCase() : sigla || 'Cobrança'),
       valor,
       vencimento,
       pagoEm,

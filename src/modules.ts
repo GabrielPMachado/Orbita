@@ -41,15 +41,37 @@ export interface ModuleDef {
  *  2. mude `ready` para true aqui
  */
 export const MODULES: ModuleDef[] = [
-  { id: 'kanban', name: 'Kanban', section: 'Núcleo', icon: Columns3, ready: true, href: '/tarefas', description: 'Tarefas em colunas: a fazer, fazendo, feito.' },
+  {
+    id: 'kanban',
+    name: 'Kanban',
+    section: 'Núcleo',
+    icon: Columns3,
+    ready: true,
+    href: '/tarefas',
+    description: 'Tarefas em colunas: a fazer, fazendo, feito.',
+  },
   { id: 'trabalho', name: 'Trabalho', section: 'Núcleo', icon: Briefcase, ready: true, description: 'Projetos e subprojetos com tarefas agrupadas.' },
-  { id: 'lembretes', name: 'Lembretes', section: 'Núcleo', icon: BellRing, ready: true, description: 'Notificações no horário certo, únicas ou recorrentes.' },
+  {
+    id: 'lembretes',
+    name: 'Lembretes',
+    section: 'Núcleo',
+    icon: BellRing,
+    ready: true,
+    description: 'Notificações no horário certo, únicas ou recorrentes.',
+  },
 
   { id: 'metas', name: 'Metas', section: 'Vida', icon: Target, ready: true, description: 'Objetivos com progresso e prazo.' },
   { id: 'habitos', name: 'Hábitos', section: 'Vida', icon: Repeat2, ready: true, description: 'Check diário com sequência (streak).' },
   { id: 'saude', name: 'Saúde', section: 'Vida', icon: HeartPulse, ready: true, description: 'Água, sono, peso e remédios com lembrete.' },
   { id: 'academia', name: 'Academia', section: 'Vida', icon: Dumbbell, ready: true, description: 'Fichas de treino, séries e cargas.' },
-  { id: 'financas', name: 'Finanças', section: 'Vida', icon: Wallet, ready: true, description: 'Contas, cartões, parcelas, orçamentos e simulador freela.' },
+  {
+    id: 'financas',
+    name: 'Finanças',
+    section: 'Vida',
+    icon: Wallet,
+    ready: true,
+    description: 'Contas, cartões, parcelas, orçamentos e simulador freela.',
+  },
   { id: 'boletos', name: 'Boletos', section: 'Vida', icon: Barcode, ready: true, description: 'Contas a pagar com código, PDF e aviso na véspera.' },
   { id: 'estudos', name: 'Estudos', section: 'Vida', icon: GraduationCap, ready: true, description: 'Matérias, provas e cadernos.' },
   { id: 'filmes', name: 'Filmes e Séries', section: 'Vida', icon: Film, ready: true, description: 'Lista para ver, vistos e notas.' },
@@ -60,7 +82,14 @@ export const MODULES: ModuleDef[] = [
   { id: 'invoices', name: 'Invoices', section: 'Trabalho', icon: ReceiptText, ready: true, description: 'Cobranças e status de pagamento.' },
 
   { id: 'revisao', name: 'Revisão', section: 'Insights', icon: CalendarCheck, ready: true, description: 'Revisão semanal do que rolou.' },
-  { id: 'produtividade', name: 'Produtividade', section: 'Insights', icon: Gauge, ready: true, description: 'Pomodoro, timer de foco e meta diária.' },
+  {
+    id: 'produtividade',
+    name: 'Produtividade',
+    section: 'Insights',
+    icon: Gauge,
+    ready: true,
+    description: 'Pomodoro, timer de foco e meta diária.',
+  },
   { id: 'analytics', name: 'Analytics', section: 'Insights', icon: ChartLine, ready: true, description: 'Gráficos de tarefas, hábitos e humor.' },
   { id: 'arquivos', name: 'Arquivos', section: 'Insights', icon: FolderOpen, ready: true, description: 'Itens arquivados e todas as suas fotos.' },
 ];

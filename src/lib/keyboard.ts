@@ -6,9 +6,9 @@
  */
 import { useEffect, useRef, useState, type ComponentRef, type RefObject } from 'react';
 import { Keyboard, Platform, TextInput, type ScrollView } from 'react-native';
-import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
 
 export type ScrollRef = ComponentRef<typeof ScrollView>;
+import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
 
 export function useKeyboardInset() {
   const inset = useSharedValue(0);

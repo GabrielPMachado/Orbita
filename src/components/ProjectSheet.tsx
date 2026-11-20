@@ -7,15 +7,7 @@ import { ColorPicker, PALETTE } from './extra';
 import { Button, Chip, Field, Sheet, T } from './ui';
 
 /** Criar ou editar projeto. `editing` = 'new' | projeto | null (fechado). */
-export function ProjectSheet({
-  editing,
-  onClose,
-  defaultParent,
-}: {
-  editing: Project | 'new' | null;
-  onClose: () => void;
-  defaultParent?: string;
-}) {
+export function ProjectSheet({ editing, onClose, defaultParent }: { editing: Project | 'new' | null; onClose: () => void; defaultParent?: string }) {
   const { items: projects, add, update } = useProjects();
   const clients = useClients((s) => s.items);
   const [name, setName] = useState('');
@@ -55,7 +47,14 @@ export function ProjectSheet({
   return (
     <Sheet visible={!!editing} onClose={onClose} title={editing === 'new' ? 'Novo projeto' : 'Editar projeto'}>
       <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex.: App do Bar do Dindo" />
-      <Field label="Descrição" value={description} onChangeText={setDescription} placeholder="Opcional" multiline style={{ minHeight: 64, textAlignVertical: 'top' }} />
+      <Field
+        label="Descrição"
+        value={description}
+        onChangeText={setDescription}
+        placeholder="Opcional"
+        multiline
+        style={{ minHeight: 64, textAlignVertical: 'top' }}
+      />
       {clients.length > 0 && (
         <View style={{ gap: space.sm }}>
           <T v="overline" tone="dim">

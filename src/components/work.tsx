@@ -14,7 +14,8 @@ export function initials(name: string) {
 
 export function Avatar({ name, color, size = 40 }: { name: string; color: string; size?: number }) {
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color + '33', alignItems: 'center', justifyContent: 'center' }}>
+    <View
+      style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color + '33', alignItems: 'center', justifyContent: 'center' }}>
       <T v="headline" color={color} style={{ fontSize: size * 0.38, lineHeight: size * 0.5 }}>
         {initials(name)}
       </T>

@@ -1,5 +1,5 @@
 import { BlurView } from 'expo-blur';
-import { GlassContainer, GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import React, { useId } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
@@ -41,11 +41,7 @@ export function Glass({
   }
 
   const flat = StyleSheet.flatten(style) ?? {};
-  const edge: ViewStyle = {
-    overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: tint ? tint : 'rgba(255,255,255,0.11)',
-  };
+  const edge: ViewStyle = { overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: tint ? tint : 'rgba(255,255,255,0.11)' };
 
   if (tint) return <View style={[style, edge, { backgroundColor: tint }]}>{children}</View>;
 
@@ -61,23 +57,16 @@ export function Glass({
 
   return (
     <View style={[style, edge]}>
-      <BlurView pointerEvents="none" intensity={variant === 'clear' ? 30 : 60} tint="systemChromeMaterialDark" style={[StyleSheet.absoluteFill, { borderRadius: flat.borderRadius }]} />
+      <BlurView
+        pointerEvents="none"
+        intensity={variant === 'clear' ? 30 : 60}
+        tint="systemChromeMaterialDark"
+        style={[StyleSheet.absoluteFill, { borderRadius: flat.borderRadius }]}
+      />
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(17,19,23,0.62)' }]} />
       {children}
     </View>
   );
-}
-
-/** Agrupa vidros próximos para que se fundam (efeito "gota") no iOS 26. */
-export function GlassGroup({ children, style, spacing = 8 }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; spacing?: number }) {
-  if (LIQUID) {
-    return (
-      <GlassContainer spacing={spacing} style={style}>
-        {children}
-      </GlassContainer>
-    );
-  }
-  return <View style={style}>{children}</View>;
 }
 
 /**

@@ -56,7 +56,9 @@ export default function Analytics() {
   const spentMap: Record<string, number> = {};
   txs.filter((t) => t.type === 'out' && set.has(t.date)).forEach((t) => (spentMap[t.category] = (spentMap[t.category] ?? 0) + t.amount));
   const spentTotal = Object.values(spentMap).reduce((a, b) => a + b, 0);
-  const spentList = Object.entries(spentMap).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const spentList = Object.entries(spentMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6);
 
   const habitRates = habits
     .filter((h) => !h.archived)
@@ -84,26 +86,46 @@ export default function Analytics() {
         <Stat label="Foco" value={totalFocus >= 60 ? `${(totalFocus / 60).toFixed(1).replace('.', ',')} h` : `${totalFocus} min`} hint="no timer" />
       </View>
       <View style={{ flexDirection: 'row', gap: space.sm }}>
-        <Stat label="Humor médio" value={moodAvg ? MOODS[Math.round(moodAvg) - 1].label : '—'} hint={moodAvg ? `${moodAvg.toFixed(1).replace('.', ',')} de 5 · ${moodNums.length} check-ins` : 'sem check-ins'} />
+        <Stat
+          label="Humor médio"
+          value={moodAvg ? MOODS[Math.round(moodAvg) - 1].label : '—'}
+          hint={moodAvg ? `${moodAvg.toFixed(1).replace('.', ',')} de 5 · ${moodNums.length} check-ins` : 'sem check-ins'}
+        />
         <Stat label="Gastos" value={brl(spentTotal)} hint={`${brl(spentTotal / n)} por dia`} />
       </View>
 
       <Section title="Tarefas concluídas">
         <Card>
-          <Bars data={buckets.map((b, i) => ({ label: labelOf(b, i), value: b.reduce((a, d) => a + (doneByDay[d] ?? 0), 0), highlight: i === buckets.length - 1 }))} format={(v) => `${v} tarefas`} />
+          <Bars
+            data={buckets.map((b, i) => ({
+              label: labelOf(b, i),
+              value: b.reduce((a, d) => a + (doneByDay[d] ?? 0), 0),
+              highlight: i === buckets.length - 1,
+            }))}
+            format={(v) => `${v} tarefas`}
+          />
         </Card>
       </Section>
 
       <Section title="Humor">
         <Card>
-          <LineChart values={moodVals} min={1} max={5} labels={[fromKey(days[0]).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }), 'hoje']} />
+          <LineChart
+            values={moodVals}
+            min={1}
+            max={5}
+            labels={[fromKey(days[0]).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }), 'hoje']}
+          />
         </Card>
       </Section>
 
       <Section title="Tempo de foco">
         <Card>
           <Bars
-            data={buckets.map((b, i) => ({ label: labelOf(b, i), value: b.reduce((a, d) => a + (focusByDay[d] ?? 0), 0), highlight: i === buckets.length - 1 }))}
+            data={buckets.map((b, i) => ({
+              label: labelOf(b, i),
+              value: b.reduce((a, d) => a + (focusByDay[d] ?? 0), 0),
+              highlight: i === buckets.length - 1,
+            }))}
             color="#F2415A"
             format={(v) => `${v} min`}
           />

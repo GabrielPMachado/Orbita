@@ -55,12 +55,7 @@ const neutral = {
   textFaint: '#5B616B',
 };
 
-const semantic = {
-  success: '#34C77B',
-  warning: '#F5B53D',
-  danger: '#F26464',
-  info: '#5B9DFF',
-};
+const semantic = { success: '#34C77B', warning: '#F5B53D', danger: '#F26464', info: '#5B9DFF' };
 
 export type Colors = typeof neutral &
   typeof semantic & { accent: string; accentSoft: string; accentLine: string; onAccent: string; intensity: number };
@@ -69,15 +64,7 @@ export function useColors(): Colors {
   const name = useSettings((s) => s.accent);
   const intensity = useSettings((s) => s.intensity ?? 4);
   const accent = resolveAccent(name);
-  return {
-    ...neutral,
-    ...semantic,
-    accent,
-    accentSoft: accent + '1F',
-    accentLine: accent + '59',
-    onAccent: readableOn(accent),
-    intensity,
-  };
+  return { ...neutral, ...semantic, accent, accentSoft: accent + '1F', accentLine: accent + '59', onAccent: readableOn(accent), intensity };
 }
 
 /* ---------- Espaço e forma (escala 4/8) ---------- */

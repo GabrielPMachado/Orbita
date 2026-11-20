@@ -80,7 +80,12 @@ export function PhotoStrip({
               tap();
               setViewing(p);
             }}>
-            <Image source={{ uri: mediaUri(p) }} style={{ width: size, height: size, borderRadius: radius.sm, backgroundColor: c.surface2 }} contentFit="cover" transition={120} />
+            <Image
+              source={{ uri: mediaUri(p) }}
+              style={{ width: size, height: size, borderRadius: radius.sm, backgroundColor: c.surface2 }}
+              contentFit="cover"
+              transition={120}
+            />
           </Pressable>
         ))}
         <Pressable

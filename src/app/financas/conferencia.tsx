@@ -1,16 +1,5 @@
 import { router } from 'expo-router';
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  BadgeCheck,
-  CircleHelp,
-  Download,
-  EyeOff,
-  Landmark,
-  Settings2,
-  ThumbsUp,
-  Undo2,
-} from 'lucide-react-native';
+import { ArrowDownLeft, ArrowUpRight, BadgeCheck, CircleHelp, Download, EyeOff, Landmark, Settings2, ThumbsUp, Undo2 } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { AnimatedNumber, SwipeRow } from '@/components/motion';

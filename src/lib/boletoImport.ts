@@ -13,7 +13,6 @@ import { cancel, ensurePermission } from './notifications';
 import * as Notifications from 'expo-notifications';
 import { brl } from './date';
 import type { Boleto } from '@/store/boletos';
-import { avisar } from '@/lib/avisar';
 
 export type Lido = { infos: BoletoInfo[]; texto?: string; arquivo?: string; origem: Boleto['origem'] };
 
@@ -24,11 +23,6 @@ export async function doClipboard(): Promise<Lido | null> {
   const um = lerCodigo(t);
   const infos = um ? [um] : lerTexto(t);
   return { infos, texto: t, origem: 'colar' };
-}
-
-export function deTexto(t: string): Lido {
-  const um = lerCodigo(t);
-  return { infos: um ? [um] : lerTexto(t), texto: t, origem: 'colar' };
 }
 
 /** Foto (câmera) ou print/imagem (galeria): código de barras, QR do Pix e texto. */
@@ -73,9 +67,7 @@ export async function dePdf(): Promise<Lido | null> {
   let arquivo: string | undefined;
   try {
     arquivo = keepFile(uri, 'pdf');
-  } catch (e) {
-    avisar('guardar o PDF do boleto', e);
-  }
+  } catch {}
   return { infos: lerTexto(r.text, r.codes), texto: r.text, arquivo, origem: 'pdf' };
 }
 

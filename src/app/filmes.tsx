@@ -64,7 +64,11 @@ export default function Filmes() {
 
   return (
     <>
-      <Screen back title="Filmes e Séries" subtitle={`${count('visto')} vistos · ${count('quero')} na lista`} actions={<GlassButton icon={Plus} label="Adicionar" onPress={() => setEditing('new')} />}>
+      <Screen
+        back
+        title="Filmes e Séries"
+        subtitle={`${count('visto')} vistos · ${count('quero')} na lista`}
+        actions={<GlassButton icon={Plus} label="Adicionar" onPress={() => setEditing('new')} />}>
         <Segmented value={tab} onChange={setTab} options={STATUS.map((s) => ({ ...s, count: count(s.value) }))} />
         <View style={{ flexDirection: 'row', gap: space.sm }}>
           <Chip label="Tudo" active={kind === 'todos'} onPress={() => setKind('todos')} />
@@ -102,7 +106,11 @@ export default function Filmes() {
                     </View>
                   )}
                   {t.providers?.stream[0]?.logo ? (
-                    <Image source={{ uri: TMDB_IMG(t.providers.stream[0].logo, 'w92') }} style={styles.badge} accessibilityLabel={t.providers.stream[0].name} />
+                    <Image
+                      source={{ uri: TMDB_IMG(t.providers.stream[0].logo, 'w92') }}
+                      style={styles.badge}
+                      accessibilityLabel={t.providers.stream[0].name}
+                    />
                   ) : null}
                 </Glass>
                 <T v="caption" numberOfLines={1} style={{ fontSize: 13 }}>
@@ -170,7 +178,7 @@ function TitleSheet({ editing, defaultStatus, onClose }: { editing: Title | 'new
   const [picked, setPicked] = useState(false);
   const [loadingInfo, setLoadingInfo] = useState(false);
 
-  const k = editing === 'new' ? 'new' : editing?.id ?? null;
+  const k = editing === 'new' ? 'new' : (editing?.id ?? null);
   if (k !== key) {
     setKey(k);
     const e = editing && editing !== 'new' ? editing : undefined;
@@ -185,7 +193,17 @@ function TitleSheet({ editing, defaultStatus, onClose }: { editing: Title | 'new
     setNotes(e?.notes ?? '');
     setInfo(
       e?.tmdbId
-        ? { id: e.tmdbId, poster: e.posterPath, overview: e.overview, year: e.year, genres: e.genres, vote: e.vote, runtime: e.runtime, seasons: e.seasons, providers: e.providers }
+        ? {
+            id: e.tmdbId,
+            poster: e.posterPath,
+            overview: e.overview,
+            year: e.year,
+            genres: e.genres,
+            vote: e.vote,
+            runtime: e.runtime,
+            seasons: e.seasons,
+            providers: e.providers,
+          }
         : {},
     );
     setHits([]);
@@ -302,7 +320,12 @@ function TitleSheet({ editing, defaultStatus, onClose }: { editing: Title | 'new
           }}>
           <Glass interactive style={{ width: 84, height: 124, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' }}>
             {poster || info.poster ? (
-              <Image source={{ uri: poster ? mediaUri(poster) : TMDB_IMG(info.poster!) }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} />
+              <Image
+                source={{ uri: poster ? mediaUri(poster) : TMDB_IMG(info.poster!) }}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+                transition={150}
+              />
             ) : (
               <ImagePlus size={22} color={c.textDim} />
             )}
@@ -319,7 +342,7 @@ function TitleSheet({ editing, defaultStatus, onClose }: { editing: Title | 'new
               }
             }}
             placeholder={hasKey ? 'Buscar filme ou série' : 'Nome'}
-           
+
             returnKeyType="search"
           />
           <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center' }}>
@@ -329,7 +352,12 @@ function TitleSheet({ editing, defaultStatus, onClose }: { editing: Title | 'new
           </View>
           {info.year || info.genres?.length || info.vote ? (
             <T v="caption" tone="dim" numberOfLines={2}>
-              {[info.year, info.genres?.slice(0, 2).join(', '), info.runtime ? (kind === 'filme' ? `${info.runtime} min` : `${info.runtime} min/ep`) : null, info.seasons && kind === 'serie' ? `${info.seasons} temp.` : null]
+              {[
+                info.year,
+                info.genres?.slice(0, 2).join(', '),
+                info.runtime ? (kind === 'filme' ? `${info.runtime} min` : `${info.runtime} min/ep`) : null,
+                info.seasons && kind === 'serie' ? `${info.seasons} temp.` : null,
+              ]
                 .filter(Boolean)
                 .join(' · ')}
               {info.vote ? `  ★ ${String(info.vote).replace('.', ',')}` : ''}
@@ -347,7 +375,13 @@ function TitleSheet({ editing, defaultStatus, onClose }: { editing: Title | 'new
               accessibilityRole="button"
               style={({ pressed }) => [styles.hit, { backgroundColor: pressed ? c.surface2 : 'transparent' }]}>
               <View style={[styles.hitThumb, { backgroundColor: c.surface2 }]}>
-                {h.poster ? <Image source={{ uri: TMDB_IMG(h.poster, 'w92') }} style={StyleSheet.absoluteFill} contentFit="cover" /> : h.kind === 'filme' ? <Film size={16} color={c.textFaint} /> : <Tv size={16} color={c.textFaint} />}
+                {h.poster ? (
+                  <Image source={{ uri: TMDB_IMG(h.poster, 'w92') }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                ) : h.kind === 'filme' ? (
+                  <Film size={16} color={c.textFaint} />
+                ) : (
+                  <Tv size={16} color={c.textFaint} />
+                )}
               </View>
               <View style={{ flex: 1 }}>
                 <T v="callout" numberOfLines={1}>
@@ -378,11 +412,11 @@ function TitleSheet({ editing, defaultStatus, onClose }: { editing: Title | 'new
         </View>
       )}
       {info.providers?.stream.length ? null : (
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-        {PLATFORMS.map((p) => (
-          <Chip key={p} label={p} active={platform === p} onPress={() => setPlatform(platform === p ? undefined : p)} />
-        ))}
-      </View>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+          {PLATFORMS.map((p) => (
+            <Chip key={p} label={p} active={platform === p} onPress={() => setPlatform(platform === p ? undefined : p)} />
+          ))}
+        </View>
       )}
       {status === 'visto' && (
         <View style={{ gap: space.sm }}>
@@ -392,7 +426,13 @@ function TitleSheet({ editing, defaultStatus, onClose }: { editing: Title | 'new
           <Stars value={rating} onChange={setRating} size={30} />
         </View>
       )}
-      <Field value={notes} onChangeText={setNotes} placeholder="Comentário (opcional)" multiline style={{ minHeight: 64, textAlignVertical: 'top' }} />
+      <Field
+        value={notes}
+        onChangeText={setNotes}
+        placeholder="Comentário (opcional)"
+        multiline
+        style={{ minHeight: 64, textAlignVertical: 'top' }}
+      />
       {editing && editing !== 'new' && editing.watchedAt ? (
         <T v="caption" tone="faint">
           Visto {friendlyDate(editing.watchedAt).toLowerCase()}
@@ -430,7 +470,11 @@ function WhereToWatch({ p }: { p: Providers }) {
   const line = (label: string, l: Providers['rent']) =>
     l.length ? (
       <T v="caption" tone="dim" numberOfLines={2}>
-        {label}: {l.slice(0, 5).map((x) => shortProvider(x.name)).join(', ')}
+        {label}:{' '}
+        {l
+          .slice(0, 5)
+          .map((x) => shortProvider(x.name))
+          .join(', ')}
       </T>
     ) : null;
   return (
@@ -518,7 +562,14 @@ const styles = StyleSheet.create({
   hitThumb: { width: 36, height: 54, borderRadius: 6, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   prov: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingLeft: 5, paddingRight: 10, borderRadius: 10 },
   provLogo: { width: 22, height: 22, borderRadius: 5 },
-  setup: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth },
+  setup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    padding: space.md,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
   cell: { width: '30.5%', gap: 4 },
   poster: { aspectRatio: 2 / 3, borderRadius: radius.sm, overflow: 'hidden' },
