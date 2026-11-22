@@ -23,11 +23,9 @@ export const SIA_ACESSAR_JS = `
 (function(){
   var step = function(ok, info){ try { window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'step', name: 'entrar no SIA', ok: ok, info: info })); } catch(e){} };
   if (!/\\/Logon/i.test(location.pathname)) { step(true, 'já com sessão'); return true; }
-  // o texto pode vir junto com outro ("Acessar Ajuda"): pega o menor elemento que começa com Acessar
-  var cands = [].slice.call(document.querySelectorAll('button, a, input[type=submit], input[type=button], [role=button]')).filter(function(x){
-    return /^\\s*acessar\\b/i.test(x.innerText || x.value || '');
-  }).sort(function(a, b){ return (a.innerText || a.value || '').length - (b.innerText || b.value || '').length; });
-  var b = cands[0];
+  var b = [].slice.call(document.querySelectorAll('button, input[type=submit], input[type=button], [role=button]')).find(function(x){
+    return /^\\s*acessar\\s*$/i.test(x.innerText || x.value || '');
+  });
   if (b) { b.click(); step(true, 'tocou em Acessar'); } else step(false, 'botão Acessar não encontrado');
   true;
 })();

@@ -241,6 +241,40 @@ async function diagnostico(page: Page, nome: string) {
   log(`  ${nome}: ${limpa(d.url)} · "${limpa(d.titulo).slice(0, 40)}" · ${d.chars} letras · botões: ${d.botoes.map(limpa).join(' | ') || 'nenhum'}`);
 }
 
+/** Links e botões do portal que levam ao financeiro/SIA, e os campos da página (sem valores nem parâmetros). */
+async function mapear(page: Page, nome: string) {
+  const d = await page
+    .evaluate(() => {
+      const els = [...document.querySelectorAll('a, button, [role=button], [role=menuitem], li')] as HTMLElement[];
+      const alvo = els
+        .filter((e) => /financ|pagament|boleto|mensalid|sia\b|secretaria/i.test((e.innerText || '') + ' ' + (e.getAttribute('href') || '')))
+        .map((e) => {
+          const href = e.getAttribute('href') || '';
+          let h = '';
+          try {
+            const u = new URL(href, location.href);
+            h = href ? u.host + u.pathname : '';
+          } catch {
+            h = '';
+          }
+          return `${e.tagName.toLowerCase()} "${(e.innerText || '').trim().split('\n')[0].slice(0, 30)}"${h ? ` → ${h}` : ''}${e.getAttribute('target') ? ` [${e.getAttribute('target')}]` : ''}`;
+        })
+        .slice(0, 15);
+      const campos = [...document.querySelectorAll('input, select, button')]
+        .map(
+          (e) =>
+            `${e.tagName.toLowerCase()}${(e as HTMLInputElement).type ? ':' + (e as HTMLInputElement).type : ''}#${e.id || ''}[${(e as HTMLInputElement).name || ''}]"${((e as HTMLInputElement).type === 'submit' || e.tagName === 'BUTTON' ? (e as HTMLInputElement).value || (e as HTMLElement).innerText || '' : '').trim().slice(0, 20)}"`,
+        )
+        .slice(0, 15);
+      return { alvo, campos };
+    })
+    .catch(() => null);
+  if (!d) return log(`  ${nome}: não deu para mapear`);
+  const limpa = (t: string) => t.replace(/\d{4,}/g, '#').replace(/\S+@\S+/g, '<e-mail>');
+  log(`  ${nome} links: ${d.alvo.map(limpa).join(' ; ') || 'nenhum'}`);
+  log(`  ${nome} campos: ${d.campos.map(limpa).join(' ; ') || 'nenhum'}`);
+}
+
 /* ---------- varredura ---------- */
 
 async function varrer(login: string, senha: string) {
@@ -344,6 +378,8 @@ async function varrer(login: string, senha: string) {
     }
     atual = undefined;
 
+    await ir(PORTAL.inicio, 8000);
+    await mapear(page, 'portal');
     log('Financeiro (SIA)');
     await ir(SIA_ENTRADA, 12_000); // cria a sessão do SIA antes de abrir o financeiro
     // o "Acessar" abre o login da Microsoft numa janela nova (popup): faz o login nela e volta
@@ -379,6 +415,7 @@ async function varrer(login: string, senha: string) {
       await sleep(1500);
     }
     await diagnostico(page, 'SIA entrada');
+    await mapear(page, 'SIA logon');
     await ir(SIA_FINANCEIRO, 12_000);
     await diagnostico(page, 'SIA financeiro');
     await passo('Financeiro: boletos', FIN_JS, 11_000);
