@@ -11,7 +11,7 @@
 import { chromium, devices, type Page } from 'playwright';
 import { analisar, HOOK_JS, novaCaptura, PAGE_JS } from '../../src/lib/estacio';
 import { PORTAL } from '../../src/lib/estacioApi';
-import { FIN_JS, SIA_FINANCEIRO, type FinRow } from '../../src/lib/estacioFinanceiro';
+import { FIN_JS, SIA_ENTRADA, SIA_FINANCEIRO, type FinRow } from '../../src/lib/estacioFinanceiro';
 
 const API_KEY = 'AIzaSyDepvsTarS6FfS-nGNz51EVOlOR0yK5yOg';
 const PROJECT = 'financy-2d';
@@ -210,8 +210,9 @@ async function varrer(login: string, senha: string) {
     atual = undefined;
 
     log('Financeiro (SIA)');
-    await ir(SIA_FINANCEIRO, 15_000);
-    await passo('Financeiro: boletos', FIN_JS, 2500);
+    await ir(SIA_ENTRADA, 12_000); // cria a sessão do SIA antes de abrir o financeiro
+    await ir(SIA_FINANCEIRO, 12_000);
+    await passo('Financeiro: boletos', FIN_JS, 11_000);
   } finally {
     await browser.close();
   }

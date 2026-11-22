@@ -8,7 +8,7 @@ import { OrbitaDocs } from '../../modules/orbita-docs';
 import { lerTexto } from '@/lib/boleto';
 import { analisar, ESTACIO_URLS, HOOK_JS, isLoginUrl, isPortalApi, LINKS_JS, novaCaptura, PAGE_JS, pdfJs, type Captura } from '@/lib/estacio';
 import { PORTAL } from '@/lib/estacioApi';
-import { FIN_JS, SIA_FINANCEIRO, type FinRow } from '@/lib/estacioFinanceiro';
+import { FIN_JS, SIA_ENTRADA, SIA_FINANCEIRO, type FinRow } from '@/lib/estacioFinanceiro';
 import type { Resultado } from '@/lib/estacioImport';
 import { keepFile } from '@/lib/media';
 import { uid } from '@/lib/storage';
@@ -156,8 +156,10 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
     }
     // financeiro (SIA): mensalidades abertas e pagas — o login é o mesmo (Microsoft)
     passos.push(
-      { label: 'Financeiro', run: () => setUrl(SIA_FINANCEIRO), wait: 15000 },
-      { label: 'Financeiro: boletos', run: js(FIN_JS), wait: 2500 },
+      // entra pelo SIA primeiro (cria a sessão), só depois abre o financeiro
+      { label: 'SIA', run: () => setUrl(SIA_ENTRADA), wait: 12000 },
+      { label: 'Financeiro', run: () => setUrl(SIA_FINANCEIRO), wait: 12000 },
+      { label: 'Financeiro: boletos', run: js(FIN_JS), wait: 11000 },
       { label: 'Início', run: () => setUrl(PORTAL.inicio), wait: 6000 },
     );
     roteiro.current.push(...passos);

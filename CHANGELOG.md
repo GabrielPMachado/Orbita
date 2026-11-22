@@ -3,6 +3,12 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.18.2] - 2026-11-22
+
+### Corrigido
+- Boletos da Estácio: a leitura abria direto o endereço do financeiro do SIA, que dá erro sem a sessão do SIA, e não trazia nenhuma cobrança. Agora entra primeiro pela entrada do SIA (onde o login da Microsoft cria a sessão), depois abre o financeiro e espera as cobranças aparecerem (até 10 s). Vale para a leitura no app e para a da nuvem.
+- Se o financeiro ainda não mostrar nada, Contas e conexões › Estácio mostra o passo "financeiro (SIA)" com o endereço e o título da página em que parou.
+
 ## [0.18.1] - 2026-11-22
 
 ### Corrigido

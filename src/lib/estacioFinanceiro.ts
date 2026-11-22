@@ -9,12 +9,22 @@
  */
 
 export const SIA_FINANCEIRO = 'https://sia.estacio.br/sianet/Aluno/InformacoesFinanceiras/Financeiro';
+/**
+ * Entrada do SIA. É aqui que o login da Microsoft cria a sessão do SIA; abrir direto o endereço
+ * do financeiro sem passar por ela dá erro e a página não mostra nenhuma cobrança.
+ */
+export const SIA_ENTRADA = 'https://sia.estacio.br/sianet/';
 
-/** Injetado na página do financeiro: devolve cada linha (texto + ficha, se houver). */
+/**
+ * Injetado na página do financeiro: espera as linhas aparecerem (até 10 s) e devolve cada uma
+ * (texto + ficha, se houver). Avisa o resultado como um passo, com o endereço e o título da
+ * página quando não acha nada, para dar para ver onde parou.
+ */
 export const FIN_JS = `
 (function(){
-  try {
-    var rows = [].slice.call(document.querySelectorAll('.linha-base-financeiro')).map(function(r){
+  var step = function(ok, info){ try { window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'step', name: 'financeiro (SIA)', ok: ok, info: info })); } catch(e){} };
+  var ler = function(){
+    return [].slice.call(document.querySelectorAll('.linha-base-financeiro')).map(function(r){
       var b = r.querySelector('[data-ficha]');
       var f = null;
       try { f = b ? JSON.parse(b.getAttribute('data-ficha')) : null; } catch(e) {}
@@ -25,9 +35,19 @@ export const FIN_JS = `
       } : null;
       return { text: r.innerText, ficha: ficha };
     });
-    window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'sia-fin', rows: rows, url: location.href }));
-    return rows;
-  } catch (e) { return []; }
+  };
+  var t0 = Date.now();
+  var go = function(){
+    try {
+      var rows = ler();
+      if (!rows.length && Date.now() - t0 < 10000) return setTimeout(go, 500);
+      window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'sia-fin', rows: rows, url: location.href }));
+      if (rows.length) step(true, rows.length + ' cobranças');
+      else step(false, 'sem cobranças em ' + location.host + location.pathname + ' (' + (document.title || 'sem título').slice(0, 40) + ')');
+    } catch (e) { step(false, 'erro ao ler'); }
+  };
+  go();
+  true;
 })();
 `;
 
