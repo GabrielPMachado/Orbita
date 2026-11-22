@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { brl, friendlyDate } from '@/lib/date';
 import { addMonthKey, category, monthName, txLabel, type MonthKey } from '@/lib/finance';
 import { useFinance, type Tx } from '@/store/finance';
-import { radius, space, useColors } from '@/theme';
+import { useColors } from '@/theme';
 import { Badge, GlassButton, IconTile, Row, T } from './ui';
 
 export function MonthSwitcher({ month, onChange }: { month: MonthKey; onChange: (m: MonthKey) => void }) {
@@ -51,6 +51,4 @@ export function TxRow({ tx, showDate }: { tx: Tx; showDate?: boolean }) {
   );
 }
 
-const styles = StyleSheet.create({
-  monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-});
+const styles = StyleSheet.create({ monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' } });

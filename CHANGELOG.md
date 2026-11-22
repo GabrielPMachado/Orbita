@@ -3,6 +3,16 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.18.0] - 2026-11-22
+
+### Mudado
+- Estudos › Avaliações redesenhada: separada em A fazer, Marcadas e Feitas (com contagem em cada uma), mais uma visão por matéria. Filtro por tipo: provas, simulados e trabalhos.
+- Cada avaliação virou um cartão: tipo em destaque (AV, AVS, Simulado 1…), matéria com a cor dela, prazo com contagem regressiva e uma barra de quanto da janela para agendar já passou; nas feitas, a nota sobre o máximo com barra. As de prazo encerrado ficam separadas.
+- "Próxima avaliação" conta até o fim do prazo para agendar/fazer, não só a data.
+
+### Adicionado
+- Metas: botão "Valor" para lançar qualquer valor (somar, tirar ou definir o total) e escolher quanto os botões + e − somam em cada meta (ou voltar ao automático). Dá para definir esse valor já ao criar a meta.
+
 ## [0.17.3] - 2026-11-22
 
 ### Corrigido

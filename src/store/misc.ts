@@ -23,6 +23,8 @@ export interface Goal {
   deadline?: DateKey;
   createdAt: number;
   archived?: boolean;
+  /** quanto os botões + e − somam (vazio: automático) */
+  step?: number;
 }
 interface GoalsState {
   goals: Goal[];

@@ -3,8 +3,9 @@ import { router } from 'expo-router';
 import { BookOpen, CalendarClock, GraduationCap, Plus, Timer, Trash } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
+import { Avaliacoes, situacaoDe } from '@/components/Avaliacoes';
 import { ColorPicker, PALETTE, Stat, Stepper, confirmDelete } from '@/components/extra';
-import { Badge, Button, Card, Chip, Empty, Field, GlassButton, IconTile, List, Row, Screen, Section, Segmented, Sheet, T } from '@/components/ui';
+import { Button, Card, Chip, Empty, Field, GlassButton, IconTile, List, Row, Screen, Section, Segmented, Sheet, T } from '@/components/ui';
 import { friendlyDate, fromKey, lastNDays, today } from '@/lib/date';
 import { parseInput } from '@/lib/parse';
 import { useExams, useFocusSessions, useSubjects, type Exam, type Subject } from '@/store/modules';
@@ -31,8 +32,9 @@ export default function Estudos() {
   const week = lastNDays(7);
   const active = subjects.filter((s) => !s.archived);
   const weekMin = sessions.filter((s) => week.includes(s.date) && s.subjectId).reduce((a, s) => a + s.minutes, 0);
-  const upcoming = exams.filter((e) => e.date >= today()).sort((a, b) => a.date.localeCompare(b.date));
-  const past = exams.filter((e) => e.date < today()).sort((a, b) => b.date.localeCompare(a.date));
+  const upcoming = exams
+    .filter((e) => (situacaoDe(e) === 'fazer' || situacaoDe(e) === 'agendada') && (e.estacio?.ate ?? e.date) >= today())
+    .sort((a, b) => (a.estacio?.ate ?? a.date).localeCompare(b.estacio?.ate ?? b.date));
   const next = upcoming[0];
 
   const avg = (id: string) => {
@@ -40,30 +42,6 @@ export default function Estudos() {
     if (!g.length) return undefined;
     const w = g.reduce((a, e) => a + (e.weight ?? 1), 0);
     return g.reduce((a, e) => a + (e.grade ?? 0) * (e.weight ?? 1), 0) / w;
-  };
-
-  const examRow = (e: Exam) => {
-    const s = subjects.find((x) => x.id === e.subjectId);
-    const d = daysUntil(e.date);
-    return (
-      <Row
-        key={e.id}
-        leading={<IconTile icon={e.kind === 'prova' ? GraduationCap : BookOpen} color={s?.color} />}
-        title={e.title || KIND[e.kind]}
-        subtitle={[s?.name ?? 'Sem matéria', examStatus(e), e.estacio?.local?.split(' · ')[0]].filter(Boolean).join(' · ')}
-        onPress={() => setExamSheet(e)}
-        trailing={
-          e.grade != null ? (
-            <T v="headline" tabular color={e.grade / (e.estacio?.max ?? 10) >= 0.6 ? c.success : c.danger}>
-              {String(e.grade).replace('.', ',')}
-              {e.estacio?.max ? <T v="caption" tone="dim">{`/${String(e.estacio.max).replace('.', ',')}`}</T> : null}
-            </T>
-          ) : d >= 0 ? (
-            <Badge label={d === 0 ? 'Hoje' : d === 1 ? 'Amanhã' : `${d} dias`} color={d <= 3 ? c.danger : d <= 7 ? c.warning : c.textDim} />
-          ) : null
-        }
-      />
-    );
   };
 
   return (
@@ -77,9 +55,9 @@ export default function Estudos() {
           <Stat label="Estudo na semana" value={hm(weekMin)} hint="com o timer de foco" />
           <Stat
             label="Próxima avaliação"
-            value={next ? (daysUntil(next.date) === 0 ? 'Hoje' : `${daysUntil(next.date)} dias`) : '—'}
+            value={next ? (daysUntil(next.estacio?.ate ?? next.date) === 0 ? 'Hoje' : `${daysUntil(next.estacio?.ate ?? next.date)} dias`) : '—'}
             hint={next ? subjects.find((s) => s.id === next.subjectId)?.name : 'nada marcado'}
-            color={next && daysUntil(next.date) <= 3 ? c.danger : undefined}
+            color={next && daysUntil(next.estacio?.ate ?? next.date) <= 3 ? c.danger : undefined}
           />
         </View>
 
@@ -88,14 +66,14 @@ export default function Estudos() {
           <Button label="Registrar" icon={Plus} variant="secondary" onPress={() => setLogOpen(true)} style={{ flex: 1 }} />
         </View>
 
-        <Section title="Próximas avaliações">
-          {upcoming.length ? (
-            <List>{upcoming.map(examRow)}</List>
+        <Section title="Avaliações" action="Nova" onAction={() => setExamSheet('new')}>
+          {exams.length ? (
+            <Avaliacoes exams={exams} subjects={subjects} onOpen={(e) => setExamSheet(e)} />
           ) : (
             <Card onPress={() => setExamSheet('new')} style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
               <IconTile icon={CalendarClock} color={c.textDim} />
               <T v="callout" tone="dim" style={{ flex: 1 }}>
-                Marque provas e entregas: elas aparecem aqui com contagem regressiva.
+                Marque provas, simulados e entregas, ou puxe da Estácio: elas aparecem aqui separadas por situação.
               </T>
             </Card>
           )}
@@ -171,12 +149,6 @@ export default function Estudos() {
             </List>
           )}
         </Section>
-
-        {past.length > 0 && (
-          <Section title="Avaliações passadas">
-            <List>{past.slice(0, 10).map(examRow)}</List>
-          </Section>
-        )}
       </Screen>
 
       <SubjectSheet editing={subjectSheet} onClose={() => setSubjectSheet(null)} />
