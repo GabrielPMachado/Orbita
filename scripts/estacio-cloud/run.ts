@@ -60,20 +60,148 @@ async function gravar(fb: { token: string; uid: string }, doc: { ok: boolean; er
 
 /* ---------- login Microsoft ---------- */
 
+type EstadoLogin = { etapa: string; emailEnviado: boolean; senhaEnviada: boolean; esperaSenha: number; marca: (e: string) => void };
+function novoLogin(prefixo: string): EstadoLogin {
+  const st: EstadoLogin = {
+    etapa: '',
+    emailEnviado: false,
+    senhaEnviada: false,
+    esperaSenha: 0,
+    marca: (e) => {
+      if (e !== st.etapa) log(`  ${prefixo}: ${e}`);
+      st.etapa = e;
+    },
+  };
+  return st;
+}
+
+/** Um passo do login da Microsoft na página dada (e-mail, senha, conta já usada, "continuar conectado"). */
+async function passoMicrosoft(page: Page, login: string, senha: string, st: EstadoLogin) {
+  const marca = st.marca;
+  const mfa = await page.locator('#idDiv_SAOTCS_Proofs, #idDiv_SAOTCAS_Title, #idDiv_SAOTCC_Title, input[name=otc], #idTxtBx_SAOTCC_OTC').count();
+  if (mfa)
+    throw new Erro(
+      'A Microsoft pediu verificação em duas etapas. Na nuvem não dá para aprovar: entre uma vez pelo app ou desative o 2FA da conta da Estácio.',
+    );
+  // o erro só vale se estiver visível e com texto (o espaço dele existe escondido na página)
+  const erroVisivel = async (sel: string) => {
+    const el = page.locator(`${sel}:visible`);
+    if (!(await el.count())) return false;
+    const txt = (
+      (await el
+        .first()
+        .innerText()
+        .catch(() => '')) || ''
+    ).trim();
+    // "Digite sua senha" é a validação do campo vazio, não uma recusa
+    return txt.length > 0 && !/^(digite sua senha|enter (your )?password)\.?$/i.test(txt);
+  };
+  for (const sel of ['#usernameError', '#passwordError']) {
+    if (await erroVisivel(sel)) {
+      const txt = (
+        (await page
+          .locator(`${sel}:visible`)
+          .first()
+          .innerText()
+          .catch(() => '')) || ''
+      )
+        .replace(/\S+@\S+/g, '<e-mail>')
+        .slice(0, 160);
+      const u = new URL(page.url());
+      log(`  login: aviso em ${u.host}${u.pathname.replace(/\d+/g, '#')}: "${txt.trim()}"`);
+    }
+  }
+  // "Digite sua senha" antes de enviarmos a senha é só a validação do campo vazio: segue e preenche
+  if (st.emailEnviado && !st.senhaEnviada && (await erroVisivel('#usernameError')))
+    throw new Erro('A Microsoft não reconheceu o login. O segredo ESTACIO_LOGIN deve ser matricula@alunos.estacio.br.');
+  if (st.senhaEnviada && (await erroVisivel('#passwordError'))) throw new Erro('A Microsoft recusou a senha. Confira o segredo ESTACIO_SENHA.');
+  // Qual campo está de fato na tela? A Microsoft deixa o outro escondido fora da tela
+  // (.moveOffScreen) para o preenchimento automático de senhas, e o Playwright o vê como visível.
+  const campo = await page
+    .evaluate(() => {
+      const naTela = (el: Element | null) => {
+        if (!el) return false;
+        const r = (el as HTMLElement).getBoundingClientRect();
+        const st = getComputedStyle(el);
+        return (
+          !el.closest('.moveOffScreen, [aria-hidden="true"], [hidden]') &&
+          st.visibility !== 'hidden' &&
+          st.display !== 'none' &&
+          r.width > 0 &&
+          r.height > 0 &&
+          r.right > 0 &&
+          r.left < innerWidth
+        );
+      };
+      document.querySelectorAll('[data-orbita]').forEach((e) => e.removeAttribute('data-orbita'));
+      const pass = [...document.querySelectorAll('input[type=password]')].find(naTela);
+      const email = [...document.querySelectorAll('input[name=loginfmt], input[type=email]')].find(naTela);
+      if (pass) {
+        pass.setAttribute('data-orbita', 'senha');
+        return 'senha';
+      }
+      if (email) {
+        email.setAttribute('data-orbita', 'email');
+        return 'email';
+      }
+      return '';
+    })
+    .catch(() => '');
+  // botão "Avançar"/"Entrar" que está na tela; sem ele, Enter no campo
+  const enviar = async () => {
+    const b = page.locator('#idSIButton9:visible, input[type=submit]:visible, button[type=submit]:visible');
+    if (await b.count())
+      await b
+        .first()
+        .click()
+        .catch(() => {});
+    else await page.keyboard.press('Enter').catch(() => {});
+  };
+  if (campo === 'senha') {
+    // a senha vai uma vez só: reenviar várias vezes uma senha errada pode bloquear a conta
+    if (st.senhaEnviada) {
+      if (++st.esperaSenha >= 6) throw new Erro('A Microsoft não aceitou a senha (a tela de senha continuou). Confira o segredo ESTACIO_SENHA.');
+      return;
+    }
+    marca('senha');
+    st.senhaEnviada = true;
+    await page.locator('[data-orbita=senha]').fill(senha);
+    await enviar();
+    return;
+  }
+  if (campo === 'email') {
+    marca('e-mail');
+    st.emailEnviado = true;
+    await page.locator('[data-orbita=email]').fill(login);
+    await enviar();
+    return;
+  }
+  // "Continuar conectado?" → Sim
+  if (await page.locator('#KmsiCheckboxField, #KmsiDescription').count()) {
+    marca('continuar conectado');
+    await page
+      .locator('#idSIButton9')
+      .click()
+      .catch(() => {});
+    return;
+  }
+  // seletor de conta já usada
+  const tile = page.locator('#tilesHolder .table[role=button]');
+  if (await tile.count())
+    await tile
+      .first()
+      .click()
+      .catch(() => {});
+}
+
 /**
  * Só conta como logado quando a API do portal responde com sucesso (sessaoOk): a tela inicial
  * de quem ainda não entrou também é uma página do portal com texto.
  */
 export async function entrar(page: Page, login: string, senha: string, sessaoOk: () => boolean) {
   await page.goto(PORTAL.inicio, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-  let etapa = '';
-  let emailEnviado = false;
-  let senhaEnviada = false;
-  let esperaSenha = 0;
-  const marca = (e: string) => {
-    if (e !== etapa) log(`  login: ${e}`);
-    etapa = e;
-  };
+  const st = novoLogin('login');
+  const marca = st.marca;
   for (let i = 0; i < 50; i++) {
     await sleep(1500);
     if (sessaoOk()) return;
@@ -90,122 +218,9 @@ export async function entrar(page: Page, login: string, senha: string, sessaoOk:
       } else marca('esperando o portal');
       continue;
     }
-    const mfa = await page.locator('#idDiv_SAOTCS_Proofs, #idDiv_SAOTCAS_Title, #idDiv_SAOTCC_Title, input[name=otc], #idTxtBx_SAOTCC_OTC').count();
-    if (mfa)
-      throw new Erro(
-        'A Microsoft pediu verificação em duas etapas. Na nuvem não dá para aprovar: entre uma vez pelo app ou desative o 2FA da conta da Estácio.',
-      );
-    // o erro só vale se estiver visível e com texto (o espaço dele existe escondido na página)
-    const erroVisivel = async (sel: string) => {
-      const el = page.locator(`${sel}:visible`);
-      if (!(await el.count())) return false;
-      const txt = (
-        (await el
-          .first()
-          .innerText()
-          .catch(() => '')) || ''
-      ).trim();
-      // "Digite sua senha" é a validação do campo vazio, não uma recusa
-      return txt.length > 0 && !/^(digite sua senha|enter (your )?password)\.?$/i.test(txt);
-    };
-    for (const sel of ['#usernameError', '#passwordError']) {
-      if (await erroVisivel(sel)) {
-        const txt = (
-          (await page
-            .locator(`${sel}:visible`)
-            .first()
-            .innerText()
-            .catch(() => '')) || ''
-        )
-          .replace(/\S+@\S+/g, '<e-mail>')
-          .slice(0, 160);
-        const u = new URL(page.url());
-        log(`  login: aviso em ${u.host}${u.pathname.replace(/\d+/g, '#')}: "${txt.trim()}"`);
-      }
-    }
-    // "Digite sua senha" antes de enviarmos a senha é só a validação do campo vazio: segue e preenche
-    if (emailEnviado && !senhaEnviada && (await erroVisivel('#usernameError')))
-      throw new Erro('A Microsoft não reconheceu o login. O segredo ESTACIO_LOGIN deve ser matricula@alunos.estacio.br.');
-    if (senhaEnviada && (await erroVisivel('#passwordError'))) throw new Erro('A Microsoft recusou a senha. Confira o segredo ESTACIO_SENHA.');
-    // Qual campo está de fato na tela? A Microsoft deixa o outro escondido fora da tela
-    // (.moveOffScreen) para o preenchimento automático de senhas, e o Playwright o vê como visível.
-    const campo = await page
-      .evaluate(() => {
-        const naTela = (el: Element | null) => {
-          if (!el) return false;
-          const r = (el as HTMLElement).getBoundingClientRect();
-          const st = getComputedStyle(el);
-          return (
-            !el.closest('.moveOffScreen, [aria-hidden="true"], [hidden]') &&
-            st.visibility !== 'hidden' &&
-            st.display !== 'none' &&
-            r.width > 0 &&
-            r.height > 0 &&
-            r.right > 0 &&
-            r.left < innerWidth
-          );
-        };
-        document.querySelectorAll('[data-orbita]').forEach((e) => e.removeAttribute('data-orbita'));
-        const pass = [...document.querySelectorAll('input[type=password]')].find(naTela);
-        const email = [...document.querySelectorAll('input[name=loginfmt], input[type=email]')].find(naTela);
-        if (pass) {
-          pass.setAttribute('data-orbita', 'senha');
-          return 'senha';
-        }
-        if (email) {
-          email.setAttribute('data-orbita', 'email');
-          return 'email';
-        }
-        return '';
-      })
-      .catch(() => '');
-    // botão "Avançar"/"Entrar" que está na tela; sem ele, Enter no campo
-    const enviar = async () => {
-      const b = page.locator('#idSIButton9:visible, input[type=submit]:visible, button[type=submit]:visible');
-      if (await b.count())
-        await b
-          .first()
-          .click()
-          .catch(() => {});
-      else await page.keyboard.press('Enter').catch(() => {});
-    };
-    if (campo === 'senha') {
-      // a senha vai uma vez só: reenviar várias vezes uma senha errada pode bloquear a conta
-      if (senhaEnviada) {
-        if (++esperaSenha >= 6) throw new Erro('A Microsoft não aceitou a senha (a tela de senha continuou). Confira o segredo ESTACIO_SENHA.');
-        continue;
-      }
-      marca('senha');
-      senhaEnviada = true;
-      await page.locator('[data-orbita=senha]').fill(senha);
-      await enviar();
-      continue;
-    }
-    if (campo === 'email') {
-      marca('e-mail');
-      emailEnviado = true;
-      await page.locator('[data-orbita=email]').fill(login);
-      await enviar();
-      continue;
-    }
-    // "Continuar conectado?" → Sim
-    if (await page.locator('#KmsiCheckboxField, #KmsiDescription').count()) {
-      marca('continuar conectado');
-      await page
-        .locator('#idSIButton9')
-        .click()
-        .catch(() => {});
-      continue;
-    }
-    // seletor de conta já usada
-    const tile = page.locator('#tilesHolder .table[role=button]');
-    if (await tile.count())
-      await tile
-        .first()
-        .click()
-        .catch(() => {});
+    await passoMicrosoft(page, login, senha, st);
   }
-  throw new Erro(`O login da Estácio não terminou (parou em: ${etapa || 'abrir o portal'}).`);
+  throw new Erro(`O login da Estácio não terminou (parou em: ${st.etapa || 'abrir o portal'}).`);
 }
 
 /** Onde a página parou: endereço sem números, título, tamanho do texto e botões curtos. Nada de dados. */
@@ -331,8 +346,21 @@ async function varrer(login: string, senha: string) {
 
     log('Financeiro (SIA)');
     await ir(SIA_ENTRADA, 12_000); // cria a sessão do SIA antes de abrir o financeiro
-    await passo('SIA: entrar', SIA_ACESSAR_JS, 6000);
-    // o "Acessar" passa pela Microsoft (mesma conta): espera voltar ao SIA, escolhendo a conta se pedir
+    // o "Acessar" abre o login da Microsoft numa janela nova (popup): faz o login nela e volta
+    const popupP = ctx.waitForEvent('page', { timeout: 10_000 }).catch(() => null);
+    await passo('SIA: entrar', SIA_ACESSAR_JS, 1000);
+    const popup = await popupP;
+    if (popup) {
+      log('  SIA: janela de login aberta');
+      const stSia = novoLogin('SIA login');
+      for (let i = 0; i < 30 && !popup.isClosed(); i++) {
+        await sleep(1500);
+        if (popup.isClosed()) break;
+        await passoMicrosoft(popup, login, senha, stSia);
+      }
+      log(popup.isClosed() ? '  SIA: janela de login fechou' : '  SIA: janela de login não fechou');
+      await sleep(4000);
+    }
     for (let i = 0; i < 16 && !/^https:\/\/sia\.estacio\.br\/sianet\/(?!Logon)/i.test(page.url()); i++) {
       const tile = page.locator('#tilesHolder .table[role=button], [data-test-id] .table[role=button]');
       if (/^https:\/\/login\.microsoftonline\.com\//.test(page.url()) && (await tile.count()))
