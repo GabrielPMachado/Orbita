@@ -127,9 +127,49 @@ export async function entrar(page: Page, login: string, senha: string, sessaoOk:
     if (emailEnviado && !senhaEnviada && (await erroVisivel('#usernameError')))
       throw new Erro('A Microsoft não reconheceu o login. O segredo ESTACIO_LOGIN deve ser matricula@alunos.estacio.br.');
     if (senhaEnviada && (await erroVisivel('#passwordError'))) throw new Erro('A Microsoft recusou a senha. Confira o segredo ESTACIO_SENHA.');
-    // senha primeiro: na tela da senha o campo de e-mail continua na página
-    const pass = page.locator('input[type=password]:visible');
-    if (await pass.count()) {
+    // Qual campo está de fato na tela? A Microsoft deixa o outro escondido fora da tela
+    // (.moveOffScreen) para o preenchimento automático de senhas, e o Playwright o vê como visível.
+    const campo = await page
+      .evaluate(() => {
+        const naTela = (el: Element | null) => {
+          if (!el) return false;
+          const r = (el as HTMLElement).getBoundingClientRect();
+          const st = getComputedStyle(el);
+          return (
+            !el.closest('.moveOffScreen, [aria-hidden="true"], [hidden]') &&
+            st.visibility !== 'hidden' &&
+            st.display !== 'none' &&
+            r.width > 0 &&
+            r.height > 0 &&
+            r.right > 0 &&
+            r.left < innerWidth
+          );
+        };
+        document.querySelectorAll('[data-orbita]').forEach((e) => e.removeAttribute('data-orbita'));
+        const pass = [...document.querySelectorAll('input[type=password]')].find(naTela);
+        const email = [...document.querySelectorAll('input[name=loginfmt], input[type=email]')].find(naTela);
+        if (pass) {
+          pass.setAttribute('data-orbita', 'senha');
+          return 'senha';
+        }
+        if (email) {
+          email.setAttribute('data-orbita', 'email');
+          return 'email';
+        }
+        return '';
+      })
+      .catch(() => '');
+    // botão "Avançar"/"Entrar" que está na tela; sem ele, Enter no campo
+    const enviar = async () => {
+      const b = page.locator('#idSIButton9:visible, input[type=submit]:visible, button[type=submit]:visible');
+      if (await b.count())
+        await b
+          .first()
+          .click()
+          .catch(() => {});
+      else await page.keyboard.press('Enter').catch(() => {});
+    };
+    if (campo === 'senha') {
       // a senha vai uma vez só: reenviar várias vezes uma senha errada pode bloquear a conta
       if (senhaEnviada) {
         if (++esperaSenha >= 6) throw new Erro('A Microsoft não aceitou a senha (a tela de senha continuou). Confira o segredo ESTACIO_SENHA.');
@@ -137,24 +177,15 @@ export async function entrar(page: Page, login: string, senha: string, sessaoOk:
       }
       marca('senha');
       senhaEnviada = true;
-      await pass.first().fill(senha);
-      await page
-        .locator('#idSIButton9, input[type=submit], button[type=submit]')
-        .first()
-        .click()
-        .catch(() => {});
+      await page.locator('[data-orbita=senha]').fill(senha);
+      await enviar();
       continue;
     }
-    const email = page.locator('input[name=loginfmt]:visible, input[type=email]:visible');
-    if (await email.count()) {
+    if (campo === 'email') {
       marca('e-mail');
       emailEnviado = true;
-      await email.first().fill(login);
-      await page
-        .locator('#idSIButton9, input[type=submit]')
-        .first()
-        .click()
-        .catch(() => {});
+      await page.locator('[data-orbita=email]').fill(login);
+      await enviar();
       continue;
     }
     // "Continuar conectado?" → Sim
