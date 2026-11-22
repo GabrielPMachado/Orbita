@@ -16,6 +16,22 @@ export const SIA_FINANCEIRO = 'https://sia.estacio.br/sianet/Aluno/InformacoesFi
 export const SIA_ENTRADA = 'https://sia.estacio.br/sianet/';
 
 /**
+ * Na página de logon do SIA (/sianet/Logon): toca em "Acessar", que entra com a mesma conta da
+ * Microsoft e cria a sessão do SIA. Fora dela não faz nada.
+ */
+export const SIA_ACESSAR_JS = `
+(function(){
+  var step = function(ok, info){ try { window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'step', name: 'entrar no SIA', ok: ok, info: info })); } catch(e){} };
+  if (!/\\/Logon/i.test(location.pathname)) { step(true, 'já com sessão'); return true; }
+  var b = [].slice.call(document.querySelectorAll('button, a, input[type=submit]')).find(function(x){
+    return /^\\s*acessar\\s*$/i.test(x.innerText || x.value || '');
+  });
+  if (b) { b.click(); step(true, 'tocou em Acessar'); } else step(false, 'botão Acessar não encontrado');
+  true;
+})();
+`;
+
+/**
  * Injetado na página do financeiro: espera as linhas aparecerem (até 10 s) e devolve cada uma
  * (texto + ficha, se houver). Avisa o resultado como um passo, com o endereço e o título da
  * página quando não acha nada, para dar para ver onde parou.

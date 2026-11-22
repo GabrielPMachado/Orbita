@@ -11,7 +11,7 @@
 import { chromium, devices, type Page } from 'playwright';
 import { analisar, HOOK_JS, isPortalApi, novaCaptura, PAGE_JS } from '../../src/lib/estacio';
 import { PORTAL } from '../../src/lib/estacioApi';
-import { FIN_JS, SIA_ENTRADA, SIA_FINANCEIRO, type FinRow } from '../../src/lib/estacioFinanceiro';
+import { FIN_JS, SIA_ACESSAR_JS, SIA_ENTRADA, SIA_FINANCEIRO, type FinRow } from '../../src/lib/estacioFinanceiro';
 
 const API_KEY = 'AIzaSyDepvsTarS6FfS-nGNz51EVOlOR0yK5yOg';
 const PROJECT = 'financy-2d';
@@ -331,6 +331,22 @@ async function varrer(login: string, senha: string) {
 
     log('Financeiro (SIA)');
     await ir(SIA_ENTRADA, 12_000); // cria a sessão do SIA antes de abrir o financeiro
+    await passo('SIA: entrar', SIA_ACESSAR_JS, 6000);
+    // o "Acessar" passa pela Microsoft (mesma conta): espera voltar ao SIA, escolhendo a conta se pedir
+    for (let i = 0; i < 16 && !/sia\.estacio\.br\/sianet\/(?!Logon)/i.test(page.url()); i++) {
+      const tile = page.locator('#tilesHolder .table[role=button], [data-test-id] .table[role=button]');
+      if (/login\.microsoftonline\.com/.test(page.url()) && (await tile.count()))
+        await tile
+          .first()
+          .click()
+          .catch(() => {});
+      else if (await page.locator('#KmsiDescription, #KmsiCheckboxField').count())
+        await page
+          .locator('#idSIButton9')
+          .click()
+          .catch(() => {});
+      await sleep(1500);
+    }
     await diagnostico(page, 'SIA entrada');
     await ir(SIA_FINANCEIRO, 12_000);
     await diagnostico(page, 'SIA financeiro');
