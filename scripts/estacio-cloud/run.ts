@@ -105,6 +105,21 @@ export async function entrar(page: Page, login: string, senha: string, sessaoOk:
         ).trim().length > 0
       );
     };
+    for (const sel of ['#usernameError', '#passwordError']) {
+      if (await erroVisivel(sel)) {
+        const txt = (
+          (await page
+            .locator(`${sel}:visible`)
+            .first()
+            .innerText()
+            .catch(() => '')) || ''
+        )
+          .replace(/\S+@\S+/g, '<e-mail>')
+          .slice(0, 160);
+        const u = new URL(page.url());
+        log(`  login: aviso em ${u.host}${u.pathname.replace(/\d+/g, '#')}: "${txt.trim()}"`);
+      }
+    }
     if (await erroVisivel('#usernameError'))
       throw new Erro('A Microsoft não reconheceu o login. O segredo ESTACIO_LOGIN deve ser matricula@alunos.estacio.br.');
     if (await erroVisivel('#passwordError')) throw new Erro('A Microsoft recusou a senha. Confira o segredo ESTACIO_SENHA.');
