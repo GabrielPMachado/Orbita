@@ -69,6 +69,7 @@ export async function entrar(page: Page, login: string, senha: string, sessaoOk:
   let etapa = '';
   let emailEnviado = false;
   let senhaEnviada = false;
+  let esperaSenha = 0;
   const marca = (e: string) => {
     if (e !== etapa) log(`  login: ${e}`);
     etapa = e;
@@ -97,15 +98,15 @@ export async function entrar(page: Page, login: string, senha: string, sessaoOk:
     // o erro só vale se estiver visível e com texto (o espaço dele existe escondido na página)
     const erroVisivel = async (sel: string) => {
       const el = page.locator(`${sel}:visible`);
-      return (
-        (await el.count()) > 0 &&
-        (
-          (await el
-            .first()
-            .innerText()
-            .catch(() => '')) || ''
-        ).trim().length > 0
-      );
+      if (!(await el.count())) return false;
+      const txt = (
+        (await el
+          .first()
+          .innerText()
+          .catch(() => '')) || ''
+      ).trim();
+      // "Digite sua senha" é a validação do campo vazio, não uma recusa
+      return txt.length > 0 && !/^(digite sua senha|enter (your )?password)\.?$/i.test(txt);
     };
     for (const sel of ['#usernameError', '#passwordError']) {
       if (await erroVisivel(sel)) {
@@ -126,6 +127,24 @@ export async function entrar(page: Page, login: string, senha: string, sessaoOk:
     if (emailEnviado && !senhaEnviada && (await erroVisivel('#usernameError')))
       throw new Erro('A Microsoft não reconheceu o login. O segredo ESTACIO_LOGIN deve ser matricula@alunos.estacio.br.');
     if (senhaEnviada && (await erroVisivel('#passwordError'))) throw new Erro('A Microsoft recusou a senha. Confira o segredo ESTACIO_SENHA.');
+    // senha primeiro: na tela da senha o campo de e-mail continua na página
+    const pass = page.locator('input[type=password]:visible');
+    if (await pass.count()) {
+      // a senha vai uma vez só: reenviar várias vezes uma senha errada pode bloquear a conta
+      if (senhaEnviada) {
+        if (++esperaSenha >= 6) throw new Erro('A Microsoft não aceitou a senha (a tela de senha continuou). Confira o segredo ESTACIO_SENHA.');
+        continue;
+      }
+      marca('senha');
+      senhaEnviada = true;
+      await pass.first().fill(senha);
+      await page
+        .locator('#idSIButton9, input[type=submit], button[type=submit]')
+        .first()
+        .click()
+        .catch(() => {});
+      continue;
+    }
     const email = page.locator('input[name=loginfmt]:visible, input[type=email]:visible');
     if (await email.count()) {
       marca('e-mail');
@@ -133,18 +152,6 @@ export async function entrar(page: Page, login: string, senha: string, sessaoOk:
       await email.first().fill(login);
       await page
         .locator('#idSIButton9, input[type=submit]')
-        .first()
-        .click()
-        .catch(() => {});
-      continue;
-    }
-    const pass = page.locator('input[type=password]:visible');
-    if (await pass.count()) {
-      marca('senha');
-      senhaEnviada = true;
-      await pass.first().fill(senha);
-      await page
-        .locator('#idSIButton9, input[type=submit], button[type=submit]')
         .first()
         .click()
         .catch(() => {});
