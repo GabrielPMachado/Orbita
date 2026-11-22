@@ -173,7 +173,7 @@ export const EstacioWeb = forwardRef(function EstacioWeb(
     roteiro.current = [
       { label: 'Início', run: () => setUrl(PORTAL.inicio), wait: 7000 },
       { label: 'Lista de avaliações', run: js(PORTAL.irAvaliacoes), wait: 4500 },
-      { label: 'Contando disciplinas', run: js(PORTAL.contar), wait: 2500 },
+      { label: 'Contando disciplinas', run: js(PORTAL.contar), wait: 11000 },
     ];
     passo();
   };

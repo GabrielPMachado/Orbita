@@ -3,6 +3,12 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.18.3] - 2026-11-22
+
+### Corrigido
+- Leitura da Estácio na nuvem: o robô achava que já tinha entrado assim que via a tela inicial do portal (que também aparece sem login) e lia tudo vazio. Agora só conta como logado quando a API do portal responde; na tela inicial ele toca em "Entrar" e segue o login da Microsoft. O log mostra em que parte do login parou, se parar.
+- A contagem de disciplinas espera até 10 s pela lista, no app e na nuvem (antes o roteiro seguia depois de 2,5 s e podia achar zero).
+
 ## [0.18.2] - 2026-11-22
 
 ### Corrigido

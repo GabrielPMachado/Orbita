@@ -9,7 +9,7 @@
  * Só lê. O repositório é público: o log mostra só etapas e contagens, nunca dados.
  */
 import { chromium, devices, type Page } from 'playwright';
-import { analisar, HOOK_JS, novaCaptura, PAGE_JS } from '../../src/lib/estacio';
+import { analisar, HOOK_JS, isPortalApi, novaCaptura, PAGE_JS } from '../../src/lib/estacio';
 import { PORTAL } from '../../src/lib/estacioApi';
 import { FIN_JS, SIA_ENTRADA, SIA_FINANCEIRO, type FinRow } from '../../src/lib/estacioFinanceiro';
 
@@ -60,15 +60,31 @@ async function gravar(fb: { token: string; uid: string }, doc: { ok: boolean; er
 
 /* ---------- login Microsoft ---------- */
 
-async function entrar(page: Page, login: string, senha: string) {
+/**
+ * Só conta como logado quando a API do portal responde com sucesso (sessaoOk): a tela inicial
+ * de quem ainda não entrou também é uma página do portal com texto.
+ */
+export async function entrar(page: Page, login: string, senha: string, sessaoOk: () => boolean) {
   await page.goto(PORTAL.inicio, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-  for (let i = 0; i < 40; i++) {
+  let etapa = '';
+  const marca = (e: string) => {
+    if (e !== etapa) log(`  login: ${e}`);
+    etapa = e;
+  };
+  for (let i = 0; i < 50; i++) {
     await sleep(1500);
+    if (sessaoOk()) return;
     const u = page.url();
-    if (/estudante\.estacio\.br/.test(u) && !(await page.locator('input[type=password]').count())) {
-      // já dentro do portal (e não na tela de senha)
-      const txt = await page.evaluate(() => document.body?.innerText?.length ?? 0).catch(() => 0);
-      if (txt > 200) return;
+    if (/estudante\.estacio\.br/.test(u) && !(await page.locator('input[type=password]:visible').count())) {
+      // tela inicial sem sessão: toca no botão de entrar (é ele que leva ao login da Microsoft)
+      const botao = page.locator('button:visible, a:visible').filter({ hasText: /^\s*(entrar|acessar|login|fazer login|entrar com)/i });
+      if (await botao.count()) {
+        marca('botão de entrar do portal');
+        await botao
+          .first()
+          .click()
+          .catch(() => {});
+      } else marca('esperando o portal');
       continue;
     }
     const mfa = await page.locator('#idDiv_SAOTCS_Proofs, #idDiv_SAOTCAS_Title, #idDiv_SAOTCC_Title, input[name=otc], #idTxtBx_SAOTCC_OTC').count();
@@ -80,6 +96,7 @@ async function entrar(page: Page, login: string, senha: string) {
       throw new Erro('Login ou senha da Estácio recusados. Confira os segredos ESTACIO_LOGIN e ESTACIO_SENHA.');
     const email = page.locator('input[name=loginfmt]:visible, input[type=email]:visible');
     if (await email.count()) {
+      marca('e-mail');
       await email.first().fill(login);
       await page
         .locator('#idSIButton9, input[type=submit]')
@@ -90,6 +107,7 @@ async function entrar(page: Page, login: string, senha: string) {
     }
     const pass = page.locator('input[type=password]:visible');
     if (await pass.count()) {
+      marca('senha');
       await pass.first().fill(senha);
       await page
         .locator('#idSIButton9, input[type=submit], button[type=submit]')
@@ -100,6 +118,7 @@ async function entrar(page: Page, login: string, senha: string) {
     }
     // "Continuar conectado?" → Sim
     if (await page.locator('#KmsiCheckboxField, #KmsiDescription').count()) {
+      marca('continuar conectado');
       await page
         .locator('#idSIButton9')
         .click()
@@ -114,7 +133,7 @@ async function entrar(page: Page, login: string, senha: string) {
         .click()
         .catch(() => {});
   }
-  throw new Erro('O login da Estácio não terminou (a página mudou ou demorou demais).');
+  throw new Erro(`O login da Estácio não terminou (parou em: ${etapa || 'abrir o portal'}).`);
 }
 
 /* ---------- varredura ---------- */
@@ -124,6 +143,8 @@ async function varrer(login: string, senha: string) {
   let atual: number | undefined;
   let contagem: number | undefined;
   let etapas = 0;
+  /** a API do portal respondeu com sucesso: a sessão vale */
+  let apiOk = false;
   const passos: { name: string; ok: boolean; info: string }[] = [];
 
   const browser = await chromium.launch({ headless: true });
@@ -139,6 +160,7 @@ async function varrer(login: string, senha: string) {
       return;
     }
     if (m.type === 'json' && typeof m.body === 'string') {
+      if (isPortalApi(String(m.url))) apiOk = true;
       cap.json.push({
         ordem: atual !== undefined && atual >= 0 ? atual : undefined,
         url: String(m.url),
@@ -188,12 +210,12 @@ async function varrer(login: string, senha: string) {
 
   try {
     log('Entrando');
-    await entrar(page, login, senha);
+    await entrar(page, login, senha, () => apiOk);
     log('Dentro do portal');
 
     await ir(PORTAL.inicio, 7000);
     await passo('Lista de avaliações', PORTAL.irAvaliacoes, 4500);
-    await passo('Contando disciplinas', PORTAL.contar, 2500);
+    await passo('Contando disciplinas', PORTAL.contar, 11_000);
     const n = Math.min(contagem ?? 0, 12);
     log(`${n} disciplina(s)`);
 
@@ -243,7 +265,9 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error(e instanceof Erro ? e.message : 'Falha ao iniciar.');
-  process.exit(1);
-});
+// ORBITA_TESTE=1: só importa as funções (teste local do login)
+if (!process.env.ORBITA_TESTE)
+  main().catch((e) => {
+    console.error(e instanceof Erro ? e.message : 'Falha ao iniciar.');
+    process.exit(1);
+  });
