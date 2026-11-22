@@ -3,6 +3,11 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.18.4] - 2026-11-22
+
+### Corrigido
+- A prova de sessão da Estácio (no app e na nuvem) aceitava qualquer resposta da API do portal, mas ela tem endereços públicos que respondem sem login. Agora só valem turmas, avaliações e dados do aluno.
+
 ## [0.18.3] - 2026-11-22
 
 ### Corrigido

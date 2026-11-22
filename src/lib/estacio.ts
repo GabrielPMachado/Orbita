@@ -14,8 +14,14 @@ import { lerFinanceiro, type Cobranca, type FinRow } from './estacioFinanceiro';
 export const isLoginUrl = (u: string) =>
   /login\.microsoftonline\.com|login\.live\.com|login\.microsoft\.com|\/adfs\/|b2clogin\.com|\/oauth2\/v2\.0\/authorize/i.test(u);
 
-/** Resposta da API do portal: só chega com a sessão válida. */
-export const isPortalApi = (u: string) => /apis\.estudante\.estacio\.br\/|api-sirius\.prd\.qlabs\.com\.br\//i.test(u);
+/**
+ * Resposta de um endereço da API do portal que só responde com a sessão válida (turmas,
+ * avaliações, dados do aluno). A API também tem endereços públicos (configuração etc.), que
+ * respondem mesmo sem login: esses não provam nada.
+ */
+export const isPortalApi = (u: string) =>
+  /apis\.estudante\.estacio\.br\/rest\/(turmas|me\/|v\d+\/avaliacoes|avaliacoes|calendarios|alunos?\/)/i.test(u) ||
+  /api-sirius\.prd\.qlabs\.com\.br\/sirius-student-api\//i.test(u);
 
 export const ESTACIO_URLS = [
   { label: 'Minha Estácio', url: 'https://estudante.estacio.br/' },

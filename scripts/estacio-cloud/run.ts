@@ -145,6 +145,7 @@ async function varrer(login: string, senha: string) {
   let etapas = 0;
   /** a API do portal respondeu com sucesso: a sessão vale */
   let apiOk = false;
+  const caminhos = new Set<string>();
   const passos: { name: string; ok: boolean; info: string }[] = [];
 
   const browser = await chromium.launch({ headless: true });
@@ -161,6 +162,13 @@ async function varrer(login: string, senha: string) {
     }
     if (m.type === 'json' && typeof m.body === 'string') {
       if (isPortalApi(String(m.url))) apiOk = true;
+      // só o caminho, sem números nem query: ajuda a ver o que respondeu sem expor dados
+      try {
+        const u = new URL(String(m.url));
+        caminhos.add(u.host + u.pathname.replace(/\d+/g, '#'));
+      } catch {
+        /* url estranha: ignora */
+      }
       cap.json.push({
         ordem: atual !== undefined && atual >= 0 ? atual : undefined,
         url: String(m.url),
@@ -239,6 +247,7 @@ async function varrer(login: string, senha: string) {
     await browser.close();
   }
 
+  log(`Respostas da API: ${[...caminhos].slice(0, 25).join(', ') || 'nenhuma'}`);
   const r = analisar(cap);
   log(
     `Lido: ${r.disciplinas.length} disciplina(s), ${(r.avaliacoes ?? []).length} avaliação(ões), ${(r.cobrancas ?? []).length} cobrança(s), ${cap.json.length} resposta(s) JSON`,
