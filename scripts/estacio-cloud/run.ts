@@ -208,6 +208,24 @@ export async function entrar(page: Page, login: string, senha: string, sessaoOk:
   throw new Erro(`O login da Estácio não terminou (parou em: ${etapa || 'abrir o portal'}).`);
 }
 
+/** Onde a página parou: endereço sem números, título, tamanho do texto e botões curtos. Nada de dados. */
+async function diagnostico(page: Page, nome: string) {
+  const d = await page
+    .evaluate(() => ({
+      url: location.host + location.pathname,
+      titulo: document.title,
+      chars: (document.body?.innerText ?? '').length,
+      botoes: [...document.querySelectorAll('button, a, input[type=submit]')]
+        .map((b) => ((b as HTMLElement).innerText || (b as HTMLInputElement).value || '').trim())
+        .filter((t) => t && t.length <= 25)
+        .slice(0, 12),
+    }))
+    .catch(() => null);
+  if (!d) return log(`  ${nome}: página não respondeu`);
+  const limpa = (t: string) => t.replace(/\d+/g, '#').replace(/\S+@\S+/g, '<e-mail>');
+  log(`  ${nome}: ${limpa(d.url)} · "${limpa(d.titulo).slice(0, 40)}" · ${d.chars} letras · botões: ${d.botoes.map(limpa).join(' | ') || 'nenhum'}`);
+}
+
 /* ---------- varredura ---------- */
 
 async function varrer(login: string, senha: string) {
@@ -313,7 +331,9 @@ async function varrer(login: string, senha: string) {
 
     log('Financeiro (SIA)');
     await ir(SIA_ENTRADA, 12_000); // cria a sessão do SIA antes de abrir o financeiro
+    await diagnostico(page, 'SIA entrada');
     await ir(SIA_FINANCEIRO, 12_000);
+    await diagnostico(page, 'SIA financeiro');
     await passo('Financeiro: boletos', FIN_JS, 11_000);
   } finally {
     await browser.close();
