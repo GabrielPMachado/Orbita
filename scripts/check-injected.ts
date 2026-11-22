@@ -5,14 +5,13 @@
  */
 import { HOOK_JS, LINKS_JS, PAGE_JS, pdfJs } from '../src/lib/estacio';
 import { PORTAL } from '../src/lib/estacioApi';
-import { FIN_JS, SIA_ACESSAR_JS } from '../src/lib/estacioFinanceiro';
+import { FIN_JS } from '../src/lib/estacioFinanceiro';
 
 const scripts: Record<string, string> = {
   HOOK_JS,
   PAGE_JS,
   LINKS_JS,
   FIN_JS,
-  SIA_ACESSAR_JS,
   pdfJs: pdfJs('https://exemplo/boleto.pdf'),
   irAvaliacoes: PORTAL.irAvaliacoes,
   contar: PORTAL.contar,

@@ -11,7 +11,7 @@
 import { chromium, devices, type Page } from 'playwright';
 import { analisar, HOOK_JS, isPortalApi, novaCaptura, PAGE_JS } from '../../src/lib/estacio';
 import { PORTAL } from '../../src/lib/estacioApi';
-import { FIN_JS, SIA_ACESSAR_JS, SIA_ENTRADA, SIA_FINANCEIRO, type FinRow } from '../../src/lib/estacioFinanceiro';
+import { FIN_JS, SIA_ENTRADA, SIA_FINANCEIRO, type FinRow } from '../../src/lib/estacioFinanceiro';
 
 const API_KEY = 'AIzaSyDepvsTarS6FfS-nGNz51EVOlOR0yK5yOg';
 const PROJECT = 'financy-2d';
@@ -345,34 +345,11 @@ async function varrer(login: string, senha: string) {
     atual = undefined;
 
     log('Financeiro (SIA)');
-    await ir(SIA_ENTRADA, 12_000); // cria a sessão do SIA antes de abrir o financeiro
-    // o "Acessar" abre o login da Microsoft numa janela nova (popup): faz o login nela e volta
-    const popupP = ctx.waitForEvent('page', { timeout: 10_000 }).catch(() => null);
-    await passo('SIA: entrar', SIA_ACESSAR_JS, 1000);
-    const popup = await popupP;
-    if (popup) {
-      log('  SIA: janela de login aberta');
-      const stSia = novoLogin('SIA login');
-      for (let i = 0; i < 30 && !popup.isClosed(); i++) {
-        await sleep(1500);
-        if (popup.isClosed()) break;
-        await passoMicrosoft(popup, login, senha, stSia);
-      }
-      log(popup.isClosed() ? '  SIA: janela de login fechou' : '  SIA: janela de login não fechou');
-      await sleep(4000);
-    }
-    for (let i = 0; i < 16 && !/^https:\/\/sia\.estacio\.br\/sianet\/(?!Logon)/i.test(page.url()); i++) {
-      const tile = page.locator('#tilesHolder .table[role=button], [data-test-id] .table[role=button]');
-      if (/^https:\/\/login\.microsoftonline\.com\//.test(page.url()) && (await tile.count()))
-        await tile
-          .first()
-          .click()
-          .catch(() => {});
-      else if (await page.locator('#KmsiDescription, #KmsiCheckboxField').count())
-        await page
-          .locator('#idSIButton9')
-          .click()
-          .catch(() => {});
+    // "Entrar com e-mail de estudante": passa pela Microsoft (mesma conta) e volta ao SIA com sessão
+    await ir(SIA_ENTRADA, 4000);
+    const stSia = novoLogin('SIA login');
+    for (let i = 0; i < 30 && !/^https:\/\/sia\.estacio\.br\/sianet\/(?!Logon)/i.test(page.url()); i++) {
+      if (/^https:\/\/(login\.microsoftonline\.com|login\.live\.com)\//i.test(page.url())) await passoMicrosoft(page, login, senha, stSia);
       await sleep(1500);
     }
     await diagnostico(page, 'SIA entrada');
