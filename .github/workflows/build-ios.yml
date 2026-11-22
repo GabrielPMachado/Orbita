@@ -64,6 +64,7 @@ jobs:
             GCC_WARN_INHIBIT_ALL_WARNINGS=YES \
             SWIFT_SUPPRESS_WARNINGS=YES \
             CLANG_WARN_DOCUMENTATION_COMMENTS=NO \
+            ENABLE_DEBUG_DYLIB=NO ENABLE_PREVIEWS=NO \
             -quiet
 
       - name: Embutir entitlements (App Group do widget)
@@ -93,6 +94,7 @@ jobs:
           EXT=$(ls -d "$APP"/PlugIns/*.appex 2>/dev/null | head -1)
           [ -n "$EXT" ] || { echo "::error::Extensão do widget não está no app (PlugIns vazio)"; exit 1; }
           echo "Extensão: $(basename "$EXT")"
+          if ls "$EXT"/*.debug.dylib >/dev/null 2>&1; then echo "::error::O widget saiu em formato Debug (debug.dylib)"; exit 1; fi
           POINT=$($B -c "Print :NSExtension:NSExtensionPointIdentifier" "$EXT/Info.plist")
           echo "Ponto de extensão: $POINT"
           [ "$POINT" = "com.apple.widgetkit-extension" ] || { echo "::error::A extensão não é de widget ($POINT)"; exit 1; }

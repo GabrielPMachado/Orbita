@@ -3,6 +3,11 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.17.3] - 2026-11-22
+
+### Corrigido
+- A extensão do widget saía compilada no formato de desenvolvimento (com `ExpoWidgetsTarget.debug.dylib` e `__preview.dylib`), mesmo no build Release. Agora o widget sai no formato normal de Release, como o app.
+
 ## [0.17.2] - 2026-11-20
 
 ### Corrigido
