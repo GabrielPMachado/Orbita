@@ -313,6 +313,10 @@ export function lerPortal(c: Captura): LeituraEstacio {
 }
 
 /** Roteiro da varredura: o que abrir e o que tocar, nessa ordem. */
+/** Texto como literal de JS para os scripts injetados (escapa <, >, / e separadores de linha). */
+const jsString = (v: string) =>
+  JSON.stringify(v).replace(/[<>/\u2028\u2029]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
+
 /**
  * Scripts que navegam no portal. Cada um espera o elemento aparecer (em vez de clicar às cegas
  * depois de um tempo fixo), só age no site certo e avisa o app se deu certo: { type: 'step' }.
@@ -349,7 +353,7 @@ export const PORTAL = {
    * Só age na sala de avaliações; "Voltar" só é usado lá dentro, para sair de outra aba.
    */
   aba: (nome: string) =>
-    `(function(){ ${STEP} var nome = ${JSON.stringify(nome)}; var t0 = Date.now(); var voltou = false;
+    `(function(){ ${STEP} var nome = ${jsString(nome)}; var t0 = Date.now(); var voltou = false;
     var achar = function(){ return [].slice.call(document.querySelectorAll('button')).find(function(b){ return (b.innerText || '').trim().split('\\n')[0].trim() === nome; }); };
     var voltar = function(){ return [].slice.call(document.querySelectorAll('button')).find(function(b){ return (b.innerText || '').trim() === 'Voltar'; }); };
     var go = function(){

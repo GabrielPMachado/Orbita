@@ -20,8 +20,8 @@ export const isLoginUrl = (u: string) =>
  * respondem mesmo sem login: esses não provam nada.
  */
 export const isPortalApi = (u: string) =>
-  /apis\.estudante\.estacio\.br\/rest\/(turmas|me\/|v\d+\/avaliacoes|avaliacoes|calendarios|alunos?\/)/i.test(u) ||
-  /api-sirius\.prd\.qlabs\.com\.br\/sirius-student-api\//i.test(u);
+  /^https?:\/\/apis\.estudante\.estacio\.br\/rest\/(turmas|me\/|v\d+\/avaliacoes|avaliacoes|calendarios|alunos?\/)/i.test(u) ||
+  /^https?:\/\/api-sirius\.prd\.qlabs\.com\.br\/sirius-student-api\//i.test(u);
 
 export const ESTACIO_URLS = [
   { label: 'Minha Estácio', url: 'https://estudante.estacio.br/' },
