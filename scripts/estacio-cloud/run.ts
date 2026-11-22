@@ -67,6 +67,8 @@ async function gravar(fb: { token: string; uid: string }, doc: { ok: boolean; er
 export async function entrar(page: Page, login: string, senha: string, sessaoOk: () => boolean) {
   await page.goto(PORTAL.inicio, { waitUntil: 'domcontentloaded', timeout: 60_000 });
   let etapa = '';
+  let emailEnviado = false;
+  let senhaEnviada = false;
   const marca = (e: string) => {
     if (e !== etapa) log(`  login: ${e}`);
     etapa = e;
@@ -120,12 +122,14 @@ export async function entrar(page: Page, login: string, senha: string, sessaoOk:
         log(`  login: aviso em ${u.host}${u.pathname.replace(/\d+/g, '#')}: "${txt.trim()}"`);
       }
     }
-    if (await erroVisivel('#usernameError'))
+    // "Digite sua senha" antes de enviarmos a senha é só a validação do campo vazio: segue e preenche
+    if (emailEnviado && !senhaEnviada && (await erroVisivel('#usernameError')))
       throw new Erro('A Microsoft não reconheceu o login. O segredo ESTACIO_LOGIN deve ser matricula@alunos.estacio.br.');
-    if (await erroVisivel('#passwordError')) throw new Erro('A Microsoft recusou a senha. Confira o segredo ESTACIO_SENHA.');
+    if (senhaEnviada && (await erroVisivel('#passwordError'))) throw new Erro('A Microsoft recusou a senha. Confira o segredo ESTACIO_SENHA.');
     const email = page.locator('input[name=loginfmt]:visible, input[type=email]:visible');
     if (await email.count()) {
       marca('e-mail');
+      emailEnviado = true;
       await email.first().fill(login);
       await page
         .locator('#idSIButton9, input[type=submit]')
@@ -137,6 +141,7 @@ export async function entrar(page: Page, login: string, senha: string, sessaoOk:
     const pass = page.locator('input[type=password]:visible');
     if (await pass.count()) {
       marca('senha');
+      senhaEnviada = true;
       await pass.first().fill(senha);
       await page
         .locator('#idSIButton9, input[type=submit], button[type=submit]')
