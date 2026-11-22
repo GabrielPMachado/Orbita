@@ -3,6 +3,12 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.18.5] - 2026-11-22
+
+### Corrigido
+- Boletos da Estácio: o SIA só cria a sessão por "Entrar com e-mail de estudante" (Logon/SignInAd). Abrir direto o financeiro, ou tocar no "Acessar" (que é do formulário antigo de matrícula e senha do SIA), dava erro. A leitura no app e a da nuvem agora entram por esse caminho e leem as mensalidades em aberto e pagas.
+- Leitura na nuvem: o login da Microsoft preenche só o campo que está na tela (a Microsoft deixa o outro escondido fora da tela), envia a senha uma vez só e diz em que parte parou se parar.
+
 ## [0.18.4] - 2026-11-22
 
 ### Corrigido
