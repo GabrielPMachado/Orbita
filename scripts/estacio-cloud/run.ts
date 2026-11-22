@@ -352,12 +352,15 @@ async function varrer(login: string, senha: string) {
     const popup = await popupP;
     if (popup) {
       log('  SIA: janela de login aberta');
+      await sleep(3000);
+      await diagnostico(popup, 'SIA janela (início)');
       const stSia = novoLogin('SIA login');
       for (let i = 0; i < 30 && !popup.isClosed(); i++) {
         await sleep(1500);
         if (popup.isClosed()) break;
         await passoMicrosoft(popup, login, senha, stSia);
       }
+      if (!popup.isClosed()) await diagnostico(popup, 'SIA janela (fim)');
       log(popup.isClosed() ? '  SIA: janela de login fechou' : '  SIA: janela de login não fechou');
       await sleep(4000);
     }
