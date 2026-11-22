@@ -61,5 +61,8 @@
     "postinstall": "patch-package",
     "check:injected": "esbuild scripts/check-injected.ts --bundle --platform=node --log-level=error --outfile=.check-injected.js && node .check-injected.js"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "minimatch@^10": "^11.0.9"
+  }
 }
