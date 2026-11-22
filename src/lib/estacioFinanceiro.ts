@@ -10,26 +10,11 @@
 
 export const SIA_FINANCEIRO = 'https://sia.estacio.br/sianet/Aluno/InformacoesFinanceiras/Financeiro';
 /**
- * Entrada do SIA. É aqui que o login da Microsoft cria a sessão do SIA; abrir direto o endereço
- * do financeiro sem passar por ela dá erro e a página não mostra nenhuma cobrança.
+ * Entrada do SIA pela conta da Microsoft ("Entrar com e-mail de estudante" na página de logon).
+ * É ela que cria a sessão do SIA; abrir direto o financeiro sem passar por aqui dá erro. O botão
+ * "Acessar" da página de logon é do formulário antigo (matrícula e senha do SIA) e não serve.
  */
-export const SIA_ENTRADA = 'https://sia.estacio.br/sianet/';
-
-/**
- * Na página de logon do SIA (/sianet/Logon): toca em "Acessar", que entra com a mesma conta da
- * Microsoft e cria a sessão do SIA. Fora dela não faz nada.
- */
-export const SIA_ACESSAR_JS = `
-(function(){
-  var step = function(ok, info){ try { window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'step', name: 'entrar no SIA', ok: ok, info: info })); } catch(e){} };
-  if (!/\\/Logon/i.test(location.pathname)) { step(true, 'já com sessão'); return true; }
-  var b = [].slice.call(document.querySelectorAll('button, input[type=submit], input[type=button], [role=button]')).find(function(x){
-    return /^\\s*acessar\\s*$/i.test(x.innerText || x.value || '');
-  });
-  if (b) { b.click(); step(true, 'tocou em Acessar'); } else step(false, 'botão Acessar não encontrado');
-  true;
-})();
-`;
+export const SIA_ENTRADA = 'https://sia.estacio.br/sianet/Logon/SignInAd';
 
 /**
  * Injetado na página do financeiro: espera as linhas aparecerem (até 10 s) e devolve cada uma
