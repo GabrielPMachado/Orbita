@@ -7,7 +7,7 @@
  *  2. No Pluggy Dashboard → Applications → sua aplicação → Demo → Connect Account → MeuPluggy
  *  3. Copie Client ID, Client Secret e o itemId de cada banco
  *  4. POST /auth { clientId, clientSecret } → apiKey  (header X-API-KEY nas próximas chamadas)
- *  5. GET /accounts?itemId=…  e  GET /transactions?accountId=…
+ *  5. GET /accounts?itemId=…  e  GET /v2/transactions?accountId=… (cursor)
  *
  * Uso pessoal é gratuito, até 5 conexões; a autorização dura 1 ano.
  * As credenciais devem ficar no expo-secure-store (Keychain), nunca no código.
@@ -30,6 +30,7 @@ async function call<T>(path: string, init: RequestInit & { apiKey?: string } = {
     if (res.status === 401 || res.status === 403)
       throw new PluggyError('Credenciais recusadas pelo Pluggy. Confira o Client ID e o Client Secret.', res.status);
     if (res.status === 404) throw new PluggyError('Conexão não encontrada. Confira o Item ID.', res.status);
+    if (res.status === 410) throw new PluggyError('O Pluggy desativou um endereço que o app usa. Atualize o Órbita.', res.status);
     if (res.status === 429) throw new PluggyError('Muitas consultas seguidas. Tente de novo em alguns minutos.', res.status);
     throw new PluggyError(`O Pluggy respondeu com erro ${res.status}.`, res.status);
   }
@@ -85,7 +86,24 @@ interface PluggyTransaction {
   type?: 'DEBIT' | 'CREDIT';
 }
 
-/** Busca as transações de uma conta no período e converte para o formato da conferência. */
+/**
+ * Data da transação no fuso de Brasília. A Pluggy manda em UTC: cortar os 10 primeiros caracteres
+ * jogaria compras das 21h–23h59 para o dia seguinte.
+ */
+function dataBR(iso: string) {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso.slice(0, 10);
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  } catch {
+    return iso.slice(0, 10);
+  }
+}
+
+/**
+ * Busca as transações de uma conta no período e converte para o formato da conferência.
+ * Usa o GET /v2/transactions (paginação por cursor): o /transactions antigo foi desativado (erro 410).
+ */
 export async function listTransactions(
   apiKey: string,
   accountId: string,
@@ -94,16 +112,15 @@ export async function listTransactions(
   link: { localAccountId?: string; localCardId?: string } = {},
 ): Promise<BankTx[]> {
   const out: BankTx[] = [];
-  let page = 1;
-  for (;;) {
-    const q = `accountId=${encodeURIComponent(accountId)}&from=${from}&to=${to}&pageSize=500&page=${page}`;
-    const r = await call<{ results: PluggyTransaction[]; totalPages: number }>(`/transactions?${q}`, { apiKey });
+  // `next` já vem pronto para ser colado no caminho (ex.: "?accountId=…&after=…")
+  let path: string | null = `/v2/transactions?accountId=${encodeURIComponent(accountId)}&dateFrom=${from}&dateTo=${to}`;
+  for (let page = 0; path && page < 40; page++) {
+    const r: { results: PluggyTransaction[]; next: string | null } = await call(path, { apiKey });
     for (const t of r.results) {
       const isOut = t.type ? t.type === 'DEBIT' : t.amount < 0;
-      out.push({ id: t.id, date: t.date.slice(0, 10), amount: Math.abs(t.amount), type: isOut ? 'out' : 'in', description: t.description, ...link });
+      out.push({ id: t.id, date: dataBR(t.date), amount: Math.abs(t.amount), type: isOut ? 'out' : 'in', description: t.description, ...link });
     }
-    if (page >= (r.totalPages ?? 1)) break;
-    page++;
+    path = r.next && r.results.length ? `/v2/transactions${r.next.startsWith('?') ? r.next : `?${r.next}`}` : null;
   }
   return out;
 }

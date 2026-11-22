@@ -24,7 +24,9 @@ const STEPS = [
 export default function PluggySetup() {
   const c = useColors();
   const p = usePluggy();
-  const { accounts: localAccounts, cards } = useFinance();
+  const { accounts: localAccounts, cards, base } = useFinance();
+  /** com o Financy como base não há contas no Órbita: as contas do banco conferem por valor e data */
+  const fy = base === 'financy';
   const [editing, setEditing] = useState(!p.configured);
   const [clientId, setClientId] = useState('');
   const [secret, setSecret] = useState('');
@@ -60,7 +62,9 @@ export default function PluggySetup() {
   const linkName = (a: LinkedAccount) => {
     if (!a.enabled) return 'Fora da conferência';
     const local = a.kind === 'CREDIT' ? cards.find((x) => x.id === a.localCardId)?.name : localAccounts.find((x) => x.id === a.localAccountId)?.name;
-    return local ? `Vinculada a ${local}` : 'Sem vínculo — toque para escolher';
+    if (local) return `Vinculada a ${local}`;
+    if (a.kind !== 'CREDIT' && (fy || !localAccounts.length)) return 'Conferida por valor e data';
+    return 'Sem vínculo — toque para escolher';
   };
 
   const options = linking
@@ -193,7 +197,9 @@ export default function PluggySetup() {
                 leading={<IconTile icon={a.kind === 'CREDIT' ? CreditCard : Landmark} color={a.color ?? c.info} />}
                 title={`${a.bank} · ${a.name}`}
                 subtitle={linkName(a)}
-                subtitleTone={!a.enabled ? 'faint' : (a.kind === 'CREDIT' ? a.localCardId : a.localAccountId) ? 'dim' : 'warning'}
+                subtitleTone={
+                  !a.enabled ? 'faint' : (a.kind === 'CREDIT' ? a.localCardId : a.localAccountId || fy || !localAccounts.length) ? 'dim' : 'warning'
+                }
                 trailing={
                   <T v="callout" tabular tone={a.enabled ? 'default' : 'faint'}>
                     {brl(a.balance)}
@@ -266,7 +272,13 @@ export default function PluggySetup() {
           </List>
           {!options.length && (
             <T v="caption" tone="faint">
-              {linking?.kind === 'CREDIT' ? 'Cadastre seus cartões em Finanças → Cartões.' : 'Cadastre suas contas em Finanças → Contas.'}
+              {linking?.kind === 'CREDIT'
+                ? fy
+                  ? 'Os cartões vêm do Financy: cadastre lá, em Ajustes › Cartões de crédito.'
+                  : 'Cadastre seus cartões em Finanças → Cartões.'
+                : fy
+                  ? 'Com o Financy como base, as contas vêm dele e esta conta é conferida por valor e data. Não precisa vincular.'
+                  : 'Cadastre suas contas em Finanças → Contas.'}
             </T>
           )}
           <Pressable

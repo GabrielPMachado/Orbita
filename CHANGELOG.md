@@ -3,6 +3,12 @@
 Todas as mudanças relevantes do Órbita ficam registradas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/). A versão é a mesma do `app.json`.
 
+## [0.18.1] - 2026-11-22
+
+### Corrigido
+- Meu Pluggy dava "erro 410": o Pluggy desativou o endereço antigo de transações. O Órbita agora usa o /v2/transactions, com paginação por cursor, e as datas saem no fuso de Brasília (compras depois das 21h não caem mais no dia seguinte).
+- Vincular contas do banco: com o Financy como base não há contas no Órbita, então as contas do banco aparecem como "Conferida por valor e data", sem o aviso amarelo, e a tela explica isso em vez de mandar cadastrar contas em Finanças. Os cartões continuam vinculáveis aos cartões do Financy.
+
 ## [0.18.0] - 2026-11-22
 
 ### Mudado
