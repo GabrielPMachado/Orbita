@@ -92,8 +92,22 @@ export async function entrar(page: Page, login: string, senha: string, sessaoOk:
       throw new Erro(
         'A Microsoft pediu verificação em duas etapas. Na nuvem não dá para aprovar: entre uma vez pelo app ou desative o 2FA da conta da Estácio.',
       );
-    if (await page.locator('#passwordError, #usernameError').count())
-      throw new Erro('Login ou senha da Estácio recusados. Confira os segredos ESTACIO_LOGIN e ESTACIO_SENHA.');
+    // o erro só vale se estiver visível e com texto (o espaço dele existe escondido na página)
+    const erroVisivel = async (sel: string) => {
+      const el = page.locator(`${sel}:visible`);
+      return (
+        (await el.count()) > 0 &&
+        (
+          (await el
+            .first()
+            .innerText()
+            .catch(() => '')) || ''
+        ).trim().length > 0
+      );
+    };
+    if (await erroVisivel('#usernameError'))
+      throw new Erro('A Microsoft não reconheceu o login. O segredo ESTACIO_LOGIN deve ser matricula@alunos.estacio.br.');
+    if (await erroVisivel('#passwordError')) throw new Erro('A Microsoft recusou a senha. Confira o segredo ESTACIO_SENHA.');
     const email = page.locator('input[name=loginfmt]:visible, input[type=email]:visible');
     if (await email.count()) {
       marca('e-mail');
