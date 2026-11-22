@@ -8,6 +8,9 @@ on:
     branches: [main]
     paths-ignore: ['**.md']
 
+permissions:
+  contents: read
+
 jobs:
   ipa:
     runs-on: macos-26

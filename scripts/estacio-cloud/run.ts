@@ -348,8 +348,8 @@ async function varrer(login: string, senha: string) {
     // "Entrar com e-mail de estudante": passa pela Microsoft (mesma conta) e volta ao SIA com sessão
     await ir(SIA_ENTRADA, 4000);
     const stSia = novoLogin('SIA login');
-    for (let i = 0; i < 30 && !/sia\.estacio\.br\/sianet\/(?!Logon)/i.test(page.url()); i++) {
-      if (/login\.microsoftonline\.com|login\.live\.com/i.test(page.url())) await passoMicrosoft(page, login, senha, stSia);
+    for (let i = 0; i < 30 && !/^https:\/\/sia\.estacio\.br\/sianet\/(?!Logon)/i.test(page.url()); i++) {
+      if (/^https:\/\/(login\.microsoftonline\.com|login\.live\.com)\//i.test(page.url())) await passoMicrosoft(page, login, senha, stSia);
       await sleep(1500);
     }
     await diagnostico(page, 'SIA entrada');
